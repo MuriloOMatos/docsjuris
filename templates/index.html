@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Gerador de Petições</title>
+  <!-- CSS Bootstrap 5 -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Bootstrap Icons -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+  <style>
+    body {
+      background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+      min-height: 100vh;
+    }
+    .card {
+      border: none;
+      box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+    }
+  </style>
+</head>
+<body>
+  <div class="container py-5">
+    <div class="row g-4">
+      <!-- Coluna do Formulário -->
+      <div class="col-lg-6">
+        <div class="card">
+          <div class="card-header bg-primary text-white">
+            <h2 class="h4 mb-0"><i class="bi bi-pencil-square me-2"></i>Dados da Petição</h2>
+          </div>
+          <div class="card-body">
+            <form action="/gerar-peticao" method="post" novalidate>
+              <!-- Seleção de Modelo: Número de Empréstimos -->
+              <div class="mb-3">
+                <label for="modelo_peticao" class="form-label">Número de Empréstimos:</label>
+                <select class="form-select" id="modelo_peticao" name="modelo_peticao" required>
+                  <option value="" selected disabled>Selecione um modelo...</option>
+                  <option value="1">1 Empréstimo</option>
+                  <option value="2">2 Empréstimos</option>
+                  <option value="3">3 Empréstimos</option>
+                </select>
+                <div class="invalid-feedback">Selecione um modelo de petição.</div>
+              </div>
+
+              <!-- Dados Gerais -->
+              <div class="mb-3">
+                <label for="renda_mensal" class="form-label">Renda Mensal Líquida</label>
+                <div class="input-group">
+                  <span class="input-group-text">R$</span>
+                  <input type="number" step="0.01" min="0" class="form-control" id="renda_mensal" name="renda_mensal" placeholder="Ex: 3500,00" required>
+                </div>
+                <div class="invalid-feedback">Informe um valor válido.</div>
+              </div>
+
+              <!-- Container para os campos de cada empréstimo -->
+              <div id="loan_fields"></div>
+
+              <!-- Outros Dados Fixos -->
+              <div class="row g-3">
+                <div class="col-md-6">
+                  <div class="mb-3">
+                    <label for="data_contratacao" class="form-label">Data de Contratação</label>
+                    <input type="date" class="form-control" id="data_contratacao" name="data_contratacao" required>
+                    <div class="invalid-feedback">Selecione uma data válida.</div>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="mb-3">
+                    <label for="parcela_pessoal" class="form-label">Parcela Pessoal</label>
+                    <div class="input-group">
+                      <span class="input-group-text">R$</span>
+                      <input type="number" step="0.01" min="0" class="form-control" id="parcela_pessoal" name="parcela_pessoal" required>
+                    </div>
+                    <div class="invalid-feedback">Informe um valor válido.</div>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="mb-3">
+                    <label for="taxa_media_bacen" class="form-label">Taxa Média BACEN</label>
+                    <div class="input-group">
+                      <input type="number" step="0.01" min="0" max="100" class="form-control" id="taxa_media_bacen" name="taxa_media_bacen" required>
+                      <span class="input-group-text">%</span>
+                    </div>
+                    <div class="invalid-feedback">Informe uma taxa entre 0 e 100%.</div>
+                    <small class="form-text text-muted">Consulte a taxa atual no site do BACEN.</small>
+                  </div>
+                </div>
+              </div>
+
+              <button type="submit" class="btn btn-primary w-100 py-3">
+                <i class="bi bi-magic me-2"></i>Gerar Petição Automática
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
+
+      <!-- Removida a coluna de Pré-visualização -->
+    </div>
+  </div>
+
+  <!-- JavaScript Bootstrap 5 -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    // Atualiza a data máxima para o campo de data de contratação
+    document.getElementById('data_contratacao').max = new Date().toISOString().split('T')[0];
+
+    // Ao selecionar o número de empréstimos, adiciona grupos de campos para cada empréstimo
+    document.getElementById('modelo_peticao').addEventListener('change', function() {
+      const numLoans = parseInt(this.value);
+      const container = document.getElementById('loan_fields');
+      container.innerHTML = ''; // Limpa campos anteriores
+
+      for (let i = 1; i <= numLoans; i++) {
+        const group = document.createElement('div');
+        group.className = 'card mb-3';
+        group.innerHTML = `
+          <div class="card-header bg-secondary text-white">
+            <h5 class="mb-0">Empréstimo ${i}</h5>
+          </div>
+          <div class="card-body">
+            <div class="mb-3">
+              <label class="form-label">Valor Financiado</label>
+              <div class="input-group">
+                <span class="input-group-text">R$</span>
+                <input type="number" step="0.01" min="0" class="form-control" name="emprestimos[${i-1}][valor]" placeholder="Ex: 1000,00" required>
+              </div>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Parcela Consignada</label>
+              <div class="input-group">
+                <span class="input-group-text">R$</span>
+                <input type="number" step="0.01" min="0" class="form-control" name="emprestimos[${i-1}][parcela_consignada]" placeholder="Ex: 200,00" required>
+              </div>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Data de Contratação</label>
+              <input type="date" class="form-control" name="emprestimos[${i-1}][data]" required>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Número de Parcelas</label>
+              <input type="number" min="1" class="form-control" name="emprestimos[${i-1}][parcelas]" required>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Taxa de Juros</label>
+              <div class="input-group">
+                <input type="number" step="0.01" min="0" max="100" class="form-control" name="emprestimos[${i-1}][taxa]" required>
+                <span class="input-group-text">%</span>
+              </div>
+            </div>
+          </div>
+        `;
+        container.appendChild(group);
+      }
+    });
+  </script>
+</body>
+</html>
