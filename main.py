@@ -39,7 +39,11 @@ def gerar_peticao():
     # Cálculo do valor líquido disponível (Renda - Parcelas)
     valor_liquido = renda_mensal - (parcela_consignado + parcela_pessoal)
     dados['valor_liquido'] = f"R$ {valor_liquido:.2f}"
-    
+
+    # Cálculo do valor líquido por dia (valor / 30)
+    Valor_diario = valor_liquido / 30
+    dados['Valor_diario'] = f"R$ {Valor_diario:.2f}"
+
     # Cálculo do comprometimento da renda
     comprometimento = (float(dados['parcela_consignado']) + float(dados['parcela_pessoal'])) / float(dados['renda_mensal']) * 100
     dados['comprometimento_renda'] = f"{comprometimento:.2f}%"
@@ -53,7 +57,7 @@ def gerar_peticao():
     dados['acima_do_financiado'] = f"{acima_do_financiado:.2f}"
 
     # Cálculo Valor com base no basen
-    taxa_juros = float(dados['taxa_juros_contrato']) / 100  # Converter para decimal
+    taxa_juros = float(dados['taxa_media_bacen']) / 100  # Converter para decimal
     valor_financiado = float(dados['valor_financiado'])
     parcelas = int(dados['quantidade_parcelas'])
 
