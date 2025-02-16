@@ -20,7 +20,8 @@
   </style>
 </head>
 <body>
-  <div class="container d-flex justify-content-center align-items-center main-vh-100">
+  <!-- Correção: Adicionado min-vh-100 para altura total -->
+  <div class="container min-vh-100 d-flex justify-content-center align-items-center">
     <div class="row g-4 w-100" style="max-width: 600px;">
       <!-- Coluna do Formulário -->
       <div class="col-12">
@@ -29,7 +30,8 @@
             <h2 class="h4 mb-0"><i class="bi bi-pencil-square me-2"></i>Dados da Petição</h2>
           </div>
           <div class="card-body">
-            <form action="/gerar-peticao" method="post" novalidate>
+            <!-- Removido novalidate para ativar validação nativa -->
+            <form action="/gerar-peticao" method="post">
               <!-- Seleção de Modelo: Número de Empréstimos -->
               <div class="mb-3">
                 <label for="modelo_peticao" class="form-label">Número de Empréstimos:</label>
@@ -56,24 +58,7 @@
               <div id="loan_fields"></div>
 
               <!-- Outros Dados Fixos -->
-              <div class="row g-3">
-                <div class="col-md-6">
-                  <div class="mb-3">
-                    <label for="data_contratacao" class="form-label">Data de Contratação</label>
-                    <input type="date" class="form-control" id="data_contratacao" name="data_contratacao" required>
-                    <div class="invalid-feedback">Selecione uma data válida.</div>
-                  </div>
-                </div>
-                <div class="col-md-6">
-                  <div class="mb-3">
-                    <label for="parcela_pessoal" class="form-label">Parcela Pessoal</label>
-                    <div class="input-group">
-                      <span class="input-group-text">R$</span>
-                      <input type="number" step="0.01" min="0" class="form-control" id="parcela_pessoal" name="parcela_pessoal" required>
-                    </div>
-                    <div class="invalid-feedback">Informe um valor válido.</div>
-                  </div>
-                </div>
+              <div class="row g-2">
                 <div class="col-md-6">
                   <div class="mb-3">
                     <label for="taxa_media_bacen" class="form-label">Taxa Média BACEN</label>
@@ -83,6 +68,17 @@
                     </div>
                     <div class="invalid-feedback">Informe uma taxa entre 0 e 100%.</div>
                     <small class="form-text text-muted">Consulte a taxa atual no site do BACEN.</small>
+                  </div>
+                </div>
+                
+                <div class="col-md-6">
+                  <div class="mb-3">
+                    <label for="parcela_pessoal" class="form-label">Parcela Pessoal</label>
+                    <div class="input-group">
+                      <span class="input-group-text">R$</span>
+                      <input type="number" step="0.01" min="0" class="form-control" id="parcela_pessoal" name="parcela_pessoal" required>
+                    </div>
+                    <div class="invalid-feedback">Informe um valor válido.</div>
                   </div>
                 </div>
               </div>
@@ -100,16 +96,16 @@
   <!-- JavaScript Bootstrap 5 -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
   <script>
-    // Atualiza a data máxima para o campo de data de contratação
-    document.getElementById('data_contratacao').max = new Date().toISOString().split('T')[0];
+    // Função para gerar IDs únicos
+    let loanCounter = 0;
 
-    // Ao selecionar o número de empréstimos, adiciona grupos de campos para cada empréstimo
     document.getElementById('modelo_peticao').addEventListener('change', function() {
       const numLoans = parseInt(this.value);
       const container = document.getElementById('loan_fields');
-      container.innerHTML = ''; // Limpa campos anteriores
+      container.innerHTML = '';
 
       for (let i = 1; i <= numLoans; i++) {
+        loanCounter++;
         const group = document.createElement('div');
         group.className = 'card mb-3';
         group.innerHTML = `
@@ -118,31 +114,31 @@
           </div>
           <div class="card-body">
             <div class="mb-3">
-              <label class="form-label">Valor Financiado</label>
+              <label for="valor_${loanCounter}" class="form-label">Valor Financiado</label>
               <div class="input-group">
                 <span class="input-group-text">R$</span>
-                <input type="number" step="0.01" min="0" class="form-control" name="emprestimos[${i-1}][valor]" placeholder="Ex: 1000,00" required>
+                <input type="number" step="0.01" min="0" class="form-control" id="valor_${loanCounter}" name="emprestimos[${i-1}][valor]" placeholder="Ex: 1000,00" required>
               </div>
             </div>
             <div class="mb-3">
-              <label class="form-label">Parcela Consignada</label>
+              <label for="parcela_${loanCounter}" class="form-label">Parcela Consignada</label>
               <div class="input-group">
                 <span class="input-group-text">R$</span>
-                <input type="number" step="0.01" min="0" class="form-control" name="emprestimos[${i-1}][parcela_consignada]" placeholder="Ex: 200,00" required>
+                <input type="number" step="0.01" min="0" class="form-control" id="parcela_${loanCounter}" name="emprestimos[${i-1}][parcela_consignada]" placeholder="Ex: 200,00" required>
               </div>
             </div>
             <div class="mb-3">
-              <label class="form-label">Data de Contratação</label>
-              <input type="date" class="form-control" name="emprestimos[${i-1}][data]" required>
+              <label for="data_${loanCounter}" class="form-label">Data de Contratação</label>
+              <input type="date" class="form-control" id="data_${loanCounter}" name="emprestimos[${i-1}][data]" max="${new Date().toISOString().split('T')[0]}" required>
             </div>
             <div class="mb-3">
-              <label class="form-label">Número de Parcelas</label>
-              <input type="number" min="1" class="form-control" name="emprestimos[${i-1}][parcelas]" required>
+              <label for="parcelas_${loanCounter}" class="form-label">Número de Parcelas</label>
+              <input type="number" min="1" class="form-control" id="parcelas_${loanCounter}" name="emprestimos[${i-1}][parcelas]" required>
             </div>
             <div class="mb-3">
-              <label class="form-label">Taxa de Juros</label>
+              <label for="taxa_${loanCounter}" class="form-label">Taxa de Juros</label>
               <div class="input-group">
-                <input type="number" step="0.01" min="0" max="100" class="form-control" name="emprestimos[${i-1}][taxa]" required>
+                <input type="number" step="0.01" min="0" max="100" class="form-control" id="taxa_${loanCounter}" name="emprestimos[${i-1}][taxa]" required>
                 <span class="input-group-text">%</span>
               </div>
             </div>
