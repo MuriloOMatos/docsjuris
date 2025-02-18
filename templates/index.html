@@ -20,7 +20,6 @@
   </style>
 </head>
 <body>
-  <!-- Correção: Adicionado min-vh-100 para altura total -->
   <div class="container min-vh-100 d-flex justify-content-center align-items-center">
     <div class="row g-4 w-100" style="max-width: 600px;">
       <!-- Coluna do Formulário -->
@@ -30,7 +29,6 @@
             <h2 class="h4 mb-0"><i class="bi bi-pencil-square me-2"></i>Dados da Petição</h2>
           </div>
           <div class="card-body">
-            <!-- Removido novalidate para ativar validação nativa -->
             <form action="/gerar-peticao" method="post">
               <!-- Seleção de Modelo: Número de Empréstimos -->
               <div class="mb-3">
@@ -52,6 +50,13 @@
                   <input type="number" step="0.01" min="0" class="form-control" id="renda_mensal" name="renda_mensal" placeholder="Ex: 3500,00" required>
                 </div>
                 <div class="invalid-feedback">Informe um valor válido.</div>
+              </div>
+
+              <!-- Novo Campo: Data de Contratação -->
+              <div class="mb-3">
+                <label for="data_contratacao" class="form-label">Data de Contratação</label>
+                <input type="date" class="form-control" id="data_contratacao" name="data_contratacao" required>
+                <div class="invalid-feedback">Informe a data de contratação.</div>
               </div>
 
               <!-- Container para os campos de cada empréstimo -->
@@ -117,28 +122,33 @@
               <label for="valor_${loanCounter}" class="form-label">Valor Financiado</label>
               <div class="input-group">
                 <span class="input-group-text">R$</span>
-                <input type="number" step="0.01" min="0" class="form-control" id="valor_${loanCounter}" name="emprestimos[${i-1}][valor]" placeholder="Ex: 1000,00" required>
+                <input type="number" step="0.01" min="0" class="form-control" id="valor_${loanCounter}" 
+                       name="emprestimos[${i-1}][valor]" placeholder="Ex: 1000,00" required>
               </div>
             </div>
             <div class="mb-3">
               <label for="parcela_${loanCounter}" class="form-label">Parcela Consignada</label>
               <div class="input-group">
                 <span class="input-group-text">R$</span>
-                <input type="number" step="0.01" min="0" class="form-control" id="parcela_${loanCounter}" name="emprestimos[${i-1}][parcela_consignada]" placeholder="Ex: 200,00" required>
+                <input type="number" step="0.01" min="0" class="form-control" id="parcela_${loanCounter}" 
+                       name="emprestimos[${i-1}][parcela_consignada]" placeholder="Ex: 300,00" required>
               </div>
             </div>
             <div class="mb-3">
-              <label for="data_${loanCounter}" class="form-label">Data de Contratação</label>
-              <input type="date" class="form-control" id="data_${loanCounter}" name="emprestimos[${i-1}][data]" max="${new Date().toISOString().split('T')[0]}" required>
+              <label for="data_${loanCounter}" class="form-label">Data do Empréstimo</label>
+              <input type="date" class="form-control" id="data_${loanCounter}" 
+                     name="emprestimos[${i-1}][data]" required>
             </div>
             <div class="mb-3">
               <label for="parcelas_${loanCounter}" class="form-label">Número de Parcelas</label>
-              <input type="number" min="1" class="form-control" id="parcelas_${loanCounter}" name="emprestimos[${i-1}][parcelas]" required>
+              <input type="number" min="1" class="form-control" id="parcelas_${loanCounter}" 
+                     name="emprestimos[${i-1}][parcelas]" placeholder="Ex: 12" required>
             </div>
             <div class="mb-3">
               <label for="taxa_${loanCounter}" class="form-label">Taxa de Juros</label>
               <div class="input-group">
-                <input type="number" step="0.01" min="0" max="100" class="form-control" id="taxa_${loanCounter}" name="emprestimos[${i-1}][taxa]" required>
+                <input type="number" step="0.01" min="0" class="form-control" id="taxa_${loanCounter}" 
+                       name="emprestimos[${i-1}][taxa]" placeholder="Ex: 2,5" required>
                 <span class="input-group-text">%</span>
               </div>
             </div>
