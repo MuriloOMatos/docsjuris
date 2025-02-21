@@ -10,7 +10,7 @@ from decimal import Decimal, InvalidOperation
 app = Flask(__name__)
 
 # Configuração da série histórica do BACEN
-SERIES_BACEN = {'pessoal_fisica': 20783}
+SERIES_BACEN = {'pessoal_fisica': 4390}
 
 def get_bacen_taxa_juros():
     """Obtém a última taxa de juros do BACEN"""
