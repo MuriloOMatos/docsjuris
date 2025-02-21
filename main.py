@@ -1,146 +1,172 @@
-from flask import Flask, request, send_file, render_template
+from flask import Flask, render_template, request, send_file, abort
 from docx import Document
 import io
 import os
+import requests
+import pandas as pd
+from datetime import datetime
+from decimal import Decimal, InvalidOperation
 
 app = Flask(__name__)
 
-# Função para calcular a diferença entre os juros do contrato e a taxa média do BACEN
-def calcular_diferenca(valor_financiado, taxa_contrato, taxa_media, parcelas):
+# Configuração da série histórica do BACEN
+SERIES_BACEN = {'pessoal_fisica': 20783}
+
+def get_bacen_taxa_juros():
+    """Obtém a última taxa de juros do BACEN"""
     try:
-        juros_contrato = (float(taxa_contrato) / 100) * float(valor_financiado) * int(parcelas)
-        juros_media = (float(taxa_media) / 100) * float(valor_financiado) * int(parcelas)
-        return juros_contrato - juros_media
-    except ValueError:
+        url = f"https://api.bcb.gov.br/dados/serie/bcdata.sgs.{SERIES_BACEN['pessoal_fisica']}/dados/ultimos/1?formato=json"
+        response = requests.get(url, timeout=15)
+        response.raise_for_status()
+        
+        dados = response.json()
+        if not dados:
+            return None
+            
+        df = pd.DataFrame(dados)
+        df['data'] = pd.to_datetime(df['data'], dayfirst=True)
+        df['valor'] = pd.to_numeric(df['valor'], errors='coerce')
+        
+        return {
+            'taxa': float(df.iloc[0]['valor']),
+            'data_consulta': datetime.now().strftime('%d/%m/%Y %H:%M'),
+            'data_atualizacao': df.iloc[0]['data'].strftime('%d/%m/%Y')
+        }
+        
+    except Exception as e:
+        app.logger.error(f"Erro na API BACEN: {str(e)}")
+        return None
+
+def calcular_diferenca(valor, taxa_contrato, taxa_media, parcelas):
+    """Calcula a diferença financeira entre as taxas"""
+    try:
+        valor_dec = Decimal(str(valor))
+        contrato = Decimal(str(taxa_contrato)) / 100
+        media = Decimal(str(taxa_media)) / 100
+        parcelas_dec = Decimal(str(parcelas))
+        
+        return float((valor_dec * contrato * parcelas_dec) - (valor_dec * media * parcelas_dec))
+    except InvalidOperation:
         return 0.0
 
-# Rota para exibir o formulário (index.html deve estar na pasta "templates")
-@app.route('/', methods=['GET'])
+@app.route('/')
 def index():
-    return render_template('index.html')
+    """Rota principal que renderiza o formulário"""
+    bacen_data = get_bacen_taxa_juros()
+    return render_template(
+        'index.html',
+        taxa_bacen=bacen_data['taxa'] if bacen_data else None,
+        data_atualizacao=bacen_data['data_atualizacao'] if bacen_data else None
+    )
 
-# Rota para processar o formulário e gerar a petição
 @app.route('/gerar-peticao', methods=['POST'])
 def gerar_peticao():
-    # Verifica se todos os campos obrigatórios estão presentes
-    required_fields = ['renda_mensal', 'data_contratacao', 'parcela_pessoal', 'modelo_peticao']
-    for field in required_fields:
-        if field not in request.form:
-            return f"Erro: Campo '{field}' é obrigatório.", 400
-
-    # Coleta dos dados gerais
-    dados = {
-        'renda_mensal': request.form.get('renda_mensal', '0').replace(",", "."),
-        'data_contratacao': request.form.get('data_contratacao', ''),
-        'parcela_pessoal': request.form.get('parcela_pessoal', '0').replace(",", "."),
-        'parcela_consignado': request.form.get('parcela_consignado', '0').replace(",", "."),
-        'quantidade_parcelas': request.form.get('quantidade_parcelas', '0'),
-        'valor_financiado': request.form.get('valor_financiado', '0').replace(",", "."),
-        'taxa_media_bacen': request.form.get('taxa_media_bacen', '0').replace(",", "."),
-        'taxa_juros_contrato': request.form.get('taxa_juros_contrato', '0').replace(",", "."),
-        'modelo_peticao': request.form.get('modelo_peticao', '')  # Valor esperado: "1", "2" ou "3"
-    }
-
-    # Verifica se o modelo foi selecionado
-    modelo_selecionado = dados.get('modelo_peticao')
-    if not modelo_selecionado:
-        return "Erro: Modelo de petição não selecionado.", 400
-
-    # Conversão dos campos gerais para cálculos
+    """Processa o formulário e gera o documento"""
     try:
-        renda_mensal = float(dados['renda_mensal'])
-        parcela_pessoal = float(dados['parcela_pessoal'])
-        parcela_consignado = float(dados['parcela_consignado'])
-        quantidade_parcelas = int(dados['quantidade_parcelas'])
-        valor_financiado = float(dados['valor_financiado'])
-        taxa_media_bacen = float(dados['taxa_media_bacen']) / 100
-    except ValueError:
-        return "Erro: Valores inválidos fornecidos.", 400
+        # Validação inicial
+        if 'modelo_peticao' not in request.form:
+            return "Número de empréstimos não especificado", 400
+            
+        num_emprestimos = int(request.form['modelo_peticao'])
+        if num_emprestimos not in [1, 2, 3]:
+            return "Número de empréstimos inválido", 400
 
-    # Cálculo do valor líquido disponível (Renda - Parcelas)
-    valor_liquido = renda_mensal - (parcela_consignado + parcela_pessoal)
-    dados['valor_liquido'] = f"R$ {valor_liquido:.2f}"
+        # Obter dados do BACEN
+        bacen_data = get_bacen_taxa_juros()
+        if not bacen_data:
+            return "Não foi possível obter a taxa do BACEN", 500
 
-    # Cálculo do valor líquido por dia (valor / 30)
-    Valor_diario = valor_liquido / 30
-    dados['Valor_diario'] = f"R$ {Valor_diario:.2f}"
+        # Processar dados do formulário
+        dados = {
+            'taxa_media_bacen': bacen_data['taxa'],
+            'data_consulta': bacen_data['data_consulta'],
+            'data_atualizacao_bacen': bacen_data['data_atualizacao'],
+            'renda_mensal': request.form['renda_mensal'].replace(",", "."),
+            'parcela_pessoal': request.form['parcela_pessoal'].replace(",", "."),
+            'emprestimos': []
+        }
 
-    # Cálculo do comprometimento da renda
-    comprometimento = (parcela_consignado + parcela_pessoal) / renda_mensal * 100
-    dados['comprometimento_renda'] = f"{comprometimento:.2f}%"
+        # Processar cada empréstimo
+        total_consignado = Decimal('0')
+        for i in range(num_emprestimos):
+            emprestimo = {
+                'data': request.form.get(f'emprestimos[{i}][data]', ''),
+                'valor': request.form.get(f'emprestimos[{i}][valor]', '0').replace(",", "."),
+                'parcela': request.form.get(f'emprestimos[{i}][parcela_consignada]', '0').replace(",", "."),
+                'parcelas': request.form.get(f'emprestimos[{i}][parcelas]', '0'),
+                'taxa': request.form.get(f'emprestimos[{i}][taxa]', '0').replace(",", ".")
+            }
+            
+            # Conversão e cálculos
+            valor = Decimal(emprestimo['valor'])
+            parcela = Decimal(emprestimo['parcela'])
+            parcelas = int(emprestimo['parcelas'])
+            taxa = Decimal(emprestimo['taxa'])
+            
+            emprestimo['total'] = float(parcela * parcelas)
+            emprestimo['diferenca'] = calcular_diferenca(valor, taxa, dados['taxa_media_bacen'], parcelas)
+            
+            dados['emprestimos'].append(emprestimo)
+            total_consignado += parcela
 
-    # Cálculo do Valor total parcela banco (Parcela * número de parcelas)
-    total_emprestimo = parcela_consignado * quantidade_parcelas
-    dados['total_emprestimo'] = f"R$ {total_emprestimo:.2f}"
+        # Cálculos finais
+        renda = Decimal(dados['renda_mensal'])
+        parcela_pessoal = Decimal(dados['parcela_pessoal'])
+        
+        dados['valor_liquido'] = f"{(renda - (parcela_pessoal + total_consignado)):.2f}"
+        dados['comprometimento'] = f"{((parcela_pessoal + total_consignado) / renda * 100):.2f}%" if renda > 0 else "0%"
 
-    # Cálculo do Valor acima do emprestado (valor total / valor financiado)
-    if valor_financiado != 0:
-        acima_do_financiado = total_emprestimo / valor_financiado
-        dados['acima_do_financiado'] = f"{acima_do_financiado:.2f}"
-    else:
-        dados['acima_do_financiado'] = "Indefinido (valor financiado é zero)"
-        print("Erro: valor_financiado é zero, divisão não realizada.")
+        # Carregar template correto
+        template_path = os.path.join("modelos", f"modelo_{num_emprestimos}.docx")
+        if not os.path.exists(template_path):
+            return "Modelo não encontrado", 404
 
-    # Cálculo Valor com base no BACEN (substitui o valor anterior de 'acima_do_financiado')
-    acima_do_financiado_bacen = valor_financiado * ((1 + taxa_media_bacen) ** quantidade_parcelas)
-    dados['acima_do_financiado_bacen'] = f"R$ {acima_do_financiado_bacen:.2f}"
+        doc = Document(template_path)
+        
+        # Função para aplanar dicionário
+        def flatten_dict(d, parent_key='', sep='_'):
+            items = []
+            for k, v in d.items():
+                new_key = f"{parent_key}{sep}{k}" if parent_key else k
+                if isinstance(v, dict):
+                    items.extend(flatten_dict(v, new_key, sep=sep).items())
+                elif isinstance(v, list):
+                    for i, item in enumerate(v):
+                        items.extend(flatten_dict(item, f"{new_key}{sep}{i}", sep=sep).items())
+                else:
+                    items.append((new_key, v))
+            return dict(items)
+        
+        replacements = flatten_dict(dados)
 
-    # Cálculo da diferença entre os juros do contrato e a taxa média do BACEN
-    diferenca = calcular_diferenca(
-        valor_financiado,
-        dados['taxa_juros_contrato'],
-        dados['taxa_media_bacen'],
-        quantidade_parcelas
-    )
-    dados['diferenca_contrato1'] = f"R$ {diferenca:.2f}"
+        # Substituir placeholders
+        for paragraph in doc.paragraphs:
+            for key, value in replacements.items():
+                paragraph.text = paragraph.text.replace(f'{{{{{key}}}}}', str(value))
 
-    # Mapeia a opção selecionada para o nome do arquivo de modelo
-    modelo_mapping = {
-        '1': 'emprestimo1',
-        '2': 'emprestimo2',
-        '3': 'emprestimo3'
-    }
-    if modelo_selecionado not in modelo_mapping:
-        return "Erro: Modelo de petição inválido.", 400
+        for table in doc.tables:
+            for row in table.rows:
+                for cell in row.cells:
+                    for key, value in replacements.items():
+                        cell.text = cell.text.replace(f'{{{{{key}}}}}', str(value))
 
-    modelo_nome = modelo_mapping[modelo_selecionado]
+        # Gerar resposta
+        output = io.BytesIO()
+        doc.save(output)
+        output.seek(0)
+        
+        return send_file(
+            output,
+            download_name=f"peticao_{datetime.now().strftime('%Y%m%d%H%M%S')}.docx",
+            as_attachment=True,
+            mimetype="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+        )
 
-    # Usa o caminho absoluto para localizar o arquivo de modelo
-    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-    template_filename = os.path.join(BASE_DIR, "modelos", f"{modelo_nome}.docx")
-    print("Diretório atual:", os.getcwd())
-    print("Procurando o arquivo:", template_filename)
-
-    if not os.path.exists(template_filename):
-        return "Erro: Modelo de petição não encontrado.", 400
-
-    # Carrega o template do modelo selecionado
-    doc = Document(template_filename)
-
-    # Substitui os placeholders nos parágrafos e tabelas do documento
-    for paragraph in doc.paragraphs:
-        for key, value in dados.items():
-            placeholder = f"{{{{{key}}}}}"
-            paragraph.text = paragraph.text.replace(placeholder, str(value))
-
-    for table in doc.tables:
-        for row in table.rows:
-            for cell in row.cells:
-                for key, value in dados.items():
-                    placeholder = f"{{{{{key}}}}}"
-                    cell.text = cell.text.replace(placeholder, str(value))
-
-    # Salva o documento gerado em memória e o envia para download
-    output = io.BytesIO()
-    doc.save(output)
-    output.seek(0)
-
-    return send_file(
-        output,
-        download_name="acao_revisional.docx",
-        as_attachment=True,
-        mimetype="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-    )
+    except InvalidOperation as e:
+        return f"Erro de conversão numérica: {str(e)}", 400
+    except Exception as e:
+        app.logger.error(f"Erro inesperado: {str(e)}")
+        return "Erro interno no servidor", 500
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(host='0.0.0.0', port=5000, debug=True)
