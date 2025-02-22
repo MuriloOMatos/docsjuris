@@ -15,11 +15,17 @@
       border: none;
       box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
     }
-    .bacen-info {
-      background-color: #e3f2fd;
-      border-radius: 5px;
-      padding: 15px;
-      margin-bottom: 20px;
+    .card-body {
+      padding: 1.5rem;
+    }
+    /* Remove o contorno vermelho dos campos de taxa de juros em qualquer situação */
+    input[id^="taxa_"] {
+      border-color: #ced4da !important; /* Cor padrão do Bootstrap */
+      box-shadow: none !important; /* Remove sombra de foco */
+    }
+    input[id^="taxa_"]:focus {
+      border-color: #86b7fe !important; /* Cor padrão de foco do Bootstrap */
+      box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25) !important; /* Sombra de foco padrão */
     }
   </style>
 </head>
@@ -32,27 +38,17 @@
             <h2 class="h4 mb-0"><i class="bi bi-pencil-square me-2"></i>Dados da Petição</h2>
           </div>
           <div class="card-body">
-            <div class="bacen-info">
-              <div class="d-flex justify-content-between align-items-center">
-                <div>
-                  <h6 class="mb-0"><i class="bi bi-bank me-2"></i>Taxa Média BACEN</h6>
-                  <small class="text-muted">Atualizada em: {% if data_atualizacao %}{{ data_atualizacao }}{% else %}N/A{% endif %}</small>
-                </div>
-                <span class="badge bg-primary fs-6">{% if taxa_bacen %}{{ "%.2f"|format(taxa_bacen) }}%{% else %}N/A{% endif %}</span>
-              </div>
-            </div>
-
-            <form action="/gerar-peticao" method="post" novalidate>
+            <form action="/gerar-peticao" method="post" role="form" novalidate>
               <!-- Seleção de Modelo -->
               <div class="mb-3">
                 <label for="modelo_peticao" class="form-label">Número de Empréstimos:</label>
-                <select class="form-select" id="modelo_peticao" name="modelo_peticao" required>
-                  <option value="" selected disabled>Selecione...</option>
+                <select class="form-select" id="modelo_peticao" name="modelo_peticao" required aria-label="Selecione o número de empréstimos" aria-required="true">
+                  <option value="" selected disabled>Selecione um modelo...</option>
                   <option value="1">1 Empréstimo</option>
                   <option value="2">2 Empréstimos</option>
                   <option value="3">3 Empréstimos</option>
                 </select>
-                <div class="invalid-feedback">Selecione o número de empréstimos</div>
+                <div class="invalid-feedback">Selecione um modelo de petição.</div>
               </div>
 
               <!-- Dados Gerais -->
@@ -60,13 +56,12 @@
                 <label for="renda_mensal" class="form-label">Renda Mensal Líquida</label>
                 <div class="input-group">
                   <span class="input-group-text">R$</span>
-                  <input type="number" step="0.01" min="0" class="form-control" 
-                         id="renda_mensal" name="renda_mensal" required>
+                  <input type="number" step="0.01" min="0" class="form-control" id="renda_mensal" name="renda_mensal" placeholder="Ex: 3500,00" required aria-describedby="renda_mensalHelp" aria-required="true">
                 </div>
-                <div class="invalid-feedback">Informe sua renda mensal</div>
+                <div id="renda_mensalHelp" class="invalid-feedback">Informe um valor válido.</div>
               </div>
 
-              <!-- Campos Dinâmicos para Empréstimos -->
+              <!-- Container para os campos de cada empréstimo -->
               <div id="loan_fields"></div>
 
               <!-- Parcela Pessoal -->
@@ -74,14 +69,13 @@
                 <label for="parcela_pessoal" class="form-label">Parcela Pessoal</label>
                 <div class="input-group">
                   <span class="input-group-text">R$</span>
-                  <input type="number" step="0.01" min="0" class="form-control" 
-                         id="parcela_pessoal" name="parcela_pessoal" required>
+                  <input type="number" step="0.01" min="0" class="form-control" id="parcela_pessoal" name="parcela_pessoal" placeholder="Ex: 500,00" required aria-describedby="parcela_pessoalHelp" aria-required="true">
                 </div>
-                <div class="invalid-feedback">Informe o valor da parcela pessoal</div>
+                <div id="parcela_pessoalHelp" class="invalid-feedback">Informe um valor válido.</div>
               </div>
 
-              <button type="submit" class="btn btn-primary w-100 py-3">
-                <i class="bi bi-magic me-2"></i>Gerar Petição
+              <button type="submit" class="btn btn-primary w-100 py-3" aria-label="Gerar petição automática">
+                <i class="bi bi-magic me-2"></i>Gerar Petição Automática
               </button>
             </form>
           </div>
@@ -90,70 +84,87 @@
     </div>
   </div>
 
+  <!-- JavaScript Bootstrap 5 -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
   <script>
-    document.getElementById('modelo_peticao').addEventListener('change', function() {
-      const numLoans = parseInt(this.value);
+    function manageLoanFields() {
+      const select = document.getElementById('modelo_peticao');
       const container = document.getElementById('loan_fields');
-      container.innerHTML = '';
 
-      for(let i = 1; i <= numLoans; i++) {
-        const loanIndex = i - 1;
-        const loanCard = document.createElement('div');
-        loanCard.className = 'card mb-3';
-        loanCard.innerHTML = `
-          <div class="card-header bg-secondary text-white">
-            <h5 class="mb-0">Empréstimo ${i}</h5>
-          </div>
-          <div class="card-body">
-            <!-- Data do Empréstimo -->
-            <div class="mb-3">
-              <label class="form-label">Data do Empréstimo</label>
-              <input type="date" class="form-control" 
-                     name="emprestimos[${loanIndex}][data]" required>
+      select.addEventListener('change', function() {
+        const numLoans = parseInt(this.value) || 0;
+        container.innerHTML = ''; // Limpa os campos existentes
+
+        for (let i = 0; i < numLoans; i++) {
+          const group = document.createElement('div');
+          group.className = 'card mb-3';
+          group.innerHTML = `
+            <div class="card-header bg-secondary text-white">
+              <h5 class="mb-0">Empréstimo ${i + 1}</h5>
             </div>
-
-            <!-- Valor Financiado -->
-            <div class="mb-3">
-              <label class="form-label">Valor Financiado</label>
-              <div class="input-group">
-                <span class="input-group-text">R$</span>
-                <input type="number" step="0.01" min="0" class="form-control" 
-                       name="emprestimos[${loanIndex}][valor]" required>
+            <div class="card-body">
+              <div class="mb-3">
+                <label for="valor_${i}" class="form-label">Valor Financiado</label>
+                <div class="input-group">
+                  <span class="input-group-text">R$</span>
+                  <input type="number" step="0.01" min="0" class="form-control" id="valor_${i}" 
+                         name="emprestimos[${i}][valor]" placeholder="Ex: 1000,00" required aria-describedby="valorHelp_${i}" aria-required="true">
+                </div>
+                <div id="valorHelp_${i}" class="invalid-feedback">Informe um valor válido.</div>
+              </div>
+              <div class="mb-3">
+                <label for="parcela_${i}" class="form-label">Parcela Consignada</label>
+                <div class="input-group">
+                  <span class="input-group-text">R$</span>
+                  <input type="number" step="0.01" min="0" class="form-control" id="parcela_${i}" 
+                         name="emprestimos[${i}][parcela_consignada]" placeholder="Ex: 300,00" required aria-describedby="parcelaHelp_${i}" aria-required="true">
+                </div>
+                <div id="parcelaHelp_${i}" class="invalid-feedback">Informe um valor válido.</div>
+              </div>
+              <div class="mb-3">
+                <label for="data_${i}" class="form-label">Data do Empréstimo</label>
+                <input type="date" class="form-control" id="data_${i}" 
+                       name="emprestimos[${i}][data]" required aria-describedby="dataHelp_${i}" aria-required="true">
+                <div id="dataHelp_${i}" class="invalid-feedback">Informe a data do empréstimo.</div>
+              </div>
+              <div class="mb-3">
+                <label for="parcelas_${i}" class="form-label">Número de Parcelas</label>
+                <input type="number" min="1" class="form-control" id="parcelas_${i}" 
+                       name="emprestimos[${i}][parcelas]" placeholder="Ex: 12" required aria-describedby="parcelasHelp_${i}" aria-required="true">
+                <div id="parcelasHelp_${i}" class="invalid-feedback">Informe o número de parcelas.</div>
+              </div>
+              <div class="mb-3">
+                <label for="taxa_${i}" class="form-label">Taxa de Juros Contratada</label>
+                <div class="input-group">
+                  <input type="number" step="0.01" min="0" max="100" class="form-control" id="taxa_${i}" 
+                         name="emprestimos[${i}][taxa]" placeholder="Ex: 2,5" required aria-describedby="taxaHelp_${i}" aria-required="true">
+                  <span class="input-group-text">%</span>
+                </div>
+                <div id="taxaHelp_${i}" class="invalid-feedback">Informe uma taxa entre 0 e 100%.</div>
               </div>
             </div>
+          `;
+          container.appendChild(group);
+        }
+      });
 
-            <!-- Parcela Consignada -->
-            <div class="mb-3">
-              <label class="form-label">Parcela Consignada</label>
-              <div class="input-group">
-                <span class="input-group-text">R$</span>
-                <input type="number" step="0.01" min="0" class="form-control" 
-                       name="emprestimos[${loanIndex}][parcela_consignada]" required>
-              </div>
-            </div>
-
-            <!-- Número de Parcelas -->
-            <div class="mb-3">
-              <label class="form-label">Número de Parcelas</label>
-              <input type="number" min="1" class="form-control" 
-                     name="emprestimos[${loanIndex}][parcelas]" required>
-            </div>
-
-            <!-- Taxa de Juros -->
-            <div class="mb-3">
-              <label class="form-label">Taxa de Juros Mensal</label>
-              <div class="input-group">
-                <input type="number" step="0.01" min="0" class="form-control" 
-                       name="emprestimos[${loanIndex}][taxa]" required>
-                <span class="input-group-text">%</span>
-              </div>
-            </div>
-          </div>
-        `;
-        container.appendChild(loanCard);
-      }
-    });
+      // Validação em tempo real
+      document.addEventListener('input', function(e) {
+        const input = e.target;
+        if (input.type === 'number') {
+          // Ignora a validação visual para campos de taxa de juros
+          if (input.id.startsWith('taxa_')) {
+            return; // Não aplica is-invalid aos campos de taxa
+          }
+          if (input.value < input.min || (input.max && input.value > input.max)) {
+            input.classList.add('is-invalid');
+          } else {
+            input.classList.remove('is-invalid');
+          }
+        }
+      });
+    }
+    manageLoanFields();
   </script>
 </body>
 </html>
