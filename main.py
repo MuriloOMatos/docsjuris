@@ -11,7 +11,7 @@ from calendar import monthrange
 app = Flask(__name__)
 
 # Configuração via variável de ambiente
-SERIES_BACEN = {'pessoal_fisica': int(os.getenv('SERIE_BACEN', 4390))}
+SERIES_BACEN = {'pessoal_fisica': int(os.getenv('SERIE_BACEN', 20783))}
 
 def get_bacen_taxa_historico(data_emprestimo):
     """Busca taxa histórica para o mês do empréstimo"""
