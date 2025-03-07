@@ -14,7 +14,11 @@ from urllib3.util.retry import Retry
 app = Flask(__name__)
 
 # Configuração via variável de ambiente
+<<<<<<< HEAD
 SERIES_BACEN = {'pessoal_fisica': int(os.getenv('SERIE_BACEN', 25464))}
+=======
+SERIES_BACEN = {'pessoal_fisica': int(os.getenv('SERIE_BACEN', 20783))}
+>>>>>>> e351f33f05a8af9551cf4412243a7c95c0f8b391
 
 # Criação de uma sessão HTTP com retry para robustez nas requisições
 http_session = requests.Session()
