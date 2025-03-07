@@ -7,53 +7,89 @@ from datetime import datetime
 from decimal import Decimal, InvalidOperation
 import bleach
 from calendar import monthrange
+from functools import lru_cache
+from requests.adapters import HTTPAdapter
+from urllib3.util.retry import Retry
 
 app = Flask(__name__)
 
 # Configuração via variável de ambiente
-SERIES_BACEN = {'pessoal_fisica': int(os.getenv('SERIE_BACEN', 4390))}
+SERIES_BACEN = {'pessoal_fisica': int(os.getenv('SERIE_BACEN', 25464))}
 
+# Criação de uma sessão HTTP com retry para robustez nas requisições
+http_session = requests.Session()
+retries = Retry(
+    total=3,
+    backoff_factor=0.3,
+    status_forcelist=[500, 502, 503, 504],
+    allowed_methods=["GET"]
+)
+adapter = HTTPAdapter(max_retries=retries)
+http_session.mount("http://", adapter)
+http_session.mount("https://", adapter)
+
+def _obter_dados_api(url, params):
+    """
+    Função auxiliar para acessar a API do BACEN.
+
+    Args:
+        url (str): URL da API.
+        params (dict): Parâmetros da requisição.
+
+    Returns:
+        list: Dados retornados pela API.
+
+    Raises:
+        Exception: Se ocorrer algum erro na requisição ou processamento dos dados.
+    """
+    headers = {'User-Agent': 'Python/AppRevisaoContratos'}
+    try:
+        response = http_session.get(url, params=params, timeout=15, headers=headers)
+        response.raise_for_status()
+        dados = response.json()
+        if not dados:
+            raise ValueError("Nenhum dado encontrado com os parâmetros fornecidos")
+        return dados
+    except Exception as e:
+        app.logger.error(f"Erro ao acessar API BACEN: {str(e)}")
+        raise
+
+@lru_cache(maxsize=128)
 def get_bacen_taxa_historico(data_emprestimo):
-    """Busca taxa histórica para o mês do empréstimo"""
+    """
+    Busca a taxa histórica para o mês do empréstimo, usando cache para
+    evitar requisições repetidas para o mesmo período.
+    """
     try:
         codigo_serie = SERIES_BACEN['pessoal_fisica']
         mes_ano = data_emprestimo.strftime("%m/%Y")
         _, last_day = monthrange(data_emprestimo.year, data_emprestimo.month)
-        url = (
-            f"https://api.bcb.gov.br/dados/serie/bcdata.sgs.{codigo_serie}/dados?"
-            f"formato=json&dataInicial=01/{mes_ano}&dataFinal={last_day:02d}/{mes_ano}"
-        )
-        
-        response = requests.get(url, timeout=15)
-        response.raise_for_status()
-        
-        dados = response.json()
-        if not dados:
-            raise ValueError("Nenhum dado histórico encontrado para o período")
+        url = f"https://api.bcb.gov.br/dados/serie/bcdata.sgs.{codigo_serie}/dados"
+        params = {
+            'formato': 'json',
+            'dataInicial': f"01/{mes_ano}",
+            'dataFinal': f"{last_day:02d}/{mes_ano}"
+        }
+        dados = _obter_dados_api(url, params)
         return float(dados[0]['valor'])
-        
-    except (requests.RequestException, ValueError) as e:
+    except Exception as e:
         app.logger.error(f"Erro ao buscar taxa histórica BACEN: {str(e)}")
         return None
 
 def get_bacen_taxa_atual():
-    """Obtém a última taxa disponível do BACEN (usada apenas no index)"""
+    """Obtém a última taxa disponível do BACEN."""
     try:
-        url = f"https://api.bcb.gov.br/dados/serie/bcdata.sgs.{SERIES_BACEN['pessoal_fisica']}/dados/ultimos/1?formato=json"
-        response = requests.get(url, timeout=15)
-        response.raise_for_status()
-        
-        dados = response.json()
-        if not dados:
-            raise ValueError("Nenhum dado atual encontrado")
+        codigo_serie = SERIES_BACEN['pessoal_fisica']
+        url = f"https://api.bcb.gov.br/dados/serie/bcdata.sgs.{codigo_serie}/dados/ultimos/1"
+        params = {'formato': 'json'}
+        dados = _obter_dados_api(url, params)
         return float(dados[0]['valor'])
-        
-    except (requests.RequestException, ValueError) as e:
+    except Exception as e:
         app.logger.error(f"Erro ao buscar taxa atual BACEN: {str(e)}")
         return None
 
 def calcular_diferenca(valor, taxa_contrato, taxa_media, parcelas):
-    """Calcula a diferença financeira entre as taxas"""
+    """Calcula a diferença financeira entre as taxas."""
     try:
         valor_dec = Decimal(str(valor))
         taxa_contrato_dec = Decimal(str(taxa_contrato))
@@ -70,7 +106,7 @@ def calcular_diferenca(valor, taxa_contrato, taxa_media, parcelas):
         raise ValueError(f"Erro ao calcular diferença: {str(e)}")
 
 def validar_dados_entrada(form):
-    """Valida os dados de entrada do formulário"""
+    """Valida os dados de entrada do formulário."""
     required_fields = ['renda_mensal', 'parcela_pessoal', 'modelo_peticao']
     for field in required_fields:
         if field not in form:
@@ -87,20 +123,22 @@ def validar_dados_entrada(form):
     
     return num_emprestimos
 
-def processar_emprestimos(form, num_emprestimos):
-    """Processa os dados dos empréstimos usando a taxa média mensal de cada um"""
+def calculos_emprestimo(form, num_emprestimos):
     emprestimos = []
     total_consignado = Decimal('0')
-    
+    total_emprestimo_geral = Decimal('0')
+    def_emprestimos = Decimal('0')
+    parcela_pessoal_atual = Decimal('0')
     for i in range(num_emprestimos):
         prefix = f'emprestimos[{i}]'
         emp_data = form.get(f'{prefix}[data]')
         try:
-            data_emprestimo = datetime.strptime(emp_data, '%Y-%m-%d')
+            #formato DD/MM/YYYY
+            data_emprestimo = datetime.strptime(emp_data, '%d/%m/%Y')
             if data_emprestimo > datetime.now():
                 raise ValueError(f"Data do empréstimo {i+1} não pode ser no futuro")
         except ValueError as e:
-            raise ValueError(f"Data do empréstimo {i+1} inválida ou no futuro. Use AAAA-MM-DD")
+            raise ValueError(f"Data do empréstimo {i+1} inválida ou no futuro. Use DD/MM/YYYY") from e
         
         taxa_media = get_bacen_taxa_historico(data_emprestimo)
         if taxa_media is None:
@@ -110,7 +148,11 @@ def processar_emprestimos(form, num_emprestimos):
         parcela = form.get(f'{prefix}[parcela_consignada]', '0').replace(",", ".")
         parcelas = form.get(f'{prefix}[parcelas]', '0')
         taxa_contrato = form.get(f'{prefix}[taxa]', '0').replace(",", ".")
-        
+        total_emprestimo = Decimal(parcela) * Decimal(parcelas)
+        total_emprestimo_geral += total_emprestimo
+        def_emprestimos = total_emprestimo / Decimal(valor)
+        parcela_pessoal_atual = Decimal(valor) * ((Decimal(taxa_media) / 100) / (1 - (1 + Decimal(taxa_media) / 100) ** -Decimal(parcelas)))
+
         if not all(Decimal(x) > 0 for x in [valor, parcela, parcelas, taxa_contrato]):
             raise ValueError(f"Valores do empréstimo {i+1} devem ser positivos")
         
@@ -119,18 +161,21 @@ def processar_emprestimos(form, num_emprestimos):
             'valor': valor,
             'parcela': parcela,
             'parcelas': parcelas,
-            'taxa': taxa_contrato,  # Renomeado para 'taxa' para corresponder ao placeholder {{emprestimos_X_taxa}}
+            'taxa': taxa_contrato,
             'taxa_media': f"{taxa_media:.2f}",
-            'diferenca': f"{calcular_diferenca(valor, taxa_contrato, taxa_media, parcelas):.2f}"
+            'diferenca': f"{calcular_diferenca(valor, taxa_contrato, taxa_media, parcelas):.2f}",
+            'total_emprestimo': f"{total_emprestimo:.2f}",
+            'def_emprestimos': f"{def_emprestimos:.2f}",
+            'parcela_pessoal_atual': f"{parcela_pessoal_atual:.2f}"
         }
         
         emprestimos.append(emprestimo)
         total_consignado += Decimal(parcela)
     
-    return emprestimos, total_consignado
+    return emprestimos, total_consignado, total_emprestimo_geral, def_emprestimos, parcela_pessoal_atual
 
 def gerar_documento(dados, num_emprestimos):
-    """Gera o documento Word a partir dos dados"""
+    """Gera o documento Word a partir dos dados."""
     template_path = os.path.abspath(os.path.join("modelos", f"modelo_{num_emprestimos}.docx"))
     if not template_path.startswith(os.path.abspath("modelos")) or not os.path.exists(template_path):
         raise FileNotFoundError("Modelo de documento inválido ou não encontrado")
@@ -141,12 +186,21 @@ def gerar_documento(dados, num_emprestimos):
         'parcela_pessoal': dados['parcela_pessoal'],
         'valor_liquido': dados['valor_liquido'],
         'comprometimento': dados['comprometimento'],
-        'emprestimos': dados['emprestimos']  # Inclui 'taxa' para {{emprestimos_X_taxa}}
+        'emprestimos': dados['emprestimos'],
+        'total_emprestimo' : dados['total_emprestimo']
     }
     
+    # Substituir placeholders nos parágrafos
     for p in doc.paragraphs:
         for key, value in flatten_dict(replacements).items():
             p.text = p.text.replace(f'{{{{{key}}}}}', bleach.clean(str(value)))
+    
+    # Substituir placeholders nas tabelas
+    for table in doc.tables:
+        for row in table.rows:
+            for cell in row.cells:
+                for key, value in flatten_dict(replacements).items():
+                    cell.text = cell.text.replace(f'{{{{{key}}}}}', bleach.clean(str(value)))
     
     output = io.BytesIO()
     doc.save(output)
@@ -157,8 +211,13 @@ def gerar_documento(dados, num_emprestimos):
 def index():
     taxa_atual = get_bacen_taxa_atual()
     if taxa_atual is None:
-        taxa_atual = "Indisponível"
-    bacen_data = {'taxa': f"{taxa_atual:.2f}%", 'data_atualizacao': datetime.now().strftime('%d/%m/%Y')}
+        taxa_atual_display = "Indisponível"
+    else:
+        taxa_atual_display = f"{taxa_atual:.2f}%"
+    bacen_data = {
+        'taxa': taxa_atual_display,
+        'data_atualizacao': datetime.now().strftime('%d/%m/%Y')
+    }
     return render_template('index.html', **bacen_data)
 
 @app.route('/gerar-peticao', methods=['POST'])
@@ -168,17 +227,19 @@ def gerar_peticao():
         
         dados = {
             'renda_mensal': request.form['renda_mensal'].replace(",", "."),
-            'parcela_pessoal': request.form['parcela_pessoal'].replace(",", ".")
+            'parcela_pessoal': request.form['parcela_pessoal'].replace(",", "."),
         }
         
-        emprestimos, total_consignado = processar_emprestimos(request.form, num_emprestimos)
+        emprestimos, total_consignado, total_emprestimo_geral,def_emprestimos, parcela_pessoal_atual = processar_emprestimos(request.form, num_emprestimos)
         dados['emprestimos'] = emprestimos
         
         renda = Decimal(dados['renda_mensal'])
         parcela_pessoal = Decimal(dados['parcela_pessoal'])
         dados['valor_liquido'] = f"{(renda - parcela_pessoal - total_consignado):.2f}"
         dados['comprometimento'] = f"{((parcela_pessoal + total_consignado) / renda * 100):.2f}%"
-        
+        dados['total_emprestimo'] = f"{(total_emprestimo_geral):.2f}"
+        dados['def_emprestimos'] = f"{(def_emprestimos):.2f}"
+        dados['parcela_pessoal_atual'] = f"{(parcela_pessoal_atual):.2f}"
         documento = gerar_documento(dados, num_emprestimos)
         
         return send_file(
@@ -199,7 +260,7 @@ def gerar_peticao():
         return abort(500, "Erro interno ao processar a solicitação")
 
 def flatten_dict(d, parent_key='', sep='_'):
-    """Flattens a nested dictionary iteratively"""
+    """Flatten a nested dictionary iteratively."""
     stack = [(d, parent_key)]
     items = []
     while stack:

@@ -18,7 +18,7 @@
     .card-body {
       padding: 1.5rem;
     }
-    /* Remove o contorno vermelho dos campos de taxa de juros em qualquer situação */
+    
     input[id^="taxa_"] {
       border-color: #ced4da !important; /* Cor padrão do Bootstrap */
       box-shadow: none !important; /* Remove sombra de foco */
@@ -123,9 +123,10 @@
               </div>
               <div class="mb-3">
                 <label for="data_${i}" class="form-label">Data do Empréstimo</label>
-                <input type="date" class="form-control" id="data_${i}" 
-                       name="emprestimos[${i}][data]" required aria-describedby="dataHelp_${i}" aria-required="true">
-                <div id="dataHelp_${i}" class="invalid-feedback">Informe a data do empréstimo.</div>
+                <!-- Alterado para input type="text" com placeholder para o formato DD/MM/YYYY -->
+                <input type="text" class="form-control" id="data_${i}" 
+                       name="emprestimos[${i}][data]" placeholder="DD/MM/YYYY" required aria-describedby="dataHelp_${i}" aria-required="true">
+                <div id="dataHelp_${i}" class="invalid-feedback">Informe a data no formato DD/MM/YYYY.</div>
               </div>
               <div class="mb-3">
                 <label for="parcelas_${i}" class="form-label">Número de Parcelas</label>
@@ -146,15 +147,15 @@
           `;
           container.appendChild(group);
         }
+        applyDateValidation(); // Aplica validação aos campos de data recém-criados
       });
 
-      // Validação em tempo real
+      // Validação em tempo real para campos numéricos (exceto taxas)
       document.addEventListener('input', function(e) {
         const input = e.target;
         if (input.type === 'number') {
-          // Ignora a validação visual para campos de taxa de juros
           if (input.id.startsWith('taxa_')) {
-            return; // Não aplica is-invalid aos campos de taxa
+            return;
           }
           if (input.value < input.min || (input.max && input.value > input.max)) {
             input.classList.add('is-invalid');
@@ -164,6 +165,22 @@
         }
       });
     }
+
+    // Função para validar o formato da data (DD/MM/YYYY)
+    function applyDateValidation() {
+      const dateInputs = document.querySelectorAll('[id^="data_"]');
+      dateInputs.forEach(input => {
+        input.addEventListener('input', function() {
+          const regex = /^(0[1-9]|[12]\d|3[01])\/(0[1-9]|1[0-2])\/\d{4}$/;
+          if (!regex.test(this.value)) {
+            this.classList.add('is-invalid');
+          } else {
+            this.classList.remove('is-invalid');
+          }
+        });
+      });
+    }
+
     manageLoanFields();
   </script>
 </body>
