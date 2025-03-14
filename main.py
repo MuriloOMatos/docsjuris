@@ -14,11 +14,7 @@ from urllib3.util.retry import Retry
 app = Flask(__name__)
 
 # Configuração via variável de ambiente
-<<<<<<< HEAD
 SERIES_BACEN = {'pessoal_fisica': int(os.getenv('SERIE_BACEN', 25464))}
-=======
-SERIES_BACEN = {'pessoal_fisica': int(os.getenv('SERIE_BACEN', 20783))}
->>>>>>> e351f33f05a8af9551cf4412243a7c95c0f8b391
 
 # Criação de uma sessão HTTP com retry para robustez nas requisições
 http_session = requests.Session()
@@ -133,6 +129,13 @@ def calculos_emprestimo(form, num_emprestimos):
     total_emprestimo_geral = Decimal('0')
     def_emprestimos = Decimal('0')
     parcela_pessoal_atual = Decimal('0')
+    dif_bacen = Decimal('0')
+    vlr_total_emprestimo1 = Decimal('0')
+    vlr_total_emprestimo2 = Decimal('0')
+    org_bacen = Decimal('0')
+    org_div = Decimal('0')
+    total_dobro = Decimal('0')
+
     for i in range(num_emprestimos):
         prefix = f'emprestimos[{i}]'
         emp_data = form.get(f'{prefix}[data]')
@@ -156,6 +159,13 @@ def calculos_emprestimo(form, num_emprestimos):
         total_emprestimo_geral += total_emprestimo
         def_emprestimos = total_emprestimo / Decimal(valor)
         parcela_pessoal_atual = Decimal(valor) * ((Decimal(taxa_media) / 100) / (1 - (1 + Decimal(taxa_media) / 100) ** -Decimal(parcelas)))
+        dif_bacen = Decimal(valor) / Decimal(parcela_pessoal_atual)
+        vlr_total_emprestimo1 = Decimal(valor) * (1 + Decimal(taxa_media) / 100) ** Decimal(parcelas)
+        vlr_total_emprestimo2 = Decimal(valor) * (1 + Decimal(taxa_contrato) / 100) ** Decimal(parcelas)
+        org_bacen = (total_emprestimo - vlr_total_emprestimo1)
+        org_div = (total_emprestimo_geral / vlr_total_emprestimo1)
+        total_dobro = org_bacen * 2
+
 
         if not all(Decimal(x) > 0 for x in [valor, parcela, parcelas, taxa_contrato]):
             raise ValueError(f"Valores do empréstimo {i+1} devem ser positivos")
@@ -170,13 +180,18 @@ def calculos_emprestimo(form, num_emprestimos):
             'diferenca': f"{calcular_diferenca(valor, taxa_contrato, taxa_media, parcelas):.2f}",
             'total_emprestimo': f"{total_emprestimo:.2f}",
             'def_emprestimos': f"{def_emprestimos:.2f}",
-            'parcela_pessoal_atual': f"{parcela_pessoal_atual:.2f}"
+            'parcela_pessoal_atual': f"{parcela_pessoal_atual:.2f}",
+            'dif_bacen': f"{dif_bacen:.2f}",
+            'vlr_total_emprestimo1': f"{vlr_total_emprestimo1:.2f}",
+            'vlr_total_emprestimo2': f"{vlr_total_emprestimo2:.2f}",
+            'org_bacen': f"{org_bacen:.2f}",
+            'org_div': f"{org_div:.2f}"
         }
         
         emprestimos.append(emprestimo)
         total_consignado += Decimal(parcela)
     
-    return emprestimos, total_consignado, total_emprestimo_geral, def_emprestimos, parcela_pessoal_atual
+    return emprestimos, total_consignado, total_emprestimo_geral, def_emprestimos, parcela_pessoal_atual,dif_bacen, vlr_total_emprestimo1, vlr_total_emprestimo2, org_bacen,org_div,total_dobro
 
 def gerar_documento(dados, num_emprestimos):
     """Gera o documento Word a partir dos dados."""
@@ -234,9 +249,9 @@ def gerar_peticao():
             'parcela_pessoal': request.form['parcela_pessoal'].replace(",", "."),
         }
         
-        emprestimos, total_consignado, total_emprestimo_geral,def_emprestimos, parcela_pessoal_atual = processar_emprestimos(request.form, num_emprestimos)
-        dados['emprestimos'] = emprestimos
+        emprestimos, total_consignado, total_emprestimo_geral,def_emprestimos, parcela_pessoal_atual,dif_bacen,vlr_total_emprestimo1,vlr_total_emprestimo2,org_bacen,org_div,total_dobro = calculos_emprestimo (request.form, num_emprestimos)
         
+        dados['emprestimos'] = emprestimos
         renda = Decimal(dados['renda_mensal'])
         parcela_pessoal = Decimal(dados['parcela_pessoal'])
         dados['valor_liquido'] = f"{(renda - parcela_pessoal - total_consignado):.2f}"
@@ -244,6 +259,13 @@ def gerar_peticao():
         dados['total_emprestimo'] = f"{(total_emprestimo_geral):.2f}"
         dados['def_emprestimos'] = f"{(def_emprestimos):.2f}"
         dados['parcela_pessoal_atual'] = f"{(parcela_pessoal_atual):.2f}"
+        dados['dif_bacen'] = f"{(dif_bacen):.2f}"
+        dados['vlr_total_emprestimo1'] = f"{(vlr_total_emprestimo1):.2f}",
+        dados['vlr_total_emprestimo2'] = f"{(vlr_total_emprestimo2):.2f}",
+        dados['org_bacen'] = f"{(org_bacen):.2f}",
+        dados['org_div'] = f"{(org_div):.2f}"
+        dados['total_dobro'] = f"{(total_dobro):.2f}"
+
         documento = gerar_documento(dados, num_emprestimos)
         
         return send_file(
