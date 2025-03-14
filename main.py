@@ -9,8 +9,9 @@ import bleach
 from calendar import monthrange
 from functools import lru_cache
 from requests.adapters import HTTPAdapter
-from urllib3.util.retry import Retry
+from requests.packages.urllib3.util.retry import Retry
 
+# Inicialização do Flask
 app = Flask(__name__)
 
 # Configuração via variável de ambiente
@@ -135,6 +136,7 @@ def calculos_emprestimo(form, num_emprestimos):
     org_bacen = Decimal('0')
     org_div = Decimal('0')
     total_dobro = Decimal('0')
+    valor_causa = Decimal('0')
 
     for i in range(num_emprestimos):
         prefix = f'emprestimos[{i}]'
@@ -164,7 +166,8 @@ def calculos_emprestimo(form, num_emprestimos):
         vlr_total_emprestimo2 = Decimal(valor) * (1 + Decimal(taxa_contrato) / 100) ** Decimal(parcelas)
         org_bacen = (total_emprestimo - vlr_total_emprestimo1)
         org_div = (total_emprestimo_geral / vlr_total_emprestimo1)
-        total_dobro = org_bacen * 2
+        total_dobro += total_emprestimo_geral * 2  
+        valor_causa = Decimal(10000) + Decimal(total_dobro)
 
 
         if not all(Decimal(x) > 0 for x in [valor, parcela, parcelas, taxa_contrato]):
@@ -185,13 +188,15 @@ def calculos_emprestimo(form, num_emprestimos):
             'vlr_total_emprestimo1': f"{vlr_total_emprestimo1:.2f}",
             'vlr_total_emprestimo2': f"{vlr_total_emprestimo2:.2f}",
             'org_bacen': f"{org_bacen:.2f}",
-            'org_div': f"{org_div:.2f}"
+            'org_div': f"{org_div:.2f}",
+            'total_dobro': f"{total_dobro:.2f}",
+            'valor_causa': f"{valor_causa:.2f}"
         }
         
         emprestimos.append(emprestimo)
         total_consignado += Decimal(parcela)
     
-    return emprestimos, total_consignado, total_emprestimo_geral, def_emprestimos, parcela_pessoal_atual,dif_bacen, vlr_total_emprestimo1, vlr_total_emprestimo2, org_bacen,org_div,total_dobro
+    return emprestimos, total_consignado, total_emprestimo_geral, def_emprestimos, parcela_pessoal_atual,dif_bacen, vlr_total_emprestimo1, vlr_total_emprestimo2, org_bacen,org_div,total_dobro,valor_causa
 
 def gerar_documento(dados, num_emprestimos):
     """Gera o documento Word a partir dos dados."""
@@ -249,7 +254,7 @@ def gerar_peticao():
             'parcela_pessoal': request.form['parcela_pessoal'].replace(",", "."),
         }
         
-        emprestimos, total_consignado, total_emprestimo_geral,def_emprestimos, parcela_pessoal_atual,dif_bacen,vlr_total_emprestimo1,vlr_total_emprestimo2,org_bacen,org_div,total_dobro = calculos_emprestimo (request.form, num_emprestimos)
+        emprestimos, total_consignado, total_emprestimo_geral,def_emprestimos, parcela_pessoal_atual,dif_bacen,vlr_total_emprestimo1,vlr_total_emprestimo2,org_bacen,org_div,total_dobro,valor_causa = calculos_emprestimo (request.form, num_emprestimos)
         
         dados['emprestimos'] = emprestimos
         renda = Decimal(dados['renda_mensal'])
@@ -263,8 +268,9 @@ def gerar_peticao():
         dados['vlr_total_emprestimo1'] = f"{(vlr_total_emprestimo1):.2f}",
         dados['vlr_total_emprestimo2'] = f"{(vlr_total_emprestimo2):.2f}",
         dados['org_bacen'] = f"{(org_bacen):.2f}",
-        dados['org_div'] = f"{(org_div):.2f}"
-        dados['total_dobro'] = f"{(total_dobro):.2f}"
+        dados['org_div'] = f"{(org_div):.2f}",
+        dados['total_dobro'] = f"{(total_dobro):.2f}",
+        dados['valor_causa'] = f"{(valor_causa):.2f}"
 
         documento = gerar_documento(dados, num_emprestimos)
         
