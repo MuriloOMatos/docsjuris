@@ -137,6 +137,12 @@ def calculos_emprestimo(form, num_emprestimos):
     org_div = Decimal('0')
     total_dobro = Decimal('0')
     valor_causa = Decimal('0')
+    comprometimento_renda = Decimal('0')
+    renda_mensal = form['renda_mensal'].replace(",", ".")
+    parcela_pessoal = form['parcela_pessoal'].replace(",", ".")
+    renda_mensal = Decimal(renda_mensal)
+    diario = Decimal(renda_mensal) / Decimal(30)
+
 
     for i in range(num_emprestimos):
         prefix = f'emprestimos[{i}]'
@@ -168,6 +174,12 @@ def calculos_emprestimo(form, num_emprestimos):
         org_div = (total_emprestimo_geral / vlr_total_emprestimo1)
         total_dobro += total_emprestimo_geral * 2  
         valor_causa = Decimal(10000) + Decimal(total_dobro)
+        comprometimento_renda = Decimal(parcela) + Decimal(parcela_pessoal)
+        renda_atual = Decimal(renda_mensal) - Decimal(parcela_pessoal) - Decimal(parcela)
+        diario = Decimal(renda_atual) / Decimal(30)
+        
+
+
 
 
         if not all(Decimal(x) > 0 for x in [valor, parcela, parcelas, taxa_contrato]):
@@ -190,13 +202,17 @@ def calculos_emprestimo(form, num_emprestimos):
             'org_bacen': f"{org_bacen:.2f}",
             'org_div': f"{org_div:.2f}",
             'total_dobro': f"{total_dobro:.2f}",
-            'valor_causa': f"{valor_causa:.2f}"
+            'valor_causa': f"{valor_causa:.2f}",
+            'comprometimento_renda': f"{comprometimento_renda:.2f}",
+            'renda_atual': f"{renda_atual:.2f}",
+            'diario': f"{diario:.2f}"
+
         }
         
         emprestimos.append(emprestimo)
         total_consignado += Decimal(parcela)
     
-    return emprestimos, total_consignado, total_emprestimo_geral, def_emprestimos, parcela_pessoal_atual,dif_bacen, vlr_total_emprestimo1, vlr_total_emprestimo2, org_bacen,org_div,total_dobro,valor_causa
+    return emprestimos, total_consignado, total_emprestimo_geral, def_emprestimos, parcela_pessoal_atual,dif_bacen, vlr_total_emprestimo1, vlr_total_emprestimo2, org_bacen,org_div,total_dobro,valor_causa,comprometimento_renda,renda_atual,diario
 
 def gerar_documento(dados, num_emprestimos):
     """Gera o documento Word a partir dos dados."""
@@ -211,7 +227,8 @@ def gerar_documento(dados, num_emprestimos):
         'valor_liquido': dados['valor_liquido'],
         'comprometimento': dados['comprometimento'],
         'emprestimos': dados['emprestimos'],
-        'total_emprestimo' : dados['total_emprestimo']
+        'total_emprestimo' : dados['total_emprestimo'],
+        
     }
     
     # Substituir placeholders nos parágrafos
@@ -254,7 +271,7 @@ def gerar_peticao():
             'parcela_pessoal': request.form['parcela_pessoal'].replace(",", "."),
         }
         
-        emprestimos, total_consignado, total_emprestimo_geral,def_emprestimos, parcela_pessoal_atual,dif_bacen,vlr_total_emprestimo1,vlr_total_emprestimo2,org_bacen,org_div,total_dobro,valor_causa = calculos_emprestimo (request.form, num_emprestimos)
+        emprestimos, total_consignado, total_emprestimo_geral,def_emprestimos, parcela_pessoal_atual,dif_bacen,vlr_total_emprestimo1,vlr_total_emprestimo2,org_bacen,org_div,total_dobro,valor_causa,comprometimento_renda,renda_atual,diario = calculos_emprestimo (request.form, num_emprestimos)
         
         dados['emprestimos'] = emprestimos
         renda = Decimal(dados['renda_mensal'])
@@ -270,7 +287,10 @@ def gerar_peticao():
         dados['org_bacen'] = f"{(org_bacen):.2f}",
         dados['org_div'] = f"{(org_div):.2f}",
         dados['total_dobro'] = f"{(total_dobro):.2f}",
-        dados['valor_causa'] = f"{(valor_causa):.2f}"
+        dados['valor_causa'] = f"{(valor_causa):.2f}",
+        dados['comprometimento_renda'] = f"{(comprometimento_renda):.2f}",
+        dados['renda_atual'] = f"{(renda - parcela_pessoal - total_consignado):.2f}"
+        dados['diario'] = f"{(diario):.2f}"
 
         documento = gerar_documento(dados, num_emprestimos)
         
