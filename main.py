@@ -290,7 +290,6 @@ def gerar_peticao():
             emp['parcela'] = format_brl(emp['parcela'])
             emp['diferenca'] = format_brl(emp['diferenca'])
             emp['total_emprestimo'] = format_brl(emp['total_emprestimo'])
-            emp['def_emprestimos'] = format_brl(emp['def_emprestimos'])
             emp['parcela_pessoal_atual'] = format_brl(emp['parcela_pessoal_atual'])
             emp['dif_bacen'] = format_brl(emp['dif_bacen'])
             emp['vlr_total_emprestimo1'] = format_brl(emp['vlr_total_emprestimo1'])
