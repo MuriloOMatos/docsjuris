@@ -10,6 +10,7 @@ from calendar import monthrange
 from functools import lru_cache
 from requests.adapters import HTTPAdapter
 from requests.packages.urllib3.util.retry import Retry
+from decimal import Decimal
 
 # Inicialização do Flask
 app = Flask(__name__)
@@ -261,6 +262,16 @@ def index():
     }
     return render_template('index.html', **bacen_data)
 
+def format_brl(valor):
+    try:
+        valor_dec = Decimal(valor)
+        s = f"{valor_dec:,.2f}"
+        s = s.replace(",", "X").replace(".", ",").replace("X", ".")
+        return f"R$ {s}"
+    except Exception:
+        return valor
+
+
 @app.route('/gerar-peticao', methods=['POST'])
 def gerar_peticao():
     try:
@@ -274,23 +285,23 @@ def gerar_peticao():
         emprestimos, total_consignado, total_emprestimo_geral,def_emprestimos, parcela_pessoal_atual,dif_bacen,vlr_total_emprestimo1,vlr_total_emprestimo2,org_bacen,org_div,total_dobro,valor_causa,comprometimento_renda,renda_atual,diario = calculos_emprestimo (request.form, num_emprestimos)
         
         dados['emprestimos'] = emprestimos
-        renda = Decimal(dados['renda_mensal'])
-        parcela_pessoal = Decimal(dados['parcela_pessoal'])
-        dados['valor_liquido'] = f"{(renda - parcela_pessoal - total_consignado):.2f}"
+        renda = Decimal(request.form['renda_mensal'].replace(",", "."))
+        parcela_pessoal = Decimal(request.form['parcela_pessoal'].replace(",", "."))
+        dados['valor_liquido'] = format_brl(renda - parcela_pessoal - total_consignado)
         dados['comprometimento'] = f"{((parcela_pessoal + total_consignado) / renda * 100):.2f}%"
-        dados['total_emprestimo'] = f"{(total_emprestimo_geral):.2f}"
-        dados['def_emprestimos'] = f"{(def_emprestimos):.2f}"
-        dados['parcela_pessoal_atual'] = f"{(parcela_pessoal_atual):.2f}"
-        dados['dif_bacen'] = f"{(dif_bacen):.2f}"
-        dados['vlr_total_emprestimo1'] = f"{(vlr_total_emprestimo1):.2f}",
-        dados['vlr_total_emprestimo2'] = f"{(vlr_total_emprestimo2):.2f}",
-        dados['org_bacen'] = f"{(org_bacen):.2f}",
-        dados['org_div'] = f"{(org_div):.2f}",
-        dados['total_dobro'] = f"{(total_dobro):.2f}",
-        dados['valor_causa'] = f"{(valor_causa):.2f}",
-        dados['comprometimento_renda'] = f"{(comprometimento_renda):.2f}",
-        dados['renda_atual'] = f"{(renda - parcela_pessoal - total_consignado):.2f}"
-        dados['diario'] = f"{(diario):.2f}"
+        dados['total_emprestimo'] = format_brl(total_emprestimo_geral)
+        dados['def_emprestimos'] = format_brl(def_emprestimos)
+        dados['parcela_pessoal_atual'] = format_brl(parcela_pessoal_atual)
+        dados['dif_bacen'] = format_brl(dif_bacen)
+        dados['vlr_total_emprestimo1'] = format_brl(vlr_total_emprestimo1)
+        dados['vlr_total_emprestimo2'] = format_brl(vlr_total_emprestimo2)
+        dados['org_bacen'] = format_brl(org_bacen)
+        dados['org_div'] = format_brl(org_div)
+        dados['total_dobro'] = format_brl(total_dobro)
+        dados['valor_causa'] = format_brl(valor_causa)
+        dados['comprometimento_renda'] = format_brl(comprometimento_renda)
+        dados['renda_atual'] = format_brl(renda_atual)
+        dados['diario'] = format_brl(diario)
 
         documento = gerar_documento(dados, num_emprestimos)
         
