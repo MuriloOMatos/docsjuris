@@ -282,11 +282,32 @@ def gerar_peticao():
             'parcela_pessoal': request.form['parcela_pessoal'].replace(",", "."),
         }
         
-        emprestimos, total_consignado, total_emprestimo_geral,def_emprestimos, parcela_pessoal_atual,dif_bacen,vlr_total_emprestimo1,vlr_total_emprestimo2,org_bacen,org_div,total_dobro,valor_causa,comprometimento_renda,renda_atual,diario = calculos_emprestimo (request.form, num_emprestimos)
+        emprestimos, total_consignado, total_emprestimo_geral, def_emprestimos, parcela_pessoal_atual, dif_bacen, vlr_total_emprestimo1, vlr_total_emprestimo2, org_bacen, org_div, total_dobro, valor_causa, comprometimento_renda, renda_atual, diario = calculos_emprestimo(request.form, num_emprestimos)
         
+        # Aplicar formatação BRL aos valores monetários dentro da lista emprestimos
+        for emp in emprestimos:
+            emp['valor'] = format_brl(emp['valor'])
+            emp['parcela'] = format_brl(emp['parcela'])
+            emp['diferenca'] = format_brl(emp['diferenca'])
+            emp['total_emprestimo'] = format_brl(emp['total_emprestimo'])
+            emp['def_emprestimos'] = format_brl(emp['def_emprestimos'])
+            emp['parcela_pessoal_atual'] = format_brl(emp['parcela_pessoal_atual'])
+            emp['dif_bacen'] = format_brl(emp['dif_bacen'])
+            emp['vlr_total_emprestimo1'] = format_brl(emp['vlr_total_emprestimo1'])
+            emp['vlr_total_emprestimo2'] = format_brl(emp['vlr_total_emprestimo2'])
+            emp['org_bacen'] = format_brl(emp['org_bacen'])
+            emp['org_div'] = format_brl(emp['org_div'])
+            emp['total_dobro'] = format_brl(emp['total_dobro'])
+            emp['valor_causa'] = format_brl(emp['valor_causa'])
+            emp['comprometimento_renda'] = format_brl(emp['comprometimento_renda'])
+            emp['renda_atual'] = format_brl(emp['renda_atual'])
+            emp['diario'] = format_brl(emp['diario'])
+
         dados['emprestimos'] = emprestimos
         renda = Decimal(request.form['renda_mensal'].replace(",", "."))
         parcela_pessoal = Decimal(request.form['parcela_pessoal'].replace(",", "."))
+
+        # Aplicar formatação BRL aos valores principais
         dados['valor_liquido'] = format_brl(renda - parcela_pessoal - total_consignado)
         dados['comprometimento'] = f"{((parcela_pessoal + total_consignado) / renda * 100):.2f}%"
         dados['total_emprestimo'] = format_brl(total_emprestimo_geral)
