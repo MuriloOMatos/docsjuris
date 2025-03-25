@@ -295,10 +295,8 @@ def gerar_peticao():
             emp['vlr_total_emprestimo1'] = format_brl(emp['vlr_total_emprestimo1'])
             emp['vlr_total_emprestimo2'] = format_brl(emp['vlr_total_emprestimo2'])
             emp['org_bacen'] = format_brl(emp['org_bacen'])
-            emp['org_div'] = format_brl(emp['org_div'])
             emp['total_dobro'] = format_brl(emp['total_dobro'])
             emp['valor_causa'] = format_brl(emp['valor_causa'])
-            emp['comprometimento_renda'] = format_brl(emp['comprometimento_renda'])
             emp['renda_atual'] = format_brl(emp['renda_atual'])
             emp['diario'] = format_brl(emp['diario'])
 
