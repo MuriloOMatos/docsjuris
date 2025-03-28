@@ -303,7 +303,7 @@ def gerar_peticao():
             emp['valor_causa'] = format_brl(emp['valor_causa'])
             emp['renda_atual'] = format_brl(emp['renda_atual'])
             emp['diario'] = format_brl(emp['diario'])
-            emp['total_emprestimo_bacen'] = format_brl(emp['total_emprestimo_bacen']
+            emp['total_emprestimo_bacen'] = format_brl(emp['total_emprestimo_bacen'])
 
         dados['emprestimos'] = emprestimos
         renda = Decimal(request.form['renda_mensal'].replace(",", "."))
