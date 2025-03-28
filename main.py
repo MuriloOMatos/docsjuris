@@ -172,7 +172,7 @@ def calculos_emprestimo(form, num_emprestimos):
         dif_bacen = Decimal(valor) / Decimal(parcela_pessoal_atual)
         vlr_total_emprestimo1 = Decimal(valor) * (1 + Decimal(taxa_media) / 100) ** Decimal(parcelas)
         vlr_total_emprestimo2 = Decimal(valor) * (1 + Decimal(taxa_contrato) / 100) ** Decimal(parcelas)
-        org_bacen = (total_emprestimo - vlr_total_emprestimo1)
+        org_bacen = (vlr_total_emprestimo1 - total_emprestimo_bacen)
         org_div = (total_emprestimo_geral / vlr_total_emprestimo1)
         total_dobro += total_emprestimo_geral * 2  
         valor_causa = Decimal(10000) + Decimal(total_dobro)
