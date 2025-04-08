@@ -139,13 +139,13 @@ def calculos_emprestimo(form, num_emprestimos):
     total_dobro = Decimal('0')
     dadovalorcausa = Decimal('0')
     valor_causa = Decimal('0')
-    valor_causa2 = Decimal('0')
     comprometimento_renda = Decimal('0')
     renda_mensal = form['renda_mensal'].replace(",", ".")
     parcela_pessoal = form['parcela_pessoal'].replace(",", ".")
     renda_mensal = Decimal(renda_mensal)
     diario = Decimal('0')
     valor_liquido = Decimal('0')
+    renda = form['renda_mensal'].replace(",", ".")
 
     for i in range(num_emprestimos):
         prefix = f'emprestimos[{i}]'
@@ -181,7 +181,7 @@ def calculos_emprestimo(form, num_emprestimos):
         comprometimento_renda = Decimal(parcela) + Decimal(parcela_pessoal)
         comprometimento_porcentagem = Decimal(comprometimento_renda) / Decimal(renda_mensal) * 100
         renda_atual = Decimal(renda_mensal) - Decimal(parcela_pessoal) - Decimal(parcela)
-        diario = Decimal(renda_atual / Decimal(30))
+        diario = Decimal(valor_liquido / Decimal(30))
         valor_liquido = (renda - parcela_pessoal - total_consignado)
         
 
@@ -211,8 +211,8 @@ def calculos_emprestimo(form, num_emprestimos):
             'comprometimento_porcentagem': f"{comprometimento_porcentagem:.2f}",
             'renda_atual': f"{renda_atual:.2f}",
             'diario': f"{diario:.2f}",
-            'total_emprestimo_bacen': f"{total_emprestimo_bacen:.2f}"
-            'valor_liquido': f"{valor_liquido:.2f}"
+            'total_emprestimo_bacen': f"{total_emprestimo_bacen:.2f}",
+            'valor_liquido' : f"{valor_liquido:.2f}"
 
         }
         
