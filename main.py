@@ -180,11 +180,8 @@ def calculos_emprestimo(form, num_emprestimos):
         comprometimento_renda = Decimal(parcela) + Decimal(parcela_pessoal)
         comprometimento_porcentagem = Decimal(comprometimento_renda) / Decimal(renda_mensal) * 100
         renda_atual = Decimal(renda_mensal) - Decimal(parcela_pessoal) - Decimal(parcela)
-        diario = Decimal(diario)
+        diario = Decimal(renda_atual / Decimal(30))
         
-
-
-
 
         if not all(Decimal(x) > 0 for x in [valor, parcela, parcelas, taxa_contrato]):
             raise ValueError(f"Valores do empréstimo {i+1} devem ser positivos")
