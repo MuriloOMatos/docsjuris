@@ -139,6 +139,7 @@ def calculos_emprestimo(form, num_emprestimos):
     total_dobro = Decimal('0')
     dado_valor_causa = Decimal('0')
     valor_causa = Decimal('0')
+    valor_causa2 = Decimal('0')
     comprometimento_renda = Decimal('0')
     renda_mensal = form['renda_mensal'].replace(",", ".")
     parcela_pessoal = form['parcela_pessoal'].replace(",", ".")
@@ -175,8 +176,9 @@ def calculos_emprestimo(form, num_emprestimos):
         org_bacen = (total_emprestimo - total_emprestimo_bacen)
         org_div = (total_emprestimo_geral / vlr_total_emprestimo1)
         total_dobro = org_bacen * 2
-        dado_valor_causa += (org_bacen * 2) + Decimal(10000)
+        dadovalorcausa += (org_bacen * 2) + Decimal(10000)
         valor_causa += Decimal(10000) + Decimal(total_dobro)
+        valor_causa2 += Decimal(10000) + Decimal()
         comprometimento_renda = Decimal(parcela) + Decimal(parcela_pessoal)
         comprometimento_porcentagem = Decimal(comprometimento_renda) / Decimal(renda_mensal) * 100
         renda_atual = Decimal(renda_mensal) - Decimal(parcela_pessoal) - Decimal(parcela)
@@ -204,7 +206,7 @@ def calculos_emprestimo(form, num_emprestimos):
             'org_div': f"{org_div:.2f}",
             'total_dobro': f"{total_dobro:.2f}",
             'valor_causa': f"{valor_causa:.2f}",
-            'dado_valor_causa': f"{dado_valor_causa:.2f}",
+            'dadovalorcausa': f"{dadovalorcausa:.2f}",
             'comprometimento_renda': f"{comprometimento_renda:.2f}",
             'comprometimento_porcentagem': f"{comprometimento_porcentagem:.2f}",
             'renda_atual': f"{renda_atual:.2f}",
@@ -216,7 +218,7 @@ def calculos_emprestimo(form, num_emprestimos):
         emprestimos.append(emprestimo)
         total_consignado += Decimal(parcela)
     
-    return emprestimos, total_consignado, total_emprestimo_geral, def_emprestimos, parcela_pessoal_atual,dif_bacen, vlr_total_emprestimo1, vlr_total_emprestimo2, org_bacen,org_div,total_dobro,valor_causa,comprometimento_renda,renda_atual,diario,comprometimento_porcentagem,total_emprestimo_bacen,dado_valor_causa
+    return emprestimos, total_consignado, total_emprestimo_geral, def_emprestimos, parcela_pessoal_atual,dif_bacen, vlr_total_emprestimo1, vlr_total_emprestimo2, org_bacen,org_div,total_dobro,valor_causa,comprometimento_renda,renda_atual,diario,comprometimento_porcentagem,total_emprestimo_bacen,dadovalorcausa
 
 def gerar_documento(dados, num_emprestimos):
     """Gera o documento Word a partir dos dados."""
@@ -285,7 +287,7 @@ def gerar_peticao():
             'parcela_pessoal': request.form['parcela_pessoal'].replace(",", "."),
         }
         
-        emprestimos, total_consignado, total_emprestimo_geral, def_emprestimos, parcela_pessoal_atual, dif_bacen, vlr_total_emprestimo1, vlr_total_emprestimo2, org_bacen, org_div, total_dobro, valor_causa, comprometimento_renda, renda_atual, diario, comprometimento_porcentagem,total_emprestimo_bacen,dado_valor_causa = calculos_emprestimo(request.form, num_emprestimos)
+        emprestimos, total_consignado, total_emprestimo_geral, def_emprestimos, parcela_pessoal_atual, dif_bacen, vlr_total_emprestimo1, vlr_total_emprestimo2, org_bacen, org_div, total_dobro, valor_causa, comprometimento_renda, renda_atual, diario, comprometimento_porcentagem,total_emprestimo_bacen,dadovalorcausa = calculos_emprestimo(request.form, num_emprestimos)
         
         # Aplicar formatação BRL aos valores monetários dentro da lista emprestimos
         for emp in emprestimos:
@@ -303,7 +305,7 @@ def gerar_peticao():
             emp['renda_atual'] = format_brl(emp['renda_atual'])
             emp['diario'] = format_brl(emp['diario'])
             emp['total_emprestimo_bacen'] = format_brl(emp['total_emprestimo_bacen'])
-            emp['dado_valor_causa'] = format_brl(emp['dado_valor_causa'])
+            emp['dadovalorcausa'] = format_brl(emp['dadovalorcausa'])
 
         dados['emprestimos'] = emprestimos
         renda = Decimal(request.form['renda_mensal'].replace(",", "."))
@@ -322,7 +324,7 @@ def gerar_peticao():
         dados['org_div'] = format_brl(org_div)
         dados['total_dobro'] = format_brl(total_dobro)
         dados['valor_causa'] = format_brl(valor_causa)
-        dados['dado_valor_causa'] = format_brl(dado_valor_causa) 
+        dados['dadovalorcausa'] = format_brl(dadovalorcausa) 
         dados['comprometimento_renda'] = format_brl(comprometimento_renda)
         dados['renda_atual'] = format_brl(renda_atual)
         dados['diario'] = format_brl(diario)
