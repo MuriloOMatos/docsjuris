@@ -137,7 +137,7 @@ def calculos_emprestimo(form, num_emprestimos):
     org_bacen = Decimal('0')
     org_div = Decimal('0')
     total_dobro = Decimal('0')
-    dado_valor_causa = Decimal('0')
+    dadovalorcausa = Decimal('0')
     valor_causa = Decimal('0')
     valor_causa2 = Decimal('0')
     comprometimento_renda = Decimal('0')
