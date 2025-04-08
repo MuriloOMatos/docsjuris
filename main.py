@@ -206,7 +206,7 @@ def calculos_emprestimo(form, num_emprestimos):
             'valor_causa': f"{valor_causa:.2f}",
             'dado_valor_causa': f"{dado_valor_causa:2.f}",
             'comprometimento_renda': f"{comprometimento_renda:.2f}",
-            'comprometimento_porcentagem': f"{comprometimento_porcentagem: .2f}",
+            'comprometimento_porcentagem': f"{comprometimento_porcentagem:.2f}",
             'renda_atual': f"{renda_atual:.2f}",
             'diario': f"{diario:.2f}",
             'total_emprestimo_bacen': f"{total_emprestimo_bacen:.2f}"
