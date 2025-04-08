@@ -165,7 +165,6 @@ def calculos_emprestimo(form, num_emprestimos):
         parcelas = form.get(f'{prefix}[parcelas]', '0')
         taxa_contrato = form.get(f'{prefix}[taxa]', '0').replace(",", ".")
         total_emprestimo = Decimal(parcela) * Decimal(parcelas)
-        total_emprestimo_geral += total_emprestimo
         def_emprestimos = total_emprestimo / Decimal(valor)
         parcela_pessoal_atual = Decimal(valor) * ((Decimal(taxa_media) / 100) / (1 - (1 + Decimal(taxa_media) / 100) ** -Decimal(parcelas)))
         total_emprestimo_bacen = Decimal(parcela_pessoal_atual) * Decimal(parcelas)
