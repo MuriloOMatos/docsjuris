@@ -143,7 +143,7 @@ def calculos_emprestimo(form, num_emprestimos):
     renda_mensal = form['renda_mensal'].replace(",", ".")
     parcela_pessoal = form['parcela_pessoal'].replace(",", ".")
     renda_mensal = Decimal(renda_mensal)
-    diario = Decimal(renda_mensal) / Decimal(30)
+    #diario = Decimal(renda_mensal) / Decimal(30)
 
 
     for i in range(num_emprestimos):
@@ -211,7 +211,7 @@ def calculos_emprestimo(form, num_emprestimos):
             'comprometimento_renda': f"{comprometimento_renda:.2f}",
             'comprometimento_porcentagem': f"{comprometimento_porcentagem: .2f}",
             'renda_atual': f"{renda_atual:.2f}",
-            'diario': f"{diario:.2f}",
+            #'diario': f"{diario:.2f}",
             'total_emprestimo_bacen': f"{total_emprestimo_bacen:.2f}"
 
         }
