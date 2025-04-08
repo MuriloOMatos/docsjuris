@@ -180,7 +180,7 @@ def calculos_emprestimo(form, num_emprestimos):
         comprometimento_renda = Decimal(parcela) + Decimal(parcela_pessoal)
         comprometimento_porcentagem = Decimal(comprometimento_renda) / Decimal(renda_mensal) * 100
         renda_atual = Decimal(renda_mensal) - Decimal(parcela_pessoal) - Decimal(parcela)
-        diario = Decimal(valor_liquido) / Decimal(30)
+        #diario = Decimal(valor_liquido) / Decimal(30)
         
 
 
@@ -327,7 +327,7 @@ def gerar_peticao():
         dados['dado_valor_causa'] = format_brl(dado_valor_causa) 
         dados['comprometimento_renda'] = format_brl(comprometimento_renda)
         dados['renda_atual'] = format_brl(renda_atual)
-        dados['diario'] = format_brl(diario)
+        dados['diario'] = format_brl(valor_liquido) / Decimal(30)
         dados['comprometimento_porcentagem'] = format_brl(comprometimento_porcentagem)
         dados['total_emprestimo_bacen'] = format_brl(total_emprestimo_bacen)
 
