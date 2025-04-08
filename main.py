@@ -310,7 +310,7 @@ def gerar_peticao():
 
         # Aplicar formatação BRL aos valores principais
         dados['valor_liquido'] = format_brl(renda - parcela_pessoal - total_consignado)
-        dados['comprometimento'] = f"{((parcela_pessoal + total_consignado) / renda * 100):.2f}%"
+        dados['comprometimento'] = format_brl(parcela_pessoal + total_consignado)
         dados['total_emprestimo'] = format_brl(total_emprestimo_geral)
         dados['def_emprestimos'] = format_brl(def_emprestimos)
         dados['parcela_pessoal_atual'] = format_brl(parcela_pessoal_atual)
