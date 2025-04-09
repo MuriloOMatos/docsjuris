@@ -140,12 +140,12 @@ def calculos_emprestimo(form, num_emprestimos):
     dadovalorcausa = Decimal('0')
     valor_causa = Decimal('0')
     comprometimento_renda = Decimal('0')
-    renda_mensal = form['renda_mensal'].replace(",", ".")
-    parcela_pessoal = form['parcela_pessoal'].replace(",", ".")
-    renda_mensal = Decimal(renda_mensal)
+    renda_mensal = Decimal(form['renda_mensal'].replace(",", "."))
+    parcela_pessoal = Decimal(form['parcela_pessoal'].replace(",", "."))
+    renda_mensal = Decimal(form['renda_mensal'].replace(",", "."))
     diario = Decimal('0')
     valor_liquido = Decimal('0')
-    renda = form['renda_mensal'].replace(",", ".")
+    renda = Decimal(form['renda_mensal'].replace(",", "."))
 
     for i in range(num_emprestimos):
         prefix = f'emprestimos[{i}]'
@@ -181,8 +181,8 @@ def calculos_emprestimo(form, num_emprestimos):
         comprometimento_renda = Decimal(parcela) + Decimal(parcela_pessoal)
         comprometimento_porcentagem = Decimal(comprometimento_renda) / Decimal(renda_mensal) * 100
         renda_atual = Decimal(renda_mensal) - Decimal(parcela_pessoal) - Decimal(parcela)
-        diario = Decimal(valor_liquido / Decimal(30))
-        valor_liquido = (renda - parcela_pessoal - total_consignado)
+        valor_liquido = Decimal(renda - parcela_pessoal - total_consignado)
+        diario = Decimal(valor_liquido / 30)
         
 
         if not all(Decimal(x) > 0 for x in [valor, parcela, parcelas, taxa_contrato]):
@@ -235,6 +235,7 @@ def gerar_documento(dados, num_emprestimos):
         'comprometimento': dados['comprometimento'],
         'emprestimos': dados['emprestimos'],
         'total_emprestimo' : dados['total_emprestimo'],
+        'diario' : dados['diario'],
         
     }
     
@@ -286,6 +287,7 @@ def gerar_peticao():
         dados = {
             'renda_mensal': request.form['renda_mensal'].replace(",", "."),
             'parcela_pessoal': request.form['parcela_pessoal'].replace(",", "."),
+            'diario': request.form['diario'].replace(",", "."),
         }
         
         emprestimos, total_consignado, total_emprestimo_geral, def_emprestimos, parcela_pessoal_atual, dif_bacen, vlr_total_emprestimo1, vlr_total_emprestimo2, org_bacen, org_div, total_dobro, valor_causa, comprometimento_renda, renda_atual, diario, comprometimento_porcentagem,total_emprestimo_bacen,dadovalorcausa,valor_liquido = calculos_emprestimo(request.form, num_emprestimos)
@@ -312,6 +314,8 @@ def gerar_peticao():
         dados['emprestimos'] = emprestimos
         renda = Decimal(request.form['renda_mensal'].replace(",", "."))
         parcela_pessoal = Decimal(request.form['parcela_pessoal'].replace(",", "."))
+        valor_liquido = renda - parcela_pessoal - total_consignado
+        diario = valor_liquido / 30
 
         # Aplicar formatação BRL aos valores principais
         dados['valor_liquido'] = format_brl(renda - parcela_pessoal - total_consignado)
@@ -329,10 +333,10 @@ def gerar_peticao():
         dados['dadovalorcausa'] = format_brl(dadovalorcausa) 
         dados['comprometimento_renda'] = format_brl(comprometimento_renda)
         dados['renda_atual'] = format_brl(renda_atual)
-        dados['diario'] = format_brl(diario)
         dados['comprometimento_porcentagem'] = format_brl(comprometimento_porcentagem)
         dados['total_emprestimo_bacen'] = format_brl(total_emprestimo_bacen)
         dados['valor_liquido'] = format_brl(valor_liquido)
+        dados['diario'] = format_brl(renda - parcela_pessoal - total_consignado / 30)
 
         documento = gerar_documento(dados, num_emprestimos)
         
