@@ -329,7 +329,6 @@ def gerar_peticao():
         dados['dadovalorcausa'] = format_brl(dadovalorcausa) 
         dados['comprometimento_renda'] = format_brl(comprometimento_renda)
         dados['renda_atual'] = format_brl(renda_atual)
-        dados['diario'] = format_brl(diario)
         dados['comprometimento_porcentagem'] = format_brl(comprometimento_porcentagem)
         dados['total_emprestimo_bacen'] = format_brl(total_emprestimo_bacen)
         
