@@ -287,7 +287,7 @@ def gerar_peticao():
             'parcela_pessoal': request.form['parcela_pessoal'].replace(",", "."),
         }
         
-        emprestimos, total_consignado, total_emprestimo_geral, def_emprestimos, parcela_pessoal_atual, dif_bacen, vlr_total_emprestimo1, vlr_total_emprestimo2, org_bacen, org_div, total_dobro, valor_causa, comprometimento_renda, renda_atual, diario, comprometimento_porcentagem,total_emprestimo_bacen,dadovalorcausa, = calculos_emprestimo(request.form, num_emprestimos)
+        emprestimos, total_consignado, total_emprestimo_geral, def_emprestimos, parcela_pessoal_atual, dif_bacen, vlr_total_emprestimo1, vlr_total_emprestimo2, org_bacen, org_div, total_dobro, valor_causa, comprometimento_renda, renda_atual, comprometimento_porcentagem,total_emprestimo_bacen,dadovalorcausa, = calculos_emprestimo(request.form, num_emprestimos)
         
         # Aplicar formatação BRL aos valores monetários dentro da lista emprestimos
         for emp in emprestimos:
