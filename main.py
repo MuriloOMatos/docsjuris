@@ -176,6 +176,7 @@ def calculos_emprestimo(form, num_emprestimos):
         org_bacen = (total_emprestimo - total_emprestimo_bacen)
         org_div = (total_emprestimo_geral / vlr_total_emprestimo1)
         total_dobro = org_bacen * 2
+        total_dobro_geral += total_dobro
         dadovalorcausa = total_dobro_geral + Decimal(10000)
         valor_causa += Decimal(10000) + Decimal(total_dobro)
         comprometimento_renda = Decimal(parcela) + Decimal(parcela_pessoal)
@@ -206,7 +207,7 @@ def calculos_emprestimo(form, num_emprestimos):
             'org_div': f"{org_div:.2f}",
             'total_dobro': f"{total_dobro:.2f}",
             'valor_causa': f"{valor_causa:.2f}",
-            'dadovalorcausa': f"{dadovalorcausa:.2f}",
+            'dadovalorcausa': f"0.00",
             'comprometimento_renda': f"{comprometimento_renda:.2f}",
             'comprometimento_porcentagem': f"{comprometimento_porcentagem:.2f}",
             'renda_atual': f"{renda_atual:.2f}",
