@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, send_file, abort
+from flask import Flask, render_template, request, send_file, abort, redirect, url_for, session
 from docx import Document
 import io
 import os
@@ -10,53 +10,23 @@ from calendar import monthrange
 from functools import lru_cache
 from requests.adapters import HTTPAdapter
 from requests.packages.urllib3.util.retry import Retry
-from decimal import Decimal
 from werkzeug.security import generate_password_hash, check_password_hash
 import logging
 
-# Configuração de logging
+# Configuração de logging (deve vir antes de usar app.logger)
 logging.basicConfig(level=logging.DEBUG)
+
+# Inicialização do Flask (apenas uma vez)
 app = Flask(__name__)
 app.secret_key = os.getenv('SECRET_KEY', 'sua_chave_secreta_aqui')
 
-# Inicialização do Flask
-app = Flask(__name__)
-app.secret_key = os.getenv('SECRET_KEY', 'sua_chave_secreta_aqui')
+# Usuários fictícios
 USERS = {
     'admin': generate_password_hash('senha123')  # Substitua por sua senha
 }
 
 # Configuração via variável de ambiente
 SERIES_BACEN = {'pessoal_fisica': int(os.getenv('SERIE_BACEN', 25464))}
-@app.route('/login', methods=['GET', 'POST'])
-def login():
-    if request.method == 'POST':
-        username = request.form.get('username')
-        password = request.form.get('password')
-        
-        if username in USERS and check_password_hash(USERS[username], password):
-            session['logged_in'] = True
-            session['username'] = username
-            return redirect(url_for('index'))
-        else:
-            return render_template('login.html', error='Usuário ou senha inválidos')
-    
-    return render_template('login.html')
-
-@app.route('/logout')
-def logout():
-    session.pop('logged_in', None)
-    session.pop('username', None)
-    return redirect(url_for('login'))
-
-# Decorador para exigir login
-def login_required(f):
-    def wrap(*args, **kwargs):
-        if 'logged_in' not in session:
-            return redirect(url_for('login'))
-        return f(*args, **kwargs)
-    wrap.__name__ = f.__name__  # Preserva o nome da função
-    return wrap
 
 # Criação de uma sessão HTTP com retry para robustez nas requisições
 http_session = requests.Session()
@@ -70,20 +40,43 @@ adapter = HTTPAdapter(max_retries=retries)
 http_session.mount("http://", adapter)
 http_session.mount("https://", adapter)
 
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    app.logger.debug("Acessando rota /login")
+    if request.method == 'POST':
+        username = request.form.get('username')
+        password = request.form.get('password')
+        app.logger.debug(f"Tentativa de login com usuário: {username}")
+        
+        if username in USERS and check_password_hash(USERS[username], password):
+            session['logged_in'] = True
+            session['username'] = username
+            app.logger.debug("Login bem-sucedido")
+            return redirect(url_for('index'))
+        else:
+            app.logger.debug("Falha no login")
+            return render_template('login.html', error='Usuário ou senha inválidos')
+    
+    return render_template('login.html')
+
+@app.route('/logout')
+def logout():
+    app.logger.debug("Executando logout")
+    session.pop('logged_in', None)
+    session.pop('username', None)
+    return redirect(url_for('login'))
+
+# Decorador para exigir login
+def login_required(f):
+    def wrap(*args, **kwargs):
+        if 'logged_in' not in session:
+            app.logger.debug("Usuário não autenticado, redirecionando para login")
+            return redirect(url_for('login'))
+        return f(*args, **kwargs)
+    wrap.__name__ = f.__name__
+    return wrap
+
 def _obter_dados_api(url, params):
-    """
-    Função auxiliar para acessar a API do BACEN.
-
-    Args:
-        url (str): URL da API.
-        params (dict): Parâmetros da requisição.
-
-    Returns:
-        list: Dados retornados pela API.
-
-    Raises:
-        Exception: Se ocorrer algum erro na requisição ou processamento dos dados.
-    """
     headers = {'User-Agent': 'Python/AppRevisaoContratos'}
     try:
         response = http_session.get(url, params=params, timeout=15, headers=headers)
@@ -98,10 +91,6 @@ def _obter_dados_api(url, params):
 
 @lru_cache(maxsize=128)
 def get_bacen_taxa_historico(data_emprestimo):
-    """
-    Busca a taxa histórica para o mês do empréstimo, usando cache para
-    evitar requisições repetidas para o mesmo período.
-    """
     try:
         codigo_serie = SERIES_BACEN['pessoal_fisica']
         mes_ano = data_emprestimo.strftime("%m/%Y")
@@ -119,7 +108,6 @@ def get_bacen_taxa_historico(data_emprestimo):
         return None
 
 def get_bacen_taxa_atual():
-    """Obtém a última taxa disponível do BACEN."""
     try:
         codigo_serie = SERIES_BACEN['pessoal_fisica']
         url = f"https://api.bcb.gov.br/dados/serie/bcdata.sgs.{codigo_serie}/dados/ultimos/1"
@@ -131,7 +119,6 @@ def get_bacen_taxa_atual():
         return None
 
 def calcular_diferenca(valor, taxa_contrato, taxa_media, parcelas):
-    """Calcula a diferença financeira entre as taxas."""
     try:
         valor_dec = Decimal(str(valor))
         taxa_contrato_dec = Decimal(str(taxa_contrato))
@@ -148,7 +135,6 @@ def calcular_diferenca(valor, taxa_contrato, taxa_media, parcelas):
         raise ValueError(f"Erro ao calcular diferença: {str(e)}")
 
 def validar_dados_entrada(form):
-    """Valida os dados de entrada do formulário."""
     required_fields = ['renda_mensal', 'parcela_pessoal', 'modelo_peticao']
     for field in required_fields:
         if field not in form:
@@ -185,13 +171,10 @@ def calculos_emprestimo(form, num_emprestimos):
     renda_mensal = Decimal(renda_mensal)
     total_dobro_geral = Decimal('0')
     
-    
-
     for i in range(num_emprestimos):
         prefix = f'emprestimos[{i}]'
         emp_data = form.get(f'{prefix}[data]')
         try:
-            #formato DD/MM/YYYY
             data_emprestimo = datetime.strptime(emp_data, '%d/%m/%Y')
             if data_emprestimo > datetime.now():
                 raise ValueError(f"Data do empréstimo {i+1} não pode ser no futuro")
@@ -214,7 +197,7 @@ def calculos_emprestimo(form, num_emprestimos):
         vlr_total_emprestimo1 = Decimal(valor) * (1 + Decimal(taxa_media) / 100) ** Decimal(parcelas)
         vlr_total_emprestimo2 = Decimal(valor) * (1 + Decimal(taxa_contrato) / 100) ** Decimal(parcelas)
         org_bacen = (total_emprestimo - total_emprestimo_bacen)
-        org_div = (total_emprestimo_geral / vlr_total_emprestimo1)
+        org_div = (total_emprestimo_geral / vlr_total_emprestimo1) if vlr_total_emprestimo1 != 0 else Decimal('0')
         total_dobro = org_bacen * 2
         total_dobro_geral += total_dobro
         dadovalorcausa = total_dobro_geral + Decimal(10000)
@@ -223,9 +206,6 @@ def calculos_emprestimo(form, num_emprestimos):
         comprometimento_porcentagem = Decimal(comprometimento_renda) / Decimal(renda_mensal) * 100
         renda_atual = Decimal(renda_mensal) - Decimal(parcela_pessoal) - Decimal(parcela)
         
-        
-        
-
         if not all(Decimal(x) > 0 for x in [valor, parcela, parcelas, taxa_contrato]):
             raise ValueError(f"Valores do empréstimo {i+1} devem ser positivos")
         
@@ -261,10 +241,9 @@ def calculos_emprestimo(form, num_emprestimos):
     for emp in emprestimos:
         emp['dadovalorcausa'] = f"{dadovalorcausa:.2f}"    
     
-    return emprestimos, total_consignado, total_emprestimo_geral, def_emprestimos, parcela_pessoal_atual,dif_bacen, vlr_total_emprestimo1, vlr_total_emprestimo2, org_bacen,org_div,total_dobro,valor_causa,comprometimento_renda,renda_atual,comprometimento_porcentagem,total_emprestimo_bacen,total_dobro_geral,dadovalorcausa,
+    return emprestimos, total_consignado, total_emprestimo_geral, def_emprestimos, parcela_pessoal_atual, dif_bacen, vlr_total_emprestimo1, vlr_total_emprestimo2, org_bacen, org_div, total_dobro, valor_causa, comprometimento_renda, renda_atual, comprometimento_porcentagem, total_emprestimo_bacen, total_dobro_geral, dadovalorcausa
 
 def gerar_documento(dados, num_emprestimos):
-    """Gera o documento Word a partir dos dados."""
     template_path = os.path.abspath(os.path.join("modelos", f"modelo_{num_emprestimos}.docx"))
     if not template_path.startswith(os.path.abspath("modelos")) or not os.path.exists(template_path):
         raise FileNotFoundError("Modelo de documento inválido ou não encontrado")
@@ -276,17 +255,14 @@ def gerar_documento(dados, num_emprestimos):
         'valor_liquido': dados['valor_liquido'],
         'comprometimento': dados['comprometimento'],
         'emprestimos': dados['emprestimos'],
-        'total_emprestimo' : dados['total_emprestimo'],
+        'total_emprestimo': dados['total_emprestimo'],
         'diario': dados['diario']
-        
     }
     
-    # Substituir placeholders nos parágrafos
     for p in doc.paragraphs:
         for key, value in flatten_dict(replacements).items():
             p.text = p.text.replace(f'{{{{{key}}}}}', bleach.clean(str(value)))
     
-    # Substituir placeholders nas tabelas
     for table in doc.tables:
         for row in table.rows:
             for cell in row.cells:
@@ -301,16 +277,21 @@ def gerar_documento(dados, num_emprestimos):
 @app.route('/')
 @login_required
 def index():
-    taxa_atual = get_bacen_taxa_atual()
-    if taxa_atual is None:
-        taxa_atual_display = "Indisponível"
-    else:
-        taxa_atual_display = f"{taxa_atual:.2f}%"
-    bacen_data = {
-        'taxa': taxa_atual_display,
-        'data_atualizacao': datetime.now().strftime('%d/%m/%Y')
-    }
-    return render_template('index.html', **bacen_data)
+    app.logger.debug("Acessando rota /")
+    try:
+        taxa_atual = get_bacen_taxa_atual()
+        if taxa_atual is None:
+            taxa_atual_display = "Indisponível"
+        else:
+            taxa_atual_display = f"{taxa_atual:.2f}%"
+        bacen_data = {
+            'taxa': taxa_atual_display,
+            'data_atualizacao': datetime.now().strftime('%d/%m/%Y')
+        }
+        return render_template('index.html', **bacen_data)
+    except Exception as e:
+        app.logger.error(f"Erro na rota index: {str(e)}")
+        return abort(500, "Erro interno ao carregar a página inicial")
 
 def format_brl(valor):
     try:
@@ -321,11 +302,11 @@ def format_brl(valor):
     except Exception:
         return valor
 
-
 @app.route('/gerar-peticao', methods=['POST'])
 @login_required
 def gerar_peticao():
     try:
+        app.logger.debug("Iniciando geração de petição")
         num_emprestimos = validar_dados_entrada(request.form)
         
         dados = {
@@ -333,9 +314,8 @@ def gerar_peticao():
             'parcela_pessoal': request.form['parcela_pessoal'].replace(",", "."),
         }
         
-        emprestimos, total_consignado, total_emprestimo_geral, def_emprestimos, parcela_pessoal_atual, dif_bacen, vlr_total_emprestimo1, vlr_total_emprestimo2, org_bacen, org_div, total_dobro,total_dobro_geral, valor_causa, comprometimento_renda, renda_atual, comprometimento_porcentagem,total_emprestimo_bacen,dadovalorcausa, = calculos_emprestimo(request.form, num_emprestimos)
+        emprestimos, total_consignado, total_emprestimo_geral, def_emprestimos, parcela_pessoal_atual, dif_bacen, vlr_total_emprestimo1, vlr_total_emprestimo2, org_bacen, org_div, total_dobro, total_dobro_geral, valor_causa, comprometimento_renda, renda_atual, comprometimento_porcentagem, total_emprestimo_bacen, dadovalorcausa = calculos_emprestimo(request.form, num_emprestimos)
         
-        # Aplicar formatação BRL aos valores monetários dentro da lista emprestimos
         for emp in emprestimos:
             emp['valor'] = format_brl(emp['valor'])
             emp['parcela'] = format_brl(emp['parcela'])
@@ -352,12 +332,10 @@ def gerar_peticao():
             emp['total_emprestimo_bacen'] = format_brl(emp['total_emprestimo_bacen'])
             emp['dadovalorcausa'] = format_brl(emp['dadovalorcausa'])
             
-
         dados['emprestimos'] = emprestimos
         renda = Decimal(request.form['renda_mensal'].replace(",", "."))
         parcela_pessoal = Decimal(request.form['parcela_pessoal'].replace(",", "."))
 
-        # Aplicar formatação BRL aos valores principais
         dados['valor_liquido'] = format_brl(renda - parcela_pessoal - total_consignado)
         dados['diario'] = format_brl((renda - parcela_pessoal - total_consignado) / 30)
         dados['comprometimento'] = format_brl(parcela_pessoal + total_consignado)
@@ -372,13 +350,14 @@ def gerar_peticao():
         dados['total_dobro'] = format_brl(total_dobro)
         dados['total_dobro_geral'] = format_brl(total_dobro_geral)
         dados['valor_causa'] = format_brl(valor_causa)
-        dados['dadovalorcausa'] = format_brl(dadovalorcausa) 
+        dados['dadovalorcausa'] = format_brl(dadovalorcausa)
         dados['comprometimento_renda'] = format_brl(comprometimento_renda)
         dados['renda_atual'] = format_brl(renda_atual)
         dados['comprometimento_porcentagem'] = format_brl(comprometimento_porcentagem)
         dados['total_emprestimo_bacen'] = format_brl(total_emprestimo_bacen)
         
         documento = gerar_documento(dados, num_emprestimos)
+        app.logger.debug("Documento gerado com sucesso")
         
         return send_file(
             documento,
@@ -398,7 +377,6 @@ def gerar_peticao():
         return abort(500, "Erro interno ao processar a solicitação")
 
 def flatten_dict(d, parent_key='', sep='_'):
-    """Flatten a nested dictionary iteratively."""
     stack = [(d, parent_key)]
     items = []
     while stack:
