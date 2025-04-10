@@ -216,8 +216,10 @@ def calculos_emprestimo(form, num_emprestimos):
         
         emprestimos.append(emprestimo)
         total_consignado += Decimal(parcela)
-        dadovalorcausa = total_dobro_geral + Decimal(10000)
         
+    dadovalorcausa = total_dobro_geral + Decimal(10000)
+    for emp in emprestimos:
+        emp['dadovalorcausa'] = f"{dadovalorcausa:.2f}"    
     
     return emprestimos, total_consignado, total_emprestimo_geral, def_emprestimos, parcela_pessoal_atual,dif_bacen, vlr_total_emprestimo1, vlr_total_emprestimo2, org_bacen,org_div,total_dobro,valor_causa,comprometimento_renda,renda_atual,comprometimento_porcentagem,total_emprestimo_bacen,total_dobro_geral,dadovalorcausa,
 
