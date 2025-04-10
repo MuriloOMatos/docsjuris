@@ -12,6 +12,12 @@ from requests.adapters import HTTPAdapter
 from requests.packages.urllib3.util.retry import Retry
 from decimal import Decimal
 from werkzeug.security import generate_password_hash, check_password_hash
+import logging
+
+# Configuração de logging
+logging.basicConfig(level=logging.DEBUG)
+app = Flask(__name__)
+app.secret_key = os.getenv('SECRET_KEY', 'sua_chave_secreta_aqui')
 
 # Inicialização do Flask
 app = Flask(__name__)
