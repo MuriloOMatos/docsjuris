@@ -207,7 +207,7 @@ def calculos_emprestimo(form, num_emprestimos):
             'org_div': f"{org_div:.2f}",
             'total_dobro': f"{total_dobro:.2f}",
             'valor_causa': f"{valor_causa:.2f}",
-            'dadovalorcausa': f"0.00",
+            'dadovalorcausa': f"{dadovalorcausa:.2f}",
             'comprometimento_renda': f"{comprometimento_renda:.2f}",
             'comprometimento_porcentagem': f"{comprometimento_porcentagem:.2f}",
             'renda_atual': f"{renda_atual:.2f}",
