@@ -22,7 +22,7 @@ app.secret_key = os.getenv('SECRET_KEY', 'sua_chave_secreta_aqui')
 
 # Usuários fictícios
 USERS = {
-    'admin': generate_password_hash('senha123')  # Substitua por sua senha
+    'admin': generate_password_hash('admin')  # Substitua por sua senha
 }
 
 # Configuração via variável de ambiente
