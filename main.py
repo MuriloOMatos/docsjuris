@@ -17,7 +17,8 @@ from werkzeug.security import generate_password_hash, check_password_hash
 app = Flask(__name__)
 app.secret_key = os.getenv('SECRET_KEY', 'sua_chave_secreta_aqui')
 USERS = {
-    'admin': generate_password_hash('senha123')
+    'admin': generate_password_hash('senha123')  # Substitua por sua senha
+}
 
 # Configuração via variável de ambiente
 SERIES_BACEN = {'pessoal_fisica': int(os.getenv('SERIE_BACEN', 25464))}
