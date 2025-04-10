@@ -11,12 +11,45 @@ from functools import lru_cache
 from requests.adapters import HTTPAdapter
 from requests.packages.urllib3.util.retry import Retry
 from decimal import Decimal
+from werkzeug.security import generate_password_hash, check_password_hash
 
 # Inicialização do Flask
 app = Flask(__name__)
+app.secret_key = os.getenv('SECRET_KEY', 'sua_chave_secreta_aqui')
+USERS = {
+    'admin': generate_password_hash('senha123')
 
 # Configuração via variável de ambiente
 SERIES_BACEN = {'pessoal_fisica': int(os.getenv('SERIE_BACEN', 25464))}
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        username = request.form.get('username')
+        password = request.form.get('password')
+        
+        if username in USERS and check_password_hash(USERS[username], password):
+            session['logged_in'] = True
+            session['username'] = username
+            return redirect(url_for('index'))
+        else:
+            return render_template('login.html', error='Usuário ou senha inválidos')
+    
+    return render_template('login.html')
+
+@app.route('/logout')
+def logout():
+    session.pop('logged_in', None)
+    session.pop('username', None)
+    return redirect(url_for('login'))
+
+# Decorador para exigir login
+def login_required(f):
+    def wrap(*args, **kwargs):
+        if 'logged_in' not in session:
+            return redirect(url_for('login'))
+        return f(*args, **kwargs)
+    wrap.__name__ = f.__name__  # Preserva o nome da função
+    return wrap
 
 # Criação de uma sessão HTTP com retry para robustez nas requisições
 http_session = requests.Session()
@@ -259,6 +292,7 @@ def gerar_documento(dados, num_emprestimos):
     return output
 
 @app.route('/')
+@login_required
 def index():
     taxa_atual = get_bacen_taxa_atual()
     if taxa_atual is None:
@@ -282,6 +316,7 @@ def format_brl(valor):
 
 
 @app.route('/gerar-peticao', methods=['POST'])
+@login_required
 def gerar_peticao():
     try:
         num_emprestimos = validar_dados_entrada(request.form)
