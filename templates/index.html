@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Gerador de Petições</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+  <style>
+    body {
+      background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+      min-height: 100vh;
+    }
+    .card {
+      border: none;
+      box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+    }
+    .card-body {
+      padding: 1.5rem;
+    }
+    input[id^="taxa_"] {
+      border-color: #ced4da !important;
+      box-shadow: none !important;
+    }
+    input[id^="taxa_"]:focus {
+      border-color: #86b7fe !important;
+      box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25) !important;
+    }
+    @media (max-width: 768px) {
+      nav {
+        display: none;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="d-flex">
+    <!-- Sidebar -->
+    <nav class="bg-primary text-white p-3 vh-100" style="width: 185px;">
+      <h4 class="mb-4"><i class="bi bi-folder"></i> Menu</h4>
+      <ul class="nav flex-column">
+        <li class="nav-item mb-2">
+          <a href="#" class="nav-link text-white"><i class="bi bi-pencil-square me-2"></i>Nova Petição</a>
+        </li>
+        <li class="nav-item mb-2">
+          <a href="#" class="nav-link text-white"><i class="bi bi-file-earmark-text me-2"></i>Documentos</a>
+        </li>
+      </ul>
+    </nav>
+
+    <!-- Conteúdo principal -->
+    <div class="flex-grow-1 p-4">
+      <div class="container min-vh-100 d-flex justify-content-center align-items-center">
+        <div class="row g-4 w-100" style="max-width: 600px;">
+          <div class="col-12">
+            <div class="card">
+              <div class="card-header bg-primary text-white">
+                <h2 class="h4 mb-0"><i class="bi bi-pencil-square me-2"></i>Dados da Petição</h2>
+              </div>
+              <div class="card-body">
+                <form action="/gerar-peticao" method="post" role="form" novalidate>
+                  <!-- Seleção de Modelo -->
+                  <div class="mb-3">
+                    <label for="modelo_peticao" class="form-label">Número de Empréstimos:</label>
+                    <select class="form-select" id="modelo_peticao" name="modelo_peticao" required>
+                      <option value="" selected disabled>Selecione um modelo...</option>
+                      <option value="1">1 Empréstimo</option>
+                      <option value="2">2 Empréstimos</option>
+                      <option value="3">3 Empréstimos</option>
+                    </select>
+                    <div class="invalid-feedback">Selecione um modelo de petição.</div>
+                  </div>
+
+                  <!-- Dados Gerais -->
+                  <div class="mb-3">
+                    <label for="renda_mensal" class="form-label">Renda Mensal Líquida</label>
+                    <div class="input-group">
+                      <span class="input-group-text">R$</span>
+                      <input type="number" step="0.01" min="0" class="form-control" id="renda_mensal" name="renda_mensal" placeholder="Ex: 3500,00" required>
+                    </div>
+                    <div class="invalid-feedback">Informe um valor válido.</div>
+                  </div>
+
+                  <!-- Container para os campos de cada empréstimo -->
+                  <div id="loan_fields"></div>
+
+                  <!-- Parcela Pessoal -->
+                  <div class="mb-3">
+                    <label for="parcela_pessoal" class="form-label">Parcela Pessoal</label>
+                    <div class="input-group">
+                      <span class="input-group-text">R$</span>
+                      <input type="number" step="0.01" min="0" class="form-control" id="parcela_pessoal" name="parcela_pessoal" placeholder="Ex: 500,00" required>
+                    </div>
+                    <div class="invalid-feedback">Informe um valor válido.</div>
+                  </div>
+
+                  <button type="submit" class="btn btn-primary w-100 py-3">
+                    <i class="bi bi-magic me-2"></i>Gerar Petição Automática
+                  </button>
+                </form>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- JavaScript Bootstrap 5 -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    function manageLoanFields() {
+      const select = document.getElementById('modelo_peticao');
+      const container = document.getElementById('loan_fields');
+
+      select.addEventListener('change', function () {
+        const numLoans = parseInt(this.value) || 0;
+        container.innerHTML = '';
+
+        for (let i = 0; i < numLoans; i++) {
+          const group = document.createElement('div');
+          group.className = 'card mb-3';
+          group.innerHTML = `
+            <div class="card-header bg-secondary text-white">
+              <h5 class="mb-0">Empréstimo ${i + 1}</h5>
+            </div>
+            <div class="card-body">
+              <div class="mb-3">
+                <label for="valor_${i}" class="form-label">Valor Financiado</label>
+                <div class="input-group">
+                  <span class="input-group-text">R$</span>
+                  <input type="number" step="0.01" min="0" class="form-control" id="valor_${i}"
+                         name="emprestimos[${i}][valor]" placeholder="Ex: 1000,00" required>
+                </div>
+                <div class="invalid-feedback">Informe um valor válido.</div>
+              </div>
+              <div class="mb-3">
+                <label for="parcela_${i}" class="form-label">Parcela Consignada</label>
+                <div class="input-group">
+                  <span class="input-group-text">R$</span>
+                  <input type="number" step="0.01" min="0" class="form-control" id="parcela_${i}"
+                         name="emprestimos[${i}][parcela_consignada]" placeholder="Ex: 300,00" required>
+                </div>
+                <div class="invalid-feedback">Informe um valor válido.</div>
+              </div>
+              <div class="mb-3">
+                <label for="data_${i}" class="form-label">Data do Empréstimo</label>
+                <input type="text" class="form-control" id="data_${i}"
+                       name="emprestimos[${i}][data]" placeholder="DD/MM/YYYY" required>
+                <div class="invalid-feedback">Informe a data no formato DD/MM/YYYY.</div>
+              </div>
+              <div class="mb-3">
+                <label for="parcelas_${i}" class="form-label">Número de Parcelas</label>
+                <input type="number" min="1" class="form-control" id="parcelas_${i}"
+                       name="emprestimos[${i}][parcelas]" placeholder="Ex: 12" required>
+                <div class="invalid-feedback">Informe o número de parcelas.</div>
+              </div>
+              <div class="mb-3">
+                <label for="taxa_${i}" class="form-label">Taxa de Juros Contratada</label>
+                <div class="input-group">
+                  <input type="number" step="0.01" min="0" max="100" class="form-control" id="taxa_${i}"
+                         name="emprestimos[${i}][taxa]" placeholder="Ex: 2,5" required>
+                  <span class="input-group-text">%</span>
+                </div>
+                <div class="invalid-feedback">Informe uma taxa entre 0 e 100%.</div>
+              </div>
+            </div>
+          `;
+          container.appendChild(group);
+        }
+        applyDateValidation();
+      });
+
+      document.addEventListener('input', function (e) {
+        const input = e.target;
+        if (input.type === 'number' && !input.id.startsWith('taxa_')) {
+          input.classList.toggle('is-invalid', input.value < input.min || (input.max && input.value > input.max));
+        }
+      });
+    }
+
+    function applyDateValidation() {
+      const dateInputs = document.querySelectorAll('[id^="data_"]');
+      dateInputs.forEach(input => {
+        input.addEventListener('input', function () {
+          const regex = /^(0[1-9]|[12]\d|3[01])\/(0[1-9]|1[0-2])\/\d{4}$/;
+          this.classList.toggle('is-invalid', !regex.test(this.value));
+        });
+      });
+    }
+
+    manageLoanFields();
+  </script>
+</body>
+</html>
