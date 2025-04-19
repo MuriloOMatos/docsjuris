@@ -1,5 +1,6 @@
 from flask import Flask, render_template, request, send_file, abort, redirect, url_for, session
 from docx import Document
+from docx2pdf import convert
 import io
 import os
 import requests
@@ -12,6 +13,8 @@ from requests.adapters import HTTPAdapter
 from requests.packages.urllib3.util.retry import Retry
 from werkzeug.security import generate_password_hash, check_password_hash
 import logging
+import zipfile
+import tempfile
 
 # Configuração de logging (deve vir antes de usar app.logger)
 logging.basicConfig(level=logging.DEBUG)
@@ -392,5 +395,77 @@ def flatten_dict(d, parent_key='', sep='_'):
                 items.append((new_key, v))
     return dict(items)
 
+# Rotas para documentos
+@app.route('/documentos')
+@login_required
+def documentos():
+    app.logger.debug("Acessando rota /documentos")
+    return render_template('documentos.html')
+
+@app.route('/documentos/gerar', methods=['POST'])
+@login_required
+def gerar_documentos():
+    app.logger.debug("Acessando rota /documentos/gerar")
+    app.logger.debug(f"Dados recebidos: {request.form}")
+    selecionados = request.form.getlist('documentos')
+    if not selecionados:
+        app.logger.error("Nenhum documento selecionado")
+        abort(400, 'Nenhum documento selecionado.')
+
+    placeholders = {key: request.form.get(key, '') for key in request.form.keys() if key != 'documentos'}
+
+    zip_buffer = io.BytesIO()
+    with zipfile.ZipFile(zip_buffer, 'w') as zipf:
+        for doc_tipo in selecionados:
+            template_path = os.path.join('modelos', f"{doc_tipo}.docx")
+            if not os.path.exists(template_path):
+                app.logger.warning(f"Template {template_path} não encontrado.")
+                continue
+            
+            # Carregar e preencher o documento DOCX
+            doc = Document(template_path)
+            for p in doc.paragraphs:
+                for chave, valor in placeholders.items():
+                    p.text = p.text.replace(f'{{{{{chave}}}}}', bleach.clean(valor))
+            for table in doc.tables:
+                for row in table.rows:
+                    for cell in row.cells:
+                        for chave, valor in placeholders.items():
+                            cell.text = cell.text.replace(f'{{{{{chave}}}}}', bleach.clean(valor))
+            
+            # Criar arquivos temporários para DOCX e PDF
+            with tempfile.NamedTemporaryFile(suffix='.docx', delete=False) as temp_docx, \
+                 tempfile.NamedTemporaryFile(suffix='.pdf', delete=False) as temp_pdf:
+                # Salvar o DOCX preenchido
+                doc.save(temp_docx.name)
+                
+                # Converter DOCX para PDF
+                try:
+                    app.logger.debug(f"Convertendo {temp_docx.name} para {temp_pdf.name}")
+                    convert(temp_docx.name, temp_pdf.name)
+                except Exception as e:
+                    app.logger.error(f"Erro ao converter {doc_tipo}.docx para PDF: {str(e)}")
+                    continue
+                
+                # Adicionar o PDF ao ZIP
+                with open(temp_pdf.name, 'rb') as pdf_file:
+                    zipf.writestr(f"{doc_tipo}.pdf", pdf_file.read())
+            
+            # Remover arquivos temporários
+            os.unlink(temp_docx.name)
+            os.unlink(temp_pdf.name)
+
+    zip_buffer.seek(0)
+    if zip_buffer.getbuffer().nbytes == 0:
+        app.logger.error("Nenhum arquivo PDF foi gerado para incluir no ZIP.")
+        abort(500, "Erro: Nenhum documento foi gerado.")
+
+    app.logger.debug("Arquivo ZIP gerado com sucesso")
+    return send_file(
+        zip_buffer,
+        mimetype='application/zip',
+        download_name='documentos.zip',
+        as_attachment=True
+    )
 if __name__ == '__main__':
     app.run(debug=True)
