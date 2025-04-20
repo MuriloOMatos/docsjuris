@@ -416,13 +416,20 @@ def gerar_documentos():
     zip_buffer = io.BytesIO()
     with zipfile.ZipFile(zip_buffer, 'w') as zipf:
         for doc_tipo in selecionados:
-            template_path = os.path.join('modelos', f"{doc_tipo}.docx")
-            if not os.path.exists(template_path):
-                app.logger.warning(f"Template {template_path} não encontrado.")
+            # Determinar template (pode ser .docx ou .pdf)
+            docx_path = os.path.join('modelos', f"{doc_tipo}.docx")
+            pdf_path_orig = os.path.join('modelos', f"{doc_tipo}.pdf")
+            if os.path.exists(pdf_path_orig):
+                # Se for PDF original, adiciona direto
+                with open(pdf_path_orig, 'rb') as f:
+                    zipf.writestr(f"{doc_tipo}.pdf", f.read())
+                continue
+            elif not os.path.exists(docx_path):
+                app.logger.warning(f"Template {doc_tipo} não encontrado (.docx ou .pdf).")
                 continue
 
             # Preencher DOCX
-            doc = Document(template_path)
+            doc = Document(docx_path)
             for p in doc.paragraphs:
                 for chave, valor in placeholders.items():
                     p.text = p.text.replace(f'{{{{{chave}}}}}', bleach.clean(valor))
@@ -433,27 +440,25 @@ def gerar_documentos():
                             cell.text = cell.text.replace(f'{{{{{chave}}}}}', bleach.clean(valor))
 
             # Arquivos temporários
-            with tempfile.NamedTemporaryFile(suffix='.docx', delete=False) as temp_docx, \
-                 tempfile.NamedTemporaryFile(suffix='.pdf', delete=False) as temp_pdf:
+            with tempfile.NamedTemporaryFile(suffix='.docx', delete=False) as temp_docx:
                 doc.save(temp_docx.name)
                 temp_docx.close()
+
                 # Converter para PDF com LibreOffice headless
                 try:
                     app.logger.debug(f"Convertendo {temp_docx.name} para PDF com LibreOffice")
                     subprocess.run([
                         'soffice', '--headless',
                         '--convert-to', 'pdf',
-                        '--outdir', os.path.dirname(temp_pdf.name),
+                        '--outdir', os.path.dirname(temp_docx.name),
                         temp_docx.name
                     ], check=True)
-                    # LibreOffice cria <nome>.pdf no mesmo diretório de temp_docx
-                    pdf_path = os.path.splitext(temp_docx.name)[0] + '.pdf'
-                    with open(pdf_path, 'rb') as pdf_file:
+                    temp_pdf_path = os.path.splitext(temp_docx.name)[0] + '.pdf'
+                    with open(temp_pdf_path, 'rb') as pdf_file:
                         zipf.writestr(f"{doc_tipo}.pdf", pdf_file.read())
-                    os.unlink(pdf_path)
+                    os.unlink(temp_pdf_path)
                 except Exception as e:
                     app.logger.error(f"Erro ao converter {doc_tipo}.docx para PDF: {str(e)}")
-                    continue
                 finally:
                     os.unlink(temp_docx.name)
 
@@ -469,5 +474,6 @@ def gerar_documentos():
         download_name='documentos.zip',
         as_attachment=True
     )
+
 if __name__ == '__main__':
     app.run(debug=True)
