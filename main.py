@@ -240,7 +240,7 @@ def calculos_emprestimo(form, num_emprestimos):
         emprestimos.append(emprestimo)
         total_consignado += Decimal(parcela)
         
-    dadovalorcausa = total_dobro_geral + Decimal(10000)
+    dadovalorcausa = total_dobro_geral + Decimal(5000)
     for emp in emprestimos:
         emp['dadovalorcausa'] = f"{dadovalorcausa:.2f}"    
     
