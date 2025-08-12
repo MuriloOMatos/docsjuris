@@ -203,8 +203,8 @@ def calculos_emprestimo(form, num_emprestimos):
         org_div = (total_emprestimo_geral / vlr_total_emprestimo1) if vlr_total_emprestimo1 != 0 else Decimal('0')
         total_dobro = org_bacen * 2
         total_dobro_geral += total_dobro
-        dadovalorcausa = total_dobro_geral + Decimal(10000)
-        valor_causa += Decimal(10000) + Decimal(total_dobro)
+        dadovalorcausa = total_dobro_geral + Decimal(5000)
+        valor_causa += Decimal(5000) + Decimal(total_dobro)
         comprometimento_renda = Decimal(parcela) + Decimal(parcela_pessoal)
         comprometimento_porcentagem = Decimal(comprometimento_renda) / Decimal(renda_mensal) * 100
         renda_atual = Decimal(renda_mensal) - Decimal(parcela_pessoal) - Decimal(parcela)
@@ -240,7 +240,7 @@ def calculos_emprestimo(form, num_emprestimos):
         emprestimos.append(emprestimo)
         total_consignado += Decimal(parcela)
         
-    dadovalorcausa = total_dobro_geral + Decimal(10000)
+    dadovalorcausa = total_dobro_geral + Decimal(5000)
     for emp in emprestimos:
         emp['dadovalorcausa'] = f"{dadovalorcausa:.2f}"    
     
