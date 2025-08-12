@@ -102,46 +102,35 @@
             <label for="estado" class="form-label">UF</label>
             <input type="text" class="form-control" id="estado" name="ESTADO" maxlength="2" required>
           </div>
+
+          <!-- Campo Banco com dados do PostgreSQL -->
           <div class="col-md-4">
             <label for="banco" class="form-label">Banco</label>
-            <input type="text" class="form-control" id="banco" name="Banco" required>
+            <select name="Banco" id="banco" class="form-control" required>
+              {% for banco in bancos %}
+                <option value="{{ banco.nome_banco }}">{{ banco.codigo_banco }} - {{ banco.nome_banco }}</option>
+              {% endfor %}
+            </select>
           </div>
-          <!-- Campo de data -->
-            <div class="col-md-4">
-              <label for="data" class="classList">Data</label>
-              <input type="text" class="form-control" id="data" name="data" required>
-            </div>
-                  <script>
-                  // Função para formatar a data por extenso
-                  function dataPorExtenso() {
-                    const hoje = new Date();
-                    const opcoes = { day: '2-digit', month: 'long', year: 'numeric' };
-                    const dataFormatada = hoje.toLocaleDateString('pt-BR', opcoes);
 
-                    // Garantir que o mês fique com a primeira letra minúscula (padrão jurídico)
-                    const [dia, mes, ano] = dataFormatada.split(' de ');
-                    document.getElementById('data').value = `${dia} de ${mes.toLowerCase()} de ${ano}`;
-                  }
-
-                  // Executa quando a página carrega
-                  document.addEventListener('DOMContentLoaded', dataPorExtenso);
-                  </script>
-
+          <div class="col-md-4">
+            <label for="data" class="form-label">Data</label>
+            <input type="text" class="form-control" id="data" name="data" required>
+          </div>
+        </div>
 
         <div class="mt-4 d-grid gap-2">
           <button type="submit" class="btn btn-primary">Gerar Documento(s)</button>
-          <a href="/templates/index.html" class="btn btn-secondary">Voltar para Página Principal</a>
+          <a href="/" class="btn btn-secondary">Voltar para Página Principal</a>
         </div>
       </form>
     </div>
   </div>
 </div>
 
-<!-- Script para buscar no ViaCEP -->
 <script>
 document.getElementById('cep').addEventListener('blur', function() {
   let cep = this.value.replace(/\D/g, '');
-  
   if (cep.length === 8) {
     fetch(`https://viacep.com.br/ws/${cep}/json/`)
       .then(response => response.json())
@@ -159,6 +148,15 @@ document.getElementById('cep').addEventListener('blur', function() {
   } else {
     alert('CEP inválido.');
   }
+});
+
+// Preencher data automática por extenso
+document.addEventListener('DOMContentLoaded', function() {
+  const hoje = new Date();
+  const opcoes = { day: '2-digit', month: 'long', year: 'numeric' };
+  const dataFormatada = hoje.toLocaleDateString('pt-BR', opcoes);
+  const [dia, mes, ano] = dataFormatada.split(' de ');
+  document.getElementById('data').value = `${dia} de ${mes.toLowerCase()} de ${ano}`;
 });
 </script>
 </body>

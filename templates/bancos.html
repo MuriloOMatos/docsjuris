@@ -1,0 +1,13 @@
+<h2>Bancos Cadastrados</h2>
+
+<form method="POST" action="{{ url_for('adicionar_banco') }}">
+    <input type="text" name="codigo_banco" placeholder="Código do Banco" required>
+    <input type="text" name="nome_banco" placeholder="Nome do Banco" required>
+    <button type="submit">Adicionar</button>
+</form>
+
+<ul>
+{% for banco in bancos %}
+    <li>{{ banco.codigo_banco }} - {{ banco.nome_banco }}</li>
+{% endfor %}
+</ul>

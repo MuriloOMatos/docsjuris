@@ -15,6 +15,23 @@ from werkzeug.security import generate_password_hash, check_password_hash
 import logging
 import zipfile
 import tempfile
+import psycopg2
+from psycopg2.extras import RealDictCursor
+
+# ============================
+# Conexão com PostgreSQL
+# ============================
+
+def get_db_connection():
+    return psycopg2.connect(
+        host=os.getenv("DB_HOST"),
+        database=os.getenv("DB_NAME"),
+        user=os.getenv("DB_USER"),
+        password=os.getenv("DB_PASSWORD"),
+        port=os.getenv("DB_PORT"),
+        cursor_factory=RealDictCursor
+    )
+
 
 # Configuração de logging (deve vir antes de usar app.logger)
 logging.basicConfig(level=logging.DEBUG)
@@ -120,6 +137,51 @@ def get_bacen_taxa_atual():
     except Exception as e:
         app.logger.error(f"Erro ao buscar taxa atual BACEN: {str(e)}")
         return None
+@app.route('/bancos')
+@login_required
+def listar_bancos():
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("SELECT * FROM bancos ORDER BY nome_banco ASC")
+    bancos = cur.fetchall()
+    cur.close()
+    conn.close()
+    return render_template('bancos.html', bancos=bancos)
+
+@app.route('/bancos/adicionar', methods=['POST'])
+@login_required
+def adicionar_banco():
+    codigo = request.form.get('codigo_banco')
+    nome = request.form.get('nome_banco')
+
+    if not codigo or not nome:
+        return "Código e Nome do banco são obrigatórios.", 400
+
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute(
+        "INSERT INTO bancos (codigo_banco, nome_banco) VALUES (%s, %s)",
+        (codigo, nome)
+    )
+    conn.commit()
+    cur.close()
+    conn.close()
+    return redirect(url_for('listar_bancos'))
+
+# ============================
+# Ajuste rota documentos para enviar lista de bancos
+# ============================
+@app.route('/documentos')
+@login_required
+def documentos():
+    app.logger.debug("Acessando rota /documentos")
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("SELECT * FROM bancos ORDER BY nome_banco ASC")
+    bancos = cur.fetchall()
+    cur.close()
+    conn.close()
+    return render_template('documentos.html', bancos=bancos)
 
 def calcular_diferenca(valor, taxa_contrato, taxa_media, parcelas):
     try:
