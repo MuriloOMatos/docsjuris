@@ -159,6 +159,13 @@ def adicionar_banco():
 
     conn = get_db_connection()
     cur = conn.cursor()
+    # Verificar se o código já existe para evitar duplicatas
+    cur.execute("SELECT 1 FROM bancos WHERE codigo_banco = %s", (codigo,))
+    if cur.fetchone():
+        cur.close()
+        conn.close()
+        return "Código do banco já existe.", 400
+
     cur.execute(
         "INSERT INTO bancos (codigo_banco, nome_banco) VALUES (%s, %s)",
         (codigo, nome)
@@ -177,10 +184,12 @@ def documentos():
     app.logger.debug("Acessando rota /documentos")
     conn = get_db_connection()
     cur = conn.cursor()
-    cur.execute("SELECT * FROM bancos ORDER BY nome_banco ASC")
-    bancos = cur.fetchall()
-    cur.close()
-    conn.close()
+    try:
+        cur.execute("SELECT * FROM bancos ORDER BY nome_banco ASC")
+        bancos = cur.fetchall()
+    finally:
+        cur.close()
+        conn.close()
     return render_template('documentos.html', bancos=bancos)
 
 def calcular_diferenca(valor, taxa_contrato, taxa_media, parcelas):
@@ -205,14 +214,17 @@ def validar_dados_entrada(form):
         if field not in form:
             raise ValueError(f"Campo obrigatório '{field}' ausente")
     
-    renda_mensal = Decimal(form['renda_mensal'].replace(",", "."))
-    parcela_pessoal = Decimal(form['parcela_pessoal'].replace(",", "."))
-    if renda_mensal <= 0 or parcela_pessoal < 0:
-        raise ValueError("Renda mensal deve ser positiva e parcela pessoal não pode ser negativa")
-    
-    num_emprestimos = int(form['modelo_peticao'])
-    if num_emprestimos not in [1, 2, 3]:
-        raise ValueError("Número de empréstimos inválido (deve ser 1, 2 ou 3)")
+    try:
+        renda_mensal = Decimal(form['renda_mensal'].replace(",", "."))
+        parcela_pessoal = Decimal(form['parcela_pessoal'].replace(",", "."))
+        if renda_mensal <= 0 or parcela_pessoal < 0:
+            raise ValueError("Renda mensal deve ser positiva e parcela pessoal não pode ser negativa")
+        
+        num_emprestimos = int(form['modelo_peticao'])
+        if num_emprestimos not in [1, 2, 3]:
+            raise ValueError("Número de empréstimos inválido (deve ser 1, 2 ou 3)")
+    except (ValueError, InvalidOperation) as e:
+        raise ValueError(f"Erro na validação de dados: {str(e)}")
     
     return num_emprestimos
 
@@ -220,21 +232,9 @@ def calculos_emprestimo(form, num_emprestimos):
     emprestimos = []
     total_consignado = Decimal('0')
     total_emprestimo_geral = Decimal('0')
-    def_emprestimos = Decimal('0')
-    parcela_pessoal_atual = Decimal('0')
-    dif_bacen = Decimal('0')
-    vlr_total_emprestimo1 = Decimal('0')
-    vlr_total_emprestimo2 = Decimal('0')
-    org_bacen = Decimal('0')
-    org_div = Decimal('0')
-    total_dobro = Decimal('0')
-    dadovalorcausa = Decimal('0')
-    valor_causa = Decimal('0')
-    comprometimento_renda = Decimal('0')
-    renda_mensal = form['renda_mensal'].replace(",", ".")
-    parcela_pessoal = form['parcela_pessoal'].replace(",", ".")
-    renda_mensal = Decimal(renda_mensal)
     total_dobro_geral = Decimal('0')
+    renda_mensal = Decimal(form['renda_mensal'].replace(",", "."))
+    parcela_pessoal = Decimal(form['parcela_pessoal'].replace(",", "."))
     
     for i in range(num_emprestimos):
         prefix = f'emprestimos[{i}]'
@@ -250,36 +250,60 @@ def calculos_emprestimo(form, num_emprestimos):
         if taxa_media is None:
             raise ValueError(f"Não foi possível obter a taxa média para o empréstimo {i+1} ({emp_data})")
         
-        valor = form.get(f'{prefix}[valor]', '0').replace(",", ".")
-        parcela = form.get(f'{prefix}[parcela_consignada]', '0').replace(",", ".")
-        parcelas = form.get(f'{prefix}[parcelas]', '0')
-        taxa_contrato = form.get(f'{prefix}[taxa]', '0').replace(",", ".")
-        total_emprestimo = Decimal(parcela) * Decimal(parcelas)
-        def_emprestimos = total_emprestimo / Decimal(valor)
-        parcela_pessoal_atual = Decimal(valor) * ((Decimal(taxa_media) / 100) / (1 - (1 + Decimal(taxa_media) / 100) ** -Decimal(parcelas)))
-        total_emprestimo_bacen = Decimal(parcela_pessoal_atual) * Decimal(parcelas)
-        dif_bacen = Decimal(valor) / Decimal(parcela_pessoal_atual)
-        vlr_total_emprestimo1 = Decimal(valor) * (1 + Decimal(taxa_media) / 100) ** Decimal(parcelas)
-        vlr_total_emprestimo2 = Decimal(valor) * (1 + Decimal(taxa_contrato) / 100) ** Decimal(parcelas)
-        org_bacen = (total_emprestimo - total_emprestimo_bacen)
+        # Obter e validar valores antes de cálculos
+        valor_str = form.get(f'{prefix}[valor]', '0').replace(",", ".")
+        parcela_str = form.get(f'{prefix}[parcela_consignada]', '0').replace(",", ".")
+        parcelas_str = form.get(f'{prefix}[parcelas]', '0')
+        taxa_contrato_str = form.get(f'{prefix}[taxa]', '0').replace(",", ".")
+        
+        try:
+            valor = Decimal(valor_str)
+            parcela = Decimal(parcela_str)
+            parcelas = Decimal(parcelas_str)
+            taxa_contrato = Decimal(taxa_contrato_str)
+            
+            if not all(x > 0 for x in [valor, parcela, parcelas, taxa_contrato]):
+                raise ValueError(f"Valores do empréstimo {i+1} devem ser positivos")
+            
+            if Decimal(str(taxa_media)) <= 0:
+                raise ValueError(f"Taxa média BACEN deve ser positiva para empréstimo {i+1}")
+        except (ValueError, InvalidOperation) as e:
+            raise ValueError(f"Erro nos valores do empréstimo {i+1}: {str(e)}")
+        
+        # Cálculos
+        total_emprestimo = parcela * parcelas
+        total_emprestimo_geral += total_emprestimo
+        
+        def_emprestimos = total_emprestimo / valor if valor != 0 else Decimal('0')
+        
+        taxa_media_dec = Decimal(str(taxa_media)) / 100
+        parcela_pessoal_atual = valor * (taxa_media_dec / (1 - (1 + taxa_media_dec) ** -parcelas)) if (1 + taxa_media_dec) ** -parcelas != 1 else Decimal('0')
+        
+        total_emprestimo_bacen = parcela_pessoal_atual * parcelas
+        
+        dif_bacen = valor / parcela_pessoal_atual if parcela_pessoal_atual != 0 else Decimal('0')
+        
+        taxa_contrato_dec = taxa_contrato / 100
+        vlr_total_emprestimo1 = valor * (1 + Decimal(str(taxa_media)) / 100) ** parcelas
+        vlr_total_emprestimo2 = valor * (1 + taxa_contrato_dec) ** parcelas
+        
+        org_bacen = abs(total_emprestimo - total_emprestimo_bacen)  # Usar abs para evitar negativos
+        
         org_div = (total_emprestimo_geral / vlr_total_emprestimo1) if vlr_total_emprestimo1 != 0 else Decimal('0')
+        
         total_dobro = org_bacen * 2
         total_dobro_geral += total_dobro
-        dadovalorcausa = total_dobro_geral + Decimal(5000)
-        valor_causa += Decimal(5000) + Decimal(total_dobro)
-        comprometimento_renda = Decimal(parcela) + Decimal(parcela_pessoal)
-        comprometimento_porcentagem = Decimal(comprometimento_renda) / Decimal(renda_mensal) * 100
-        renda_atual = Decimal(renda_mensal) - Decimal(parcela_pessoal) - Decimal(parcela)
         
-        if not all(Decimal(x) > 0 for x in [valor, parcela, parcelas, taxa_contrato]):
-            raise ValueError(f"Valores do empréstimo {i+1} devem ser positivos")
+        comprometimento_renda = parcela + parcela_pessoal
+        comprometimento_porcentagem = (comprometimento_renda / renda_mensal * 100) if renda_mensal != 0 else Decimal('0')
+        renda_atual = renda_mensal - parcela_pessoal - parcela
         
         emprestimo = {
             'data': emp_data,
-            'valor': valor,
-            'parcela': parcela,
-            'parcelas': parcelas,
-            'taxa': taxa_contrato,
+            'valor': valor_str,
+            'parcela': parcela_str,
+            'parcelas': parcelas_str,
+            'taxa': taxa_contrato_str,
             'taxa_media': f"{taxa_media:.2f}",
             'diferenca': f"{calcular_diferenca(valor, taxa_contrato, taxa_media, parcelas):.2f}",
             'total_emprestimo': f"{total_emprestimo:.2f}",
@@ -291,8 +315,8 @@ def calculos_emprestimo(form, num_emprestimos):
             'org_bacen': f"{org_bacen:.2f}",
             'org_div': f"{org_div:.2f}",
             'total_dobro': f"{total_dobro:.2f}",
-            'valor_causa': f"{valor_causa:.2f}",
-            'dadovalorcausa': f"0.00",
+            'valor_causa': f"{Decimal('5000') + total_dobro:.2f}",  # Por empréstimo
+            'dadovalorcausa': f"0.00",  # Será atualizado depois
             'comprometimento_renda': f"{comprometimento_renda:.2f}",
             'comprometimento_porcentagem': f"{comprometimento_porcentagem:.2f}",
             'renda_atual': f"{renda_atual:.2f}",
@@ -300,11 +324,13 @@ def calculos_emprestimo(form, num_emprestimos):
         }
         
         emprestimos.append(emprestimo)
-        total_consignado += Decimal(parcela)
+        total_consignado += parcela
         
-    dadovalorcausa = total_dobro_geral + Decimal(5000)
+    dadovalorcausa = total_dobro_geral + Decimal('5000')
+    valor_causa = dadovalorcausa  # Ajuste para consistência
+    
     for emp in emprestimos:
-        emp['dadovalorcausa'] = f"{dadovalorcausa:.2f}"    
+        emp['dadovalorcausa'] = f"{dadovalorcausa:.2f}"
     
     return emprestimos, total_consignado, total_emprestimo_geral, def_emprestimos, parcela_pessoal_atual, dif_bacen, vlr_total_emprestimo1, vlr_total_emprestimo2, org_bacen, org_div, total_dobro, valor_causa, comprometimento_renda, renda_atual, comprometimento_porcentagem, total_emprestimo_bacen, total_dobro_geral, dadovalorcausa
 
@@ -360,12 +386,12 @@ def index():
 
 def format_brl(valor):
     try:
-        valor_dec = Decimal(valor)
+        valor_dec = Decimal(str(valor))
         s = f"{valor_dec:,.2f}"
         s = s.replace(",", "X").replace(".", ",").replace("X", ".")
         return f"R$ {s}"
     except Exception:
-        return valor
+        return str(valor)
 
 @app.route('/gerar-peticao', methods=['POST'])
 @login_required
@@ -379,7 +405,7 @@ def gerar_peticao():
             'parcela_pessoal': request.form['parcela_pessoal'].replace(",", "."),
         }
         
-        emprestimos, total_consignado, total_emprestimo_geral, def_emprestimos, parcela_pessoal_atual, dif_bacen, vlr_total_emprestimo1, vlr_total_emprestimo2, org_bacen, org_div, total_dobro, total_dobro_geral, valor_causa, comprometimento_renda, renda_atual, comprometimento_porcentagem, total_emprestimo_bacen, dadovalorcausa = calculos_emprestimo(request.form, num_emprestimos)
+        emprestimos, total_consignado, total_emprestimo_geral, def_emprestimos, parcela_pessoal_atual, dif_bacen, vlr_total_emprestimo1, vlr_total_emprestimo2, org_bacen, org_div, total_dobro, valor_causa, comprometimento_renda, renda_atual, comprometimento_porcentagem, total_emprestimo_bacen, total_dobro_geral, dadovalorcausa = calculos_emprestimo(request.form, num_emprestimos)
         
         for emp in emprestimos:
             emp['valor'] = format_brl(emp['valor'])
@@ -398,8 +424,8 @@ def gerar_peticao():
             emp['dadovalorcausa'] = format_brl(emp['dadovalorcausa'])
             
         dados['emprestimos'] = emprestimos
-        renda = Decimal(request.form['renda_mensal'].replace(",", "."))
-        parcela_pessoal = Decimal(request.form['parcela_pessoal'].replace(",", "."))
+        renda = Decimal(dados['renda_mensal'])
+        parcela_pessoal = Decimal(dados['parcela_pessoal'])
 
         dados['valor_liquido'] = format_brl(renda - parcela_pessoal - total_consignado)
         dados['diario'] = format_brl((renda - parcela_pessoal - total_consignado) / 30)
@@ -458,11 +484,11 @@ def flatten_dict(d, parent_key='', sep='_'):
     return dict(items)
 
 # Rotas para documentos
-@app.route('/documentos_old')
-@login_required
-def documentos():
-    app.logger.debug("Acessando rota /documentos")
-    return render_template('documentos.html')
+#@app.route('/documentos_old')
+#@login_required
+#def documentos_old():
+#    app.logger.debug("Acessando rota /documentos_old")
+#    return render_template('documentos.html')
 
 @app.route('/documentos/gerar', methods=['POST'])
 @login_required
@@ -502,27 +528,30 @@ def gerar_documentos():
                             cell.text = cell.text.replace(f'{{{{{chave}}}}}', bleach.clean(valor))
 
             # Arquivos temporários
-            with tempfile.NamedTemporaryFile(suffix='.docx', delete=False) as temp_docx:
-                doc.save(temp_docx.name)
-                temp_docx.close()
+            temp_docx = None
+            temp_pdf_path = None
+            try:
+                with tempfile.NamedTemporaryFile(suffix='.docx', delete=False) as temp_docx:
+                    doc.save(temp_docx.name)
 
                 # Converter para PDF com LibreOffice headless
-                try:
-                    app.logger.debug(f"Convertendo {temp_docx.name} para PDF com LibreOffice")
-                    subprocess.run([
-                        'soffice', '--headless',
-                        '--convert-to', 'pdf',
-                        '--outdir', os.path.dirname(temp_docx.name),
-                        temp_docx.name
-                    ], check=True)
-                    temp_pdf_path = os.path.splitext(temp_docx.name)[0] + '.pdf'
-                    with open(temp_pdf_path, 'rb') as pdf_file:
-                        zipf.writestr(f"{doc_tipo}.pdf", pdf_file.read())
-                    os.unlink(temp_pdf_path)
-                except Exception as e:
-                    app.logger.error(f"Erro ao converter {doc_tipo}.docx para PDF: {str(e)}")
-                finally:
+                app.logger.debug(f"Convertendo {temp_docx.name} para PDF com LibreOffice")
+                subprocess.run([
+                    'soffice', '--headless',
+                    '--convert-to', 'pdf',
+                    '--outdir', os.path.dirname(temp_docx.name),
+                    temp_docx.name
+                ], check=True)
+                temp_pdf_path = os.path.splitext(temp_docx.name)[0] + '.pdf'
+                with open(temp_pdf_path, 'rb') as pdf_file:
+                    zipf.writestr(f"{doc_tipo}.pdf", pdf_file.read())
+            except Exception as e:
+                app.logger.error(f"Erro ao converter {doc_tipo}.docx para PDF: {str(e)}")
+            finally:
+                if temp_docx:
                     os.unlink(temp_docx.name)
+                if temp_pdf_path and os.path.exists(temp_pdf_path):
+                    os.unlink(temp_pdf_path)
 
     zip_buffer.seek(0)
     if zip_buffer.getbuffer().nbytes == 0:
