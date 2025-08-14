@@ -1,6 +1,6 @@
 from flask import Flask, render_template, request, send_file, abort, redirect, url_for, session
 from docx import Document
-import subprocess
+from docx2pdf import convert
 import io
 import os
 import requests
@@ -18,47 +18,49 @@ import tempfile
 import psycopg2
 from psycopg2.extras import RealDictCursor
 
-# ============================
-# Conexão com PostgreSQL
-# ============================
+# Lista de templates válidos
+VALID_TEMPLATES = [
+    'declaracao_hiposuficencia',
+    'contratos_honorarios',
+    'declaracao_contrato_digital',
+    'declaracao_procuradores'
+]
 
-def get_db_connection():
-    return psycopg2.connect(
-        host=os.getenv("DB_HOST"),
-        database=os.getenv("DB_NAME"),
-        user=os.getenv("DB_USER"),
-        password=os.getenv("DB_PASSWORD"),
-        port=os.getenv("DB_PORT"),
-        cursor_factory=RealDictCursor
-    )
-
-
-# Configuração de logging (deve vir antes de usar app.logger)
+# Configuração de logging
 logging.basicConfig(level=logging.DEBUG)
 
-# Inicialização do Flask (apenas uma vez)
+# Inicialização do Flask
 app = Flask(__name__)
-app.secret_key = os.getenv('SECRET_KEY', 'sua_chave_secreta_aqui')
+app.secret_key = os.getenv('SECRET_KEY', os.urandom(24).hex())
 
 # Usuários fictícios
 USERS = {
-    'GMadvogados': generate_password_hash('GM1252')  # Substitua por sua senha
+    'GMadvogados': generate_password_hash('GM1252')
 }
 
 # Configuração via variável de ambiente
 SERIES_BACEN = {'pessoal_fisica': int(os.getenv('SERIE_BACEN', 25464))}
 
-# Criação de uma sessão HTTP com retry para robustez nas requisições
+# Sessão HTTP com retry
 http_session = requests.Session()
-retries = Retry(
-    total=3,
-    backoff_factor=0.3,
-    status_forcelist=[500, 502, 503, 504],
-    allowed_methods=["GET"]
-)
+retries = Retry(total=3, backoff_factor=0.3, status_forcelist=[500, 502, 503, 504], allowed_methods=["GET"])
 adapter = HTTPAdapter(max_retries=retries)
 http_session.mount("http://", adapter)
 http_session.mount("https://", adapter)
+
+def get_db_connection():
+    try:
+        return psycopg2.connect(
+            host=os.getenv("DB_HOST"),
+            database=os.getenv("DB_NAME"),
+            user=os.getenv("DB_USER"),
+            password=os.getenv("DB_PASSWORD"),
+            port=os.getenv("DB_PORT"),
+            cursor_factory=RealDictCursor
+        )
+    except psycopg2.Error as e:
+        app.logger.error(f"Erro ao conectar ao banco de dados: {str(e)}")
+        raise
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -86,7 +88,6 @@ def logout():
     session.pop('username', None)
     return redirect(url_for('login'))
 
-# Decorador para exigir login
 def login_required(f):
     def wrap(*args, **kwargs):
         if 'logged_in' not in session:
@@ -99,11 +100,11 @@ def login_required(f):
 def _obter_dados_api(url, params):
     headers = {'User-Agent': 'Python/AppRevisaoContratos'}
     try:
-        response = http_session.get(url, params=params, timeout=15, headers=headers)
+        response = http_session.get(url, params=params, timeout=10, headers=headers)
         response.raise_for_status()
         dados = response.json()
-        if not dados:
-            raise ValueError("Nenhum dado encontrado com os parâmetros fornecidos")
+        if not dados or 'valor' not in dados[0]:
+            raise ValueError("Nenhum dado válido retornado pela API")
         return dados
     except Exception as e:
         app.logger.error(f"Erro ao acessar API BACEN: {str(e)}")
@@ -125,7 +126,7 @@ def get_bacen_taxa_historico(data_emprestimo):
         return float(dados[0]['valor'])
     except Exception as e:
         app.logger.error(f"Erro ao buscar taxa histórica BACEN: {str(e)}")
-        return None
+        return 0.01
 
 def get_bacen_taxa_atual():
     try:
@@ -136,17 +137,22 @@ def get_bacen_taxa_atual():
         return float(dados[0]['valor'])
     except Exception as e:
         app.logger.error(f"Erro ao buscar taxa atual BACEN: {str(e)}")
-        return None
+        return 0.01
+
 @app.route('/bancos')
 @login_required
 def listar_bancos():
-    conn = get_db_connection()
-    cur = conn.cursor()
-    cur.execute("SELECT * FROM bancos ORDER BY nome_banco ASC")
-    bancos = cur.fetchall()
-    cur.close()
-    conn.close()
-    return render_template('bancos.html', bancos=bancos)
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor()
+        cur.execute("SELECT * FROM bancos ORDER BY nome_banco ASC")
+        bancos = cur.fetchall()
+        cur.close()
+        conn.close()
+        return render_template('bancos.html', bancos=bancos)
+    except psycopg2.Error as e:
+        app.logger.error(f"Erro ao acessar bancos: {str(e)}")
+        return render_template('bancos.html', bancos=[], error="Erro ao carregar bancos")
 
 @app.route('/bancos/adicionar', methods=['POST'])
 @login_required
@@ -157,39 +163,36 @@ def adicionar_banco():
     if not codigo or not nome:
         return "Código e Nome do banco são obrigatórios.", 400
 
-    conn = get_db_connection()
-    cur = conn.cursor()
-    # Verificar se o código já existe para evitar duplicatas
-    cur.execute("SELECT 1 FROM bancos WHERE codigo_banco = %s", (codigo,))
-    if cur.fetchone():
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor()
+        cur.execute("SELECT 1 FROM bancos WHERE codigo_banco = %s", (codigo,))
+        if cur.fetchone():
+            cur.close()
+            conn.close()
+            return "Código do banco já existe.", 400
+
+        cur.execute(
+            "INSERT INTO bancos (codigo_banco, nome_banco) VALUES (%s, %s)",
+            (codigo, nome)
+        )
+        conn.commit()
         cur.close()
         conn.close()
-        return "Código do banco já existe.", 400
+        return redirect(url_for('listar_bancos'))
+    except psycopg2.Error as e:
+        app.logger.error(f"Erro ao adicionar banco: {str(e)}")
+        return "Erro ao adicionar banco.", 500
 
-    cur.execute(
-        "INSERT INTO bancos (codigo_banco, nome_banco) VALUES (%s, %s)",
-        (codigo, nome)
-    )
-    conn.commit()
-    cur.close()
-    conn.close()
-    return redirect(url_for('listar_bancos'))
-
-# ============================
-# Ajuste rota documentos para enviar lista de bancos
-# ============================
 @app.route('/documentos')
 @login_required
 def documentos():
-    app.logger.debug("Acessando rota /documentos")
-    conn = get_db_connection()
-    cur = conn.cursor()
-    try:
-        cur.execute("SELECT * FROM bancos ORDER BY nome_banco ASC")
-        bancos = cur.fetchall()
-    finally:
-        cur.close()
-        conn.close()
+    app.logger.debug("Acessando rota /documentos com banco desativado temporariamente")
+    # Simulação de dados sem banco de dados
+    bancos = [
+        {"codigo_banco": "001", "nome_banco": "Banco do Brasil (Teste)"},
+        {"codigo_banco": "104", "nome_banco": "Caixa Econômica (Teste)"}
+    ]
     return render_template('documentos.html', bancos=bancos)
 
 def calcular_diferenca(valor, taxa_contrato, taxa_media, parcelas):
@@ -250,7 +253,6 @@ def calculos_emprestimo(form, num_emprestimos):
         if taxa_media is None:
             raise ValueError(f"Não foi possível obter a taxa média para o empréstimo {i+1} ({emp_data})")
         
-        # Obter e validar valores antes de cálculos
         valor_str = form.get(f'{prefix}[valor]', '0').replace(",", ".")
         parcela_str = form.get(f'{prefix}[parcela_consignada]', '0').replace(",", ".")
         parcelas_str = form.get(f'{prefix}[parcelas]', '0')
@@ -270,7 +272,6 @@ def calculos_emprestimo(form, num_emprestimos):
         except (ValueError, InvalidOperation) as e:
             raise ValueError(f"Erro nos valores do empréstimo {i+1}: {str(e)}")
         
-        # Cálculos
         total_emprestimo = parcela * parcelas
         total_emprestimo_geral += total_emprestimo
         
@@ -287,7 +288,7 @@ def calculos_emprestimo(form, num_emprestimos):
         vlr_total_emprestimo1 = valor * (1 + Decimal(str(taxa_media)) / 100) ** parcelas
         vlr_total_emprestimo2 = valor * (1 + taxa_contrato_dec) ** parcelas
         
-        org_bacen = abs(total_emprestimo - total_emprestimo_bacen)  # Usar abs para evitar negativos
+        org_bacen = abs(total_emprestimo - total_emprestimo_bacen)
         
         org_div = (total_emprestimo_geral / vlr_total_emprestimo1) if vlr_total_emprestimo1 != 0 else Decimal('0')
         
@@ -315,8 +316,8 @@ def calculos_emprestimo(form, num_emprestimos):
             'org_bacen': f"{org_bacen:.2f}",
             'org_div': f"{org_div:.2f}",
             'total_dobro': f"{total_dobro:.2f}",
-            'valor_causa': f"{Decimal('5000') + total_dobro:.2f}",  # Por empréstimo
-            'dadovalorcausa': f"0.00",  # Será atualizado depois
+            'valor_causa': f"{Decimal('5000') + total_dobro:.2f}",
+            'dadovalorcausa': f"0.00",
             'comprometimento_renda': f"{comprometimento_renda:.2f}",
             'comprometimento_porcentagem': f"{comprometimento_porcentagem:.2f}",
             'renda_atual': f"{renda_atual:.2f}",
@@ -327,7 +328,7 @@ def calculos_emprestimo(form, num_emprestimos):
         total_consignado += parcela
         
     dadovalorcausa = total_dobro_geral + Decimal('5000')
-    valor_causa = dadovalorcausa  # Ajuste para consistência
+    valor_causa = dadovalorcausa
     
     for emp in emprestimos:
         emp['dadovalorcausa'] = f"{dadovalorcausa:.2f}"
@@ -336,8 +337,9 @@ def calculos_emprestimo(form, num_emprestimos):
 
 def gerar_documento(dados, num_emprestimos):
     template_path = os.path.abspath(os.path.join("modelos", f"modelo_{num_emprestimos}.docx"))
-    if not template_path.startswith(os.path.abspath("modelos")) or not os.path.exists(template_path):
-        raise FileNotFoundError("Modelo de documento inválido ou não encontrado")
+    if not os.path.exists(template_path):
+        app.logger.error(f"Template {template_path} não encontrado")
+        raise FileNotFoundError(f"Modelo de documento modelo_{num_emprestimos}.docx não encontrado")
     
     doc = Document(template_path)
     replacements = {
@@ -371,10 +373,7 @@ def index():
     app.logger.debug("Acessando rota /")
     try:
         taxa_atual = get_bacen_taxa_atual()
-        if taxa_atual is None:
-            taxa_atual_display = "Indisponível"
-        else:
-            taxa_atual_display = f"{taxa_atual:.2f}%"
+        taxa_atual_display = f"{taxa_atual:.2f}%" if taxa_atual is not None else "Indisponível"
         bacen_data = {
             'taxa': taxa_atual_display,
             'data_atualizacao': datetime.now().strftime('%d/%m/%Y')
@@ -483,13 +482,6 @@ def flatten_dict(d, parent_key='', sep='_'):
                 items.append((new_key, v))
     return dict(items)
 
-# Rotas para documentos
-#@app.route('/documentos_old')
-#@login_required
-#def documentos_old():
-#    app.logger.debug("Acessando rota /documentos_old")
-#    return render_template('documentos.html')
-
 @app.route('/documentos/gerar', methods=['POST'])
 @login_required
 def gerar_documentos():
@@ -499,21 +491,19 @@ def gerar_documentos():
         app.logger.error("Nenhum documento selecionado")
         abort(400, 'Nenhum documento selecionado.')
 
+    selecionados = [doc for doc in selecionados if doc in VALID_TEMPLATES]
+    if not selecionados:
+        app.logger.error("Nenhum documento válido selecionado")
+        abort(400, 'Nenhum documento válido selecionado.')
+
     placeholders = {key: request.form.get(key, '') for key in request.form.keys() if key != 'documentos'}
 
     zip_buffer = io.BytesIO()
     with zipfile.ZipFile(zip_buffer, 'w') as zipf:
         for doc_tipo in selecionados:
-            # Determinar template (pode ser .docx ou .pdf)
             docx_path = os.path.join('modelos', f"{doc_tipo}.docx")
-            pdf_path_orig = os.path.join('modelos', f"{doc_tipo}.pdf")
-            if os.path.exists(pdf_path_orig):
-                # Se for PDF original, adiciona direto
-                with open(pdf_path_orig, 'rb') as f:
-                    zipf.writestr(f"{doc_tipo}.pdf", f.read())
-                continue
-            elif not os.path.exists(docx_path):
-                app.logger.warning(f"Template {doc_tipo} não encontrado (.docx ou .pdf).")
+            if not os.path.exists(docx_path):
+                app.logger.warning(f"Template {doc_tipo}.docx não encontrado.")
                 continue
 
             # Preencher DOCX
@@ -534,21 +524,18 @@ def gerar_documentos():
                 with tempfile.NamedTemporaryFile(suffix='.docx', delete=False) as temp_docx:
                     doc.save(temp_docx.name)
 
-                # Converter para PDF com LibreOffice headless
-                app.logger.debug(f"Convertendo {temp_docx.name} para PDF com LibreOffice")
-                subprocess.run([
-                    'soffice', '--headless',
-                    '--convert-to', 'pdf',
-                    '--outdir', os.path.dirname(temp_docx.name),
-                    temp_docx.name
-                ], check=True)
                 temp_pdf_path = os.path.splitext(temp_docx.name)[0] + '.pdf'
+                convert(temp_docx.name, temp_pdf_path)
+                if not os.path.exists(temp_pdf_path):
+                    app.logger.error(f"Falha ao gerar PDF para {doc_tipo}.docx")
+                    continue
                 with open(temp_pdf_path, 'rb') as pdf_file:
                     zipf.writestr(f"{doc_tipo}.pdf", pdf_file.read())
             except Exception as e:
                 app.logger.error(f"Erro ao converter {doc_tipo}.docx para PDF: {str(e)}")
+                continue
             finally:
-                if temp_docx:
+                if temp_docx and os.path.exists(temp_docx.name):
                     os.unlink(temp_docx.name)
                 if temp_pdf_path and os.path.exists(temp_pdf_path):
                     os.unlink(temp_pdf_path)
@@ -556,7 +543,7 @@ def gerar_documentos():
     zip_buffer.seek(0)
     if zip_buffer.getbuffer().nbytes == 0:
         app.logger.error("Nenhum arquivo PDF foi gerado para incluir no ZIP.")
-        abort(500, "Erro: Nenhum documento foi gerado.")
+        abort(500, "Erro: Nenhum documento foi gerado. Verifique se os arquivos .docx estão na pasta 'modelos' e se a conversão para PDF está funcionando.")
 
     app.logger.debug("Arquivo ZIP gerado com sucesso")
     return send_file(
@@ -567,4 +554,4 @@ def gerar_documentos():
     )
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=True, port=5000)
