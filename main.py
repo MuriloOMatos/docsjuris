@@ -458,7 +458,7 @@ def flatten_dict(d, parent_key='', sep='_'):
     return dict(items)
 
 # Rotas para documentos
-@app.route('/documentos')
+@app.route('/documentos_old')
 @login_required
 def documentos():
     app.logger.debug("Acessando rota /documentos")
