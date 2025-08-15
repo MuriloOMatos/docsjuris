@@ -1,6 +1,5 @@
 from flask import Flask, render_template, request, send_file, abort, redirect, url_for, session
 from docx import Document
-from docx2pdf import convert
 import io
 import os
 import requests
@@ -23,8 +22,11 @@ VALID_TEMPLATES = [
     'declaracao_hiposuficencia',
     'contratos_honorarios',
     'declaracao_contrato_digital',
-    'declaracao_procuradores'
+    'declaracao_procuradores',
+    'declaracao_ir',
+    'procuracao'
 ]
+
 
 # Configuração de logging
 logging.basicConfig(level=logging.DEBUG)
@@ -517,34 +519,24 @@ def gerar_documentos():
                         for chave, valor in placeholders.items():
                             cell.text = cell.text.replace(f'{{{{{chave}}}}}', bleach.clean(valor))
 
-            # Arquivos temporários
-            temp_docx = None
-            temp_pdf_path = None
-            try:
-                with tempfile.NamedTemporaryFile(suffix='.docx', delete=False) as temp_docx:
-                    doc.save(temp_docx.name)
-
-                temp_pdf_path = os.path.splitext(temp_docx.name)[0] + '.pdf'
-                convert(temp_docx.name, temp_pdf_path)
-                if not os.path.exists(temp_pdf_path):
-                    app.logger.error(f"Falha ao gerar PDF para {doc_tipo}.docx")
-                    continue
-                with open(temp_pdf_path, 'rb') as pdf_file:
-                    zipf.writestr(f"{doc_tipo}.pdf", pdf_file.read())
-            except Exception as e:
-                app.logger.error(f"Erro ao converter {doc_tipo}.docx para PDF: {str(e)}")
-                continue
-            finally:
-                if temp_docx and os.path.exists(temp_docx.name):
-                    os.unlink(temp_docx.name)
-                if temp_pdf_path and os.path.exists(temp_pdf_path):
-                    os.unlink(temp_pdf_path)
+            # Salvar DOCX em memória e adicionar no ZIP
+            output = io.BytesIO()
+            doc.save(output)
+            output.seek(0)
+            zipf.writestr(f"{doc_tipo}.docx", output.read())
 
     zip_buffer.seek(0)
-    if zip_buffer.getbuffer().nbytes == 0:
-        app.logger.error("Nenhum arquivo PDF foi gerado para incluir no ZIP.")
-        abort(500, "Erro: Nenhum documento foi gerado. Verifique se os arquivos .docx estão na pasta 'modelos' e se a conversão para PDF está funcionando.")
+    app.logger.debug("Arquivo ZIP gerado com sucesso")
+    return send_file(
+        zip_buffer,
+        mimetype='application/zip',
+        download_name='documentos.zip',
+        as_attachment=True
+    )
+                                            
 
+
+    
     app.logger.debug("Arquivo ZIP gerado com sucesso")
     return send_file(
         zip_buffer,

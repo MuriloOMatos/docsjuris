@@ -13,17 +13,17 @@
     </div>
     
     <div class="card-body">
-      <form action="/documentos/gerar" method="post">
+      <form id="form-documentos" action="/documentos/gerar" method="post">
         
         <!-- Seleção dos documentos -->
         <div class="mb-4">
           <label class="form-label fw-bold">Selecione os documentos que deseja gerar:</label>
           <div class="form-check">
-            <input class="form-check-input" type="checkbox" name="documentos" value="isencao_ir" id="isencao_ir">
+            <input class="form-check-input" type="checkbox" name="documentos" value="declaracao_ir" id="isencao_ir">
             <label class="form-check-label" for="isencao_ir">Isenção de IR</label>
           </div>
           <div class="form-check">
-            <input class="form-check-input" type="checkbox" name="documentos" value="foro" id="foro">
+            <input class="form-check-input" type="checkbox" name="documentos" value="declaracao_procuradores" id="foro">
             <label class="form-check-label" for="foro">Opção de Foro</label>
           </div>
           <div class="form-check">
@@ -35,11 +35,11 @@
             <label class="form-check-label" for="procuracao">Procuração</label>
           </div>
           <div class="form-check">
-            <input class="form-check-input" type="checkbox" name="documentos" value="contratacao_digital" id="contratacao_digital">
+            <input class="form-check-input" type="checkbox" name="documentos" value="declaracao_contrato_digital" id="contratacao_digital">
             <label class="form-check-label" for="contratacao_digital">Contratação Digital</label>
           </div>
           <div class="form-check mb-3">
-            <input class="form-check-input" type="checkbox" name="documentos" value="contrato_revisional" id="contrato_revisional">
+            <input class="form-check-input" type="checkbox" name="documentos" value="contratos_honorarios" id="contrato_revisional">
             <label class="form-check-label" for="contrato_revisional">Contrato Revisional</label>
           </div>
         </div>
@@ -52,7 +52,7 @@
           </div>
           <div class="col-md-6">
             <label for="cpf" class="form-label">CPF</label>
-            <input type="text" class="form-control" id="cpf" name="cpf" required>
+            <input type="text" class="form-control" id="cpf" name="CPF" required>
           </div>
           <div class="col-md-6">
             <label for="cidadania" class="form-label">Nacionalidade</label>
@@ -64,7 +64,7 @@
           </div>
           <div class="col-md-6">
             <label for="emprego" class="form-label">Profissão</label>
-            <input type="text" class="form-control" id="emprego" name="emprego" required>
+            <input type="text" class="form-control" id="emprego" name="profissao" required>
           </div>
           <div class="col-md-6">
             <label for="email" class="form-label">E-mail</label>
@@ -72,7 +72,7 @@
           </div>
           <div class="col-md-3">
             <label for="cep" class="form-label">CEP</label>
-            <input type="text" class="form-control" id="cep" name="cep" required>
+            <input type="text" class="form-control" id="cep" name="CEP" required>
           </div>
           <div class="col-md-6">
             <label for="rua" class="form-label">Rua</label>
@@ -107,6 +107,7 @@
           <div class="col-md-4">
             <label for="banco" class="form-label">Banco</label>
             <select name="banco" id="banco" class="form-control" required>
+              <option value="">Selecione um banco</option>
               {% for banco in bancos %}
                 <option value="{{ banco.nome_banco }}">{{ banco.codigo_banco }} - {{ banco.nome_banco }}</option>
               {% endfor %}
@@ -115,7 +116,7 @@
 
           <div class="col-md-4">
             <label for="data" class="form-label">Data</label>
-            <input type="text" class="form-control" id="data" name="data" required>
+            <input type="text" class="form-control" id="data" name="data_extenso" required>
           </div>
         </div>
 
@@ -129,6 +130,15 @@
 </div>
 
 <script>
+  // Validação para garantir que pelo menos um documento seja selecionado
+  document.getElementById('form-documentos').addEventListener('submit', function(event) {
+    const checkboxes = document.querySelectorAll('input[name="documentos"]:checked');
+    if (checkboxes.length === 0) {
+      event.preventDefault();
+      alert('Por favor, selecione pelo menos um documento.');
+    }
+  });
+
   // Busca de CEP
   document.getElementById('cep').addEventListener('blur', function() {
     let cep = this.value.replace(/\D/g, '');
@@ -201,7 +211,7 @@
     }
   });
 
-  // Validação ao enviar o formulário
+  // Validação do CPF ao enviar o formulário
   document.querySelector('form').addEventListener('submit', function(event) {
     const cpf = document.getElementById('cpf').value;
     if (!validarCPF(cpf)) {
