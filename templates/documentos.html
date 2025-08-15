@@ -201,15 +201,6 @@
     this.value = value;
   });
 
-  // Validação do CPF no campo
-  document.getElementById('cpf').addEventListener('blur', function() {
-    const cpf = this.value;
-    if (!validarCPF(cpf)) {
-      alert('CPF inválido. Por favor, insira um CPF válido.');
-      this.value = '';
-      this.focus();
-    }
-  });
 
   // Validação do CPF ao enviar o formulário
   document.querySelector('form').addEventListener('submit', function(event) {
