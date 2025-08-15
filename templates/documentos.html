@@ -27,7 +27,7 @@
             <label class="form-check-label" for="foro">Opção de Foro</label>
           </div>
           <div class="form-check">
-            <input class="form-check-input" type="checkbox" name="documentos" value="hipossuficiencia" id="hipossuficiencia">
+            <input class="form-check-input" type="checkbox" name="documentos" value="declaracao_hiposuficencia" id="hipossuficiencia">
             <label class="form-check-label" for="hipossuficiencia">Hipossuficiência</label>
           </div>
           <div class="form-check">
@@ -48,39 +48,39 @@
         <div class="row g-3">
           <div class="col-md-6">
             <label for="nome" class="form-label">Nome Completo</label>
-            <input type="text" class="form-control" id="nome" name="Nome" required>
+            <input type="text" class="form-control" id="nome" name="nome" required>
           </div>
           <div class="col-md-6">
             <label for="cpf" class="form-label">CPF</label>
-            <input type="text" class="form-control" id="cpf" name="CPF" required>
+            <input type="text" class="form-control" id="cpf" name="cpf" required>
           </div>
           <div class="col-md-6">
             <label for="cidadania" class="form-label">Nacionalidade</label>
-            <input type="text" class="form-control" id="cidadania" name="Cidadania" required>
+            <input type="text" class="form-control" id="cidadania" name="cidadania" required>
           </div>
           <div class="col-md-6">
             <label for="estado_civil" class="form-label">Estado Civil</label>
-            <input type="text" class="form-control" id="estado_civil" name="Estado_Civil" required>
+            <input type="text" class="form-control" id="estado_civil" name="estado_civil" required>
           </div>
           <div class="col-md-6">
             <label for="emprego" class="form-label">Profissão</label>
-            <input type="text" class="form-control" id="emprego" name="Emprego" required>
+            <input type="text" class="form-control" id="emprego" name="emprego" required>
           </div>
           <div class="col-md-6">
             <label for="email" class="form-label">E-mail</label>
-            <input type="email" class="form-control" id="email" name="EMAIL" required>
+            <input type="email" class="form-control" id="email" name="email" required>
           </div>
           <div class="col-md-3">
             <label for="cep" class="form-label">CEP</label>
-            <input type="text" class="form-control" id="cep" name="CEP" required>
+            <input type="text" class="form-control" id="cep" name="cep" required>
           </div>
           <div class="col-md-6">
             <label for="rua" class="form-label">Rua</label>
-            <input type="text" class="form-control" id="rua" name="Rua" required>
+            <input type="text" class="form-control" id="rua" name="rua" required>
           </div>
           <div class="col-md-3">
             <label for="numero" class="form-label">Número</label>
-            <input type="text" class="form-control" id="numero" name="Numero" required>
+            <input type="text" class="form-control" id="numero" name="numero" required>
           </div>
           <div class="col-md-6">
             <label for="complemento1" class="form-label">Complemento 1</label>
@@ -100,13 +100,13 @@
           </div>
           <div class="col-md-2">
             <label for="estado" class="form-label">UF</label>
-            <input type="text" class="form-control" id="estado" name="ESTADO" maxlength="2" required>
+            <input type="text" class="form-control" id="estado" name="estado" maxlength="2" required>
           </div>
 
           <!-- Campo Banco com dados do PostgreSQL -->
           <div class="col-md-4">
             <label for="banco" class="form-label">Banco</label>
-            <select name="Banco" id="banco" class="form-control" required>
+            <select name="banco" id="banco" class="form-control" required>
               {% for banco in bancos %}
                 <option value="{{ banco.nome_banco }}">{{ banco.codigo_banco }} - {{ banco.nome_banco }}</option>
               {% endfor %}
@@ -129,35 +129,86 @@
 </div>
 
 <script>
-document.getElementById('cep').addEventListener('blur', function() {
-  let cep = this.value.replace(/\D/g, '');
-  if (cep.length === 8) {
-    fetch(`https://viacep.com.br/ws/${cep}/json/`)
-      .then(response => response.json())
-      .then(data => {
-        if (!data.erro) {
-          document.getElementById('rua').value = data.logradouro || '';
-          document.getElementById('bairro').value = data.bairro || '';
-          document.getElementById('cidade').value = data.localidade || '';
-          document.getElementById('estado').value = data.uf || '';
-        } else {
-          alert('CEP não encontrado.');
-        }
-      })
-      .catch(() => alert('Erro ao buscar o CEP.'));
-  } else {
-    alert('CEP inválido.');
-  }
-});
+  // Busca de CEP
+  document.getElementById('cep').addEventListener('blur', function() {
+    let cep = this.value.replace(/\D/g, '');
+    if (cep.length === 8) {
+      fetch(`https://viacep.com.br/ws/${cep}/json/`)
+        .then(response => response.json())
+        .then(data => {
+          if (!data.erro) {
+            document.getElementById('rua').value = data.logradouro || '';
+            document.getElementById('bairro').value = data.bairro || '';
+            document.getElementById('cidade').value = data.localidade || '';
+            document.getElementById('estado').value = data.uf || '';
+          } else {
+            alert('CEP não encontrado.');
+          }
+        })
+        .catch(() => alert('Erro ao buscar o CEP.'));
+    } else {
+      alert('CEP inválido.');
+    }
+  });
 
-// Preencher data automática por extenso
-document.addEventListener('DOMContentLoaded', function() {
-  const hoje = new Date();
-  const opcoes = { day: '2-digit', month: 'long', year: 'numeric' };
-  const dataFormatada = hoje.toLocaleDateString('pt-BR', opcoes);
-  const [dia, mes, ano] = dataFormatada.split(' de ');
-  document.getElementById('data').value = `${dia} de ${mes.toLowerCase()} de ${ano}`;
-});
+  // Preencher data automática por extenso
+  document.addEventListener('DOMContentLoaded', function() {
+    const hoje = new Date();
+    const opcoes = { day: '2-digit', month: 'long', year: 'numeric' };
+    const dataFormatada = hoje.toLocaleDateString('pt-BR', opcoes);
+    const [dia, mes, ano] = dataFormatada.split(' de ');
+    document.getElementById('data').value = `${dia} de ${mes.toLowerCase()} de ${ano}`;
+  });
+
+  // Função para validar CPF
+  function validarCPF(cpf) {
+    cpf = cpf.replace(/[^\d]/g, '');
+    if (cpf.length !== 11) return false;
+    if (/^(\d)\1+$/.test(cpf)) return false;
+    let soma = 0;
+    for (let i = 0; i < 9; i++) {
+      soma += parseInt(cpf.charAt(i)) * (10 - i);
+    }
+    let resto = 11 - (soma % 11);
+    let digito1 = resto >= 10 ? 0 : resto;
+    if (digito1 !== parseInt(cpf.charAt(9))) return false;
+    soma = 0;
+    for (let i = 0; i < 10; i++) {
+      soma += parseInt(cpf.charAt(i)) * (11 - i);
+    }
+    resto = 11 - (soma % 11);
+    let digito2 = resto >= 10 ? 0 : resto;
+    return digito2 === parseInt(cpf.charAt(10));
+  }
+
+  // Máscara para o CPF
+  document.getElementById('cpf').addEventListener('input', function() {
+    let value = this.value.replace(/\D/g, '');
+    if (value.length > 11) value = value.slice(0, 11);
+    value = value.replace(/(\d{3})(\d)/, '$1.$2');
+    value = value.replace(/(\d{3})\.(\d{3})(\d)/, '$1.$2.$3');
+    value = value.replace(/(\d{3})\.(\d{3})\.(\d{3})(\d)/, '$1.$2.$3-$4');
+    this.value = value;
+  });
+
+  // Validação do CPF no campo
+  document.getElementById('cpf').addEventListener('blur', function() {
+    const cpf = this.value;
+    if (!validarCPF(cpf)) {
+      alert('CPF inválido. Por favor, insira um CPF válido.');
+      this.value = '';
+      this.focus();
+    }
+  });
+
+  // Validação ao enviar o formulário
+  document.querySelector('form').addEventListener('submit', function(event) {
+    const cpf = document.getElementById('cpf').value;
+    if (!validarCPF(cpf)) {
+      alert('CPF inválido. Corrija antes de enviar.');
+      event.preventDefault();
+    }
+  });
 </script>
 </body>
 </html>
