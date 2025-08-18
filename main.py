@@ -192,12 +192,12 @@ def documentos():
     app.logger.debug("Acessando rota /documentos com banco desativado temporariamente")
 
     bancos = [
-        {"codigo_banco": "01", "nome_banco": "Banco do Brasil.", "cnpj": "00.000.000/0001-00"},
-        {"codigo_banco": "02", "nome_banco": "Caixa Econômica.", "cnpj": "00.000.000/0001-91"},
-        {"codigo_banco": "03", "nome_banco": "Banco Mercantil do Brasil S.A.", "cnpj": "17.184.037/0001-10"},
-        {"codigo_banco": "04", "nome_banco": "Banco Crefisa S.A.", "cnpj": "61.033.106/0001-86"},
-        {"codigo_banco": "05", "nome_banco": "Banco BMG S.A.", "cnpj": "61.186.680/0001-74"},
-        {"codigo_banco": "06", "nome_banco": "Banco Agibank S.A.", "cnpj": "10.664.513/0001-50"}
+    {"codigo_banco": "01", "nome_banco": "banco do brasil.", "cnpj": "00.000.000/0001-00"},
+    {"codigo_banco": "02", "nome_banco": "caixa econômica.", "cnpj": "00.000.000/0001-91"},
+    {"codigo_banco": "03", "nome_banco": "banco mercantil do brasil s.a.", "cnpj": "17.184.037/0001-10"},
+    {"codigo_banco": "04", "nome_banco": "banco crefisa s.a.", "cnpj": "61.033.106/0001-86"},
+    {"codigo_banco": "05", "nome_banco": "banco bmg s.a.", "cnpj": "61.186.680/0001-74"},
+    {"codigo_banco": "06", "nome_banco": "banco agibank s.a.", "cnpj": "10.664.513/0001-50"}
     ]
 
     return render_template('documentos.html', bancos=bancos)

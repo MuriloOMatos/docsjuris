@@ -59,8 +59,16 @@
             <input type="text" class="form-control" id="cidadania" name="cidadania" required>
           </div>
           <div class="col-md-6">
-            <label for="estado_civil" class="form-label">Estado Civil</label>
-            <input type="text" class="form-control" id="estado_civil" name="estado_civil" required>
+              <label for="estado_civil" class="form-label">Estado Civil</label>
+              <select class="form-control" id="estado_civil" name="estado_civil" required>
+                <option value="">Selecione...</option>
+                <option value="solteiro">Solteiro(a)</option>
+                <option value="casado">Casado(a)</option>
+                <option value="separado judicialmente">Separado(a) judicialmente</option>
+                <option value="divorciado">Divorciado(a)</option>
+                <option value="viúvo">Viúvo(a)</option>
+                <option value="em união estável">Em união estável</option>
+              </select>
           </div>
           <div class="col-md-6">
             <label for="email" class="form-label">E-mail</label>
