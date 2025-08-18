@@ -539,17 +539,7 @@ def gerar_documentos():
         download_name='documentos.zip',
         as_attachment=True
     )
-                                            
 
-
-    
-    app.logger.debug("Arquivo ZIP gerado com sucesso")
-    return send_file(
-        zip_buffer,
-        mimetype='application/zip',
-        download_name='documentos.zip',
-        as_attachment=True
-    )
 
 if __name__ == '__main__':
     app.run(debug=True, port=5000)
