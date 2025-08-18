@@ -282,27 +282,18 @@ def calculos_emprestimo(form, num_emprestimos):
         
         total_emprestimo = parcela * parcelas
         total_emprestimo_geral += total_emprestimo
-        
         def_emprestimos = total_emprestimo / valor if valor != 0 else Decimal('0')
-        
         taxa_media_dec = Decimal(str(taxa_media)) / 100
         parcela_pessoal_atual = valor * (taxa_media_dec / (1 - (1 + taxa_media_dec) ** -parcelas)) if (1 + taxa_media_dec) ** -parcelas != 1 else Decimal('0')
-        
         total_emprestimo_bacen = parcela_pessoal_atual * parcelas
-        
         dif_bacen = valor / parcela_pessoal_atual if parcela_pessoal_atual != 0 else Decimal('0')
-        
         taxa_contrato_dec = taxa_contrato / 100
         vlr_total_emprestimo1 = valor * (1 + Decimal(str(taxa_media)) / 100) ** parcelas
         vlr_total_emprestimo2 = valor * (1 + taxa_contrato_dec) ** parcelas
-        
         org_bacen = abs(total_emprestimo - total_emprestimo_bacen)
-        
         org_div = (total_emprestimo_geral / vlr_total_emprestimo1) if vlr_total_emprestimo1 != 0 else Decimal('0')
-        
         total_dobro = org_bacen * 2
         total_dobro_geral += total_dobro
-        
         comprometimento_renda = parcela + parcela_pessoal
         comprometimento_porcentagem = (comprometimento_renda / renda_mensal * 100) if renda_mensal != 0 else Decimal('0')
         renda_atual = renda_mensal - parcela_pessoal - parcela
@@ -363,6 +354,7 @@ def gerar_documento(dados, num_emprestimos):
     # Dicionário de trechos que devem estar em negrito
     bold_sections = {
         "CONTRATADO: GUILHERME ESTEVES DOS SANTOS MORAES": True,
+        "AÇÃO REVISIONAL DE CONTRATO DE EMPRÉSTIMO PESSOAL NÃO CONSIGNADO, bem como, eventualmente, quando necessário, ingressar com ação judicial de exibição de documentos, EM FACE DO ": True
         # Adicione outros trechos que precisam de negrito aqui
     }
     
