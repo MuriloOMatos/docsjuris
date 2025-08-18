@@ -191,13 +191,14 @@ def documentos():
     app.logger.debug("Acessando rota /documentos com banco desativado temporariamente")
 
     bancos = [
-    
     {"codigo_banco": "01", "nome_banco": "BANCO DO BRASIL.", "cnpj": "00.000.000/0001-00"},
     {"codigo_banco": "02", "nome_banco": "CAIXA ECONÔMICA.", "cnpj": "00.000.000/0001-91"},
     {"codigo_banco": "03", "nome_banco": "BANCO MERCANTIL DO BRASIL S.A.", "cnpj": "17.184.037/0001-10"},
     {"codigo_banco": "04", "nome_banco": "BANCO CREFISA S.A.", "cnpj": "61.033.106/0001-86"},
     {"codigo_banco": "05", "nome_banco": "BANCO BMG S.A.", "cnpj": "61.186.680/0001-74"},
-    {"codigo_banco": "06", "nome_banco": "BANCO AGIBANK S.A.", "cnpj": "10.664.513/0001-50"}
+    {"codigo_banco": "06", "nome_banco": "BANCO AGIBANK S.A.", "cnpj": "10.664.513/0001-50"},
+    {"codigo_banco": "07", "nome_banco": "CREFAZ SOCIEDADE DE CREDITO AO MICROEMPREENDEDOR E A EMPRESA DE PEQUENO PORTE S.A.", "cnpj": "18.188.384/0001-83"},
+    {"codigo_banco": "08", "nome_banco": "BANCO BRADESCO S.A.", "cnpj": "60.746.948/0001-12"}
 ]
     return render_template('documentos.html', bancos=bancos)
 
