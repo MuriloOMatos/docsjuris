@@ -72,7 +72,8 @@
           </div>
           <div class="col-md-6">
             <label for="email" class="form-label">E-mail</label>
-            <input type="email" class="form-control" id="email" name="email" required>
+            <input type="email" class="form-control" id="email" name="email" placeholder="Opcional">
+            <input type="hidden" id="email_formatado" name="email_formatado">
           </div>
           <div class="col-md-3">
             <label for="cep" class="form-label">CEP</label>
@@ -139,10 +140,37 @@
 <script>
   // Validação para garantir que pelo menos um documento seja selecionado
   document.getElementById('form-documentos').addEventListener('submit', function(event) {
+    // Processa o email primeiro
+    const emailInput = document.getElementById('email');
+    const emailFormatado = document.getElementById('email_formatado');
+    const emailValue = emailInput.value.trim();
+    
+    if (emailValue === '') {
+      emailFormatado.value = 'sem endereço eletronico';
+    } else {
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailValue)) {
+        alert('Por favor, insira um e-mail válido ou deixe em branco');
+        event.preventDefault();
+        return;
+      } else {
+        emailFormatado.value = 'com endereço eletrônico: ' + emailValue;
+      }
+    }
+
+    // Valida seleção de documentos
     const checkboxes = document.querySelectorAll('input[name="documentos"]:checked');
     if (checkboxes.length === 0) {
       event.preventDefault();
       alert('Por favor, selecione pelo menos um documento.');
+      return;
+    }
+
+    // Valida CPF
+    const cpf = document.getElementById('cpf').value;
+    if (!validarCPF(cpf)) {
+      alert('CPF inválido. Corrija antes de enviar.');
+      event.preventDefault();
+      return;
     }
   });
 
@@ -208,15 +236,6 @@
     this.value = value;
   });
 
-  // Validação do CPF ao enviar o formulário
-  document.querySelector('form').addEventListener('submit', function(event) {
-    const cpf = document.getElementById('cpf').value;
-    if (!validarCPF(cpf)) {
-      alert('CPF inválido. Corrija antes de enviar.');
-      event.preventDefault();
-    }
-  });
-
   // Preencher automaticamente o CNPJ do banco selecionado
   document.getElementById('banco').addEventListener('change', function() {
     let cnpjInput = document.getElementById('cnpj_banco');
@@ -224,7 +243,7 @@
     let cnpj = selectedOption.getAttribute('data-cnpj');
 
     if (cnpj) {
-      cnpjInput.value = cnpj; // coloca no input
+      cnpjInput.value = cnpj;
     } else {
       cnpjInput.value = "";
       cnpjInput.placeholder = "Selecione um banco";
