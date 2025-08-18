@@ -27,7 +27,6 @@ VALID_TEMPLATES = [
     'procuracao'
 ]
 
-
 # Configuração de logging
 logging.basicConfig(level=logging.DEBUG)
 
@@ -360,15 +359,38 @@ def gerar_documento(dados, num_emprestimos):
         'diario': dados['diario']
     }
     
+    # Dicionário de trechos que devem estar em negrito
+    bold_sections = {
+        "CONTRATADO: GUILHERME ESTEVES DOS SANTOS MORAES": True,
+        # Adicione outros trechos que precisam de negrito aqui
+    }
+    
     for p in doc.paragraphs:
+        # Substituir placeholders
         for key, value in flatten_dict(replacements).items():
             p.text = p.text.replace(f'{{{{{key}}}}}', bleach.clean(str(value)))
+        
+        # Aplicar negrito nos trechos específicos
+        for text, should_bold in bold_sections.items():
+            if text in p.text and should_bold:
+                for run in p.runs:
+                    if text in run.text:
+                        run.bold = True
     
     for table in doc.tables:
         for row in table.rows:
             for cell in row.cells:
+                # Substituir placeholders
                 for key, value in flatten_dict(replacements).items():
                     cell.text = cell.text.replace(f'{{{{{key}}}}}', bleach.clean(str(value)))
+                
+                # Aplicar negrito nos trechos específicos
+                for text, should_bold in bold_sections.items():
+                    if text in cell.text and should_bold:
+                        for paragraph in cell.paragraphs:
+                            for run in paragraph.runs:
+                                if text in run.text:
+                                    run.bold = True
     
     output = io.BytesIO()
     doc.save(output)
@@ -506,6 +528,12 @@ def gerar_documentos():
 
     placeholders = {key: request.form.get(key, '') for key in request.form.keys() if key != 'documentos'}
 
+    # Dicionário de trechos que devem estar em negrito
+    bold_sections = {
+        "CONTRATADO: GUILHERME ESTEVES DOS SANTOS MORAES": True,
+        # Adicione outros trechos que precisam de negrito aqui
+    }
+
     zip_buffer = io.BytesIO()
     with zipfile.ZipFile(zip_buffer, 'w') as zipf:
         for doc_tipo in selecionados:
@@ -517,13 +545,34 @@ def gerar_documentos():
             # Preencher DOCX
             doc = Document(docx_path)
             for p in doc.paragraphs:
+                # Substituir placeholders
                 for chave, valor in placeholders.items():
-                    p.text = p.text.replace(f'{{{{{chave}}}}}', bleach.clean(valor))
+                    if f'{{{{{chave}}}}}' in p.text:
+                        p.text = p.text.replace(f'{{{{{chave}}}}}', bleach.clean(valor))
+                
+                # Aplicar negrito nos trechos específicos
+                for text, should_bold in bold_sections.items():
+                    if text in p.text and should_bold:
+                        for run in p.runs:
+                            if text in run.text:
+                                run.bold = True
+            
+            # Processar tabelas
             for table in doc.tables:
                 for row in table.rows:
                     for cell in row.cells:
+                        # Substituir placeholders
                         for chave, valor in placeholders.items():
-                            cell.text = cell.text.replace(f'{{{{{chave}}}}}', bleach.clean(valor))
+                            if f'{{{{{chave}}}}}' in cell.text:
+                                cell.text = cell.text.replace(f'{{{{{chave}}}}}', bleach.clean(valor))
+                        
+                        # Aplicar negrito nos trechos específicos
+                        for text, should_bold in bold_sections.items():
+                            if text in cell.text and should_bold:
+                                for paragraph in cell.paragraphs:
+                                    for run in paragraph.runs:
+                                        if text in run.text:
+                                            run.bold = True
 
             # Salvar DOCX em memória e adicionar no ZIP
             output = io.BytesIO()
