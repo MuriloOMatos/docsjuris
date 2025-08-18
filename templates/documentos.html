@@ -56,7 +56,7 @@
           </div>
           <div class="col-md-6">
             <label for="cidadania" class="form-label">Nacionalidade</label>
-            <input type="text" class="form-control" id="cidadania" name="cidadania" required>
+            <input type="text" class="form-control" id="cidadania" name="cidadania" value="brasileiro" required>
           </div>
           <div class="col-md-6">
               <label for="estado_civil" class="form-label">Estado Civil</label>
@@ -72,8 +72,8 @@
           </div>
           <div class="col-md-6">
             <label for="email" class="form-label">E-mail</label>
-            <input type="email" class="form-control" id="email" name="email" placeholder="Opcional">
-            <input type="hidden" id="email_formatado" name="email_formatado">
+            <input type="email" class="form-control" id="email" placeholder="Opcional">
+            <input type="hidden" id="email_final" name="email">
           </div>
           <div class="col-md-3">
             <label for="cep" class="form-label">CEP</label>
@@ -142,19 +142,18 @@
   document.getElementById('form-documentos').addEventListener('submit', function(event) {
     // Processa o email primeiro
     const emailInput = document.getElementById('email');
-    const emailFormatado = document.getElementById('email_formatado');
+    const emailFinal = document.getElementById('email_final');
     const emailValue = emailInput.value.trim();
     
     if (emailValue === '') {
-      emailFormatado.value = 'sem endereço eletronico';
+      emailFinal.value = 'sem endereço eletronico';
     } else {
       if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailValue)) {
         alert('Por favor, insira um e-mail válido ou deixe em branco');
         event.preventDefault();
         return;
-      } else {
-        emailFormatado.value = 'com endereço eletrônico: ' + emailValue;
       }
+      emailFinal.value = 'com endereço eletrônico: ' + emailValue;
     }
 
     // Valida seleção de documentos
