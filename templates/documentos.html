@@ -103,15 +103,22 @@
             <input type="text" class="form-control" id="estado" name="estado" maxlength="2" required>
           </div>
 
-          <!-- Campo Banco com dados do PostgreSQL -->
+          <!-- Campo Banco com CNPJ -->
           <div class="col-md-4">
             <label for="banco" class="form-label">Banco</label>
             <select name="banco" id="banco" class="form-control" required>
               <option value="">Selecione um banco</option>
               {% for banco in bancos %}
-                <option value="{{ banco.nome_banco }}">{{ banco.codigo_banco }} - {{ banco.nome_banco }}</option>
+                <option value="{{ banco.nome_banco }}" data-cnpj="{{ banco.cnpj }}">
+                  {{ banco.codigo_banco }} - {{ banco.nome_banco }}
+                </option>
               {% endfor %}
             </select>
+          </div>
+
+          <div class="col-md-4">
+            <label for="cnpj_banco" class="form-label">CNPJ do Banco</label>
+            <input type="text" class="form-control" id="cnpj_banco" name="cnpj_banco" placeholder="Selecione um banco" readonly>
           </div>
 
           <div class="col-md-4">
@@ -201,13 +208,26 @@
     this.value = value;
   });
 
-
   // Validação do CPF ao enviar o formulário
   document.querySelector('form').addEventListener('submit', function(event) {
     const cpf = document.getElementById('cpf').value;
     if (!validarCPF(cpf)) {
       alert('CPF inválido. Corrija antes de enviar.');
       event.preventDefault();
+    }
+  });
+
+  // Preencher automaticamente o CNPJ do banco selecionado
+  document.getElementById('banco').addEventListener('change', function() {
+    let cnpjInput = document.getElementById('cnpj_banco');
+    let selectedOption = this.options[this.selectedIndex];
+    let cnpj = selectedOption.getAttribute('data-cnpj');
+
+    if (cnpj) {
+      cnpjInput.value = cnpj; // coloca no input
+    } else {
+      cnpjInput.value = "";
+      cnpjInput.placeholder = "Selecione um banco";
     }
   });
 </script>
