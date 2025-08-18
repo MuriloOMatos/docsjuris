@@ -1,13 +1,35 @@
-<h2>Bancos Cadastrados</h2>
+<h2 class="mb-4">Bancos Cadastrados</h2>
 
-<form method="POST" action="{{ url_for('adicionar_banco') }}">
-    <input type="text" name="codigo_banco" placeholder="Código do Banco" required>
-    <input type="text" name="nome_banco" placeholder="Nome do Banco" required>
-    <button type="submit">Adicionar</button>
+<!-- Formulário de cadastro -->
+<form method="POST" action="{{ url_for('adicionar_banco') }}" class="row g-3 mb-4">
+  <div class="col-md-3">
+    <label for="codigo_banco" class="form-label">Código</label>
+    <input type="text" id="codigo_banco" name="codigo_banco" class="form-control" placeholder="Ex: 001" required>
+  </div>
+  <div class="col-md-6">
+    <label for="nome_banco" class="form-label">Nome do Banco</label>
+    <input type="text" id="nome_banco" name="nome_banco" class="form-control" placeholder="Ex: Banco do Brasil" required>
+  </div>
+  <div class="col-md-3 d-flex align-items-end">
+    <button type="submit" class="btn btn-primary w-100">Adicionar Banco</button>
+  </div>
 </form>
 
-<ul>
-{% for banco in bancos %}
-    <li>{{ banco.codigo_banco }} - {{ banco.nome_banco }}</li>
-{% endfor %}
-</ul>
+<!-- Lista de bancos -->
+<div class="card">
+  <div class="card-header bg-secondary text-white">
+    Lista de Bancos
+  </div>
+  <ul class="list-group list-group-flush">
+    {% for banco in bancos %}
+      <li class="list-group-item d-flex justify-content-between align-items-center">
+        <span>
+          <strong>{{ banco.codigo_banco }}</strong> - {{ banco.nome_banco }}
+        </span>
+        <a href="{{ url_for('remover_banco', id=banco.id) }}" class="btn btn-sm btn-danger">Remover</a>
+      </li>
+    {% else %}
+      <li class="list-group-item text-muted">Nenhum banco cadastrado ainda.</li>
+    {% endfor %}
+  </ul>
+</div>
