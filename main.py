@@ -24,7 +24,8 @@ VALID_TEMPLATES = [
     'declaracao_contrato_digital',
     'declaracao_procuradores',
     'declaracao_ir',
-    'procuracao'
+    'procuracao',
+    'declaracao_residencia'
 ]
 
 # Configuração de logging
