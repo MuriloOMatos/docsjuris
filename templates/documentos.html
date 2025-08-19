@@ -155,6 +155,49 @@
       }
       emailFinal.value = 'com endereço eletrônico: ' + emailValue;
     }
+      // Formatar nome para maiúsculas em tempo real
+  document.getElementById('nome').addEventListener('input', function() {
+    this.value = this.value.toUpperCase();
+  });
+
+  // Garantir que o nome esteja em maiúsculas antes do envio
+  document.getElementById('form-documentos').addEventListener('submit', function(event) {
+    // Forçar nome para maiúsculas (caso o usuário tenha desativado JavaScript)
+    document.getElementById('nome').value = document.getElementById('nome').value.toUpperCase();
+    
+    // Restante do código de validação existente...
+    // Processa o email primeiro
+    const emailInput = document.getElementById('email');
+    const emailFinal = document.getElementById('email_final');
+    const emailValue = emailInput.value.trim();
+    
+    if (emailValue === '') {
+      emailFinal.value = 'sem endereço eletronico';
+    } else {
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailValue)) {
+        alert('Por favor, insira um e-mail válido ou deixe em branco');
+        event.preventDefault();
+        return;
+      }
+      emailFinal.value = 'com endereço eletrônico: ' + emailValue;
+    }
+
+    // Valida seleção de documentos
+    const checkboxes = document.querySelectorAll('input[name="documentos"]:checked');
+    if (checkboxes.length === 0) {
+      event.preventDefault();
+      alert('Por favor, selecione pelo menos um documento.');
+      return;
+    }
+
+    // Valida CPF
+    const cpf = document.getElementById('cpf').value;
+    if (!validarCPF(cpf)) {
+      alert('CPF inválido. Corrija antes de enviar.');
+      event.preventDefault();
+      return;
+    }
+  });
 
     // Valida seleção de documentos
     const checkboxes = document.querySelectorAll('input[name="documentos"]:checked');
