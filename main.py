@@ -140,6 +140,9 @@ def get_bacen_taxa_atual():
     except Exception as e:
         app.logger.error(f"Erro ao buscar taxa atual BACEN: {str(e)}")
         return 0.01
+@app.route("/peticoes")
+def peticoes():
+    return render_template("peticoes.html")
 
 @app.route('/bancos')
 @login_required
