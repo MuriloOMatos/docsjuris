@@ -36,19 +36,31 @@
 <body>
   <div class="d-flex">
     <!-- Sidebar -->
-    <nav class="bg-primary text-white p-3 vh-100" style="width: 185px;">
-      <h4 class="mb-4"><i class="bi bi-folder"></i> Menu</h4>
-      <ul class="nav flex-column">
-        <li class="nav-item mb-2">
-          <a href="#" class="nav-link text-white"><i class="bi bi-pencil-square me-2"></i>Nova Petição</a>
-        </li>
-        <li class="nav-item mb-2">
-          <a href="/documentos" class="nav-link text-white">
-            <i class="bi bi-file-earmark-text me-2"></i>Documentos
-          </a>
-        </li>
-      </ul>
-    </nav>
+<nav class="bg-primary text-white p-3 vh-100 d-flex flex-column shadow" style="width: 220px;">
+  <!-- Título -->
+  <h4 class="mb-4 border-bottom pb-2">
+    <i class="bi bi-folder me-2"></i> Menu
+  </h4>
+
+  <!-- Lista de navegação -->
+  <ul class="nav flex-column">
+    <li class="nav-item mb-2">
+      <a href="#" class="nav-link text-white d-flex align-items-center">
+        <i class="bi bi-pencil-square me-2"></i> Nova Petição
+      </a>
+    </li>
+    <li class="nav-item mb-2">
+      <a href="/index" class="nav-link text-white d-flex align-items-center">
+        <i class="bi bi-house-door me-2"></i> Menu Inicial
+      </a>
+    </li>
+    <li class="nav-item mb-2">
+      <a href="/documentos" class="nav-link text-white d-flex align-items-center">
+        <i class="bi bi-file-earmark-text me-2"></i> Documentos
+      </a>
+    </li>
+  </ul>
+</nav>
 
     <!-- Conteúdo principal -->
     <div class="flex-grow-1 p-4">
