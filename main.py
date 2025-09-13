@@ -16,10 +16,12 @@ import zipfile
 import tempfile
 import psycopg2
 from psycopg2.extras import RealDictCursor
+import json
+import re
 
-# Lista de templates válidos
+# Lista de templates válidos - atualizada com os novos templates
 VALID_TEMPLATES = [
-    'declaracao_hiposuficencia',
+    'declaracao_hiposuficiencia',
     'contratos_honorarios',
     'declaracao_contrato_digital',
     'declaracao_procuradores',
@@ -27,6 +29,50 @@ VALID_TEMPLATES = [
     'procuracao',
     'declaracao_residencia'
 ]
+
+# Adicionar templates dinamicamente para autor e réu
+for foro in ['autor', 'reu']:
+    for i in range(1, 4):  # 1 a 3 empréstimos
+        VALID_TEMPLATES.append(f'Contrato_Foro_{foro.capitalize()}_{i}')
+
+# Mapeamento de valores para exibição
+MAPEAMENTO_VALORES = {
+    # Tipos de petição
+    "judicial": "Judicial",
+    "extrajudicial": "Extrajudicial",
+    "administrativa": "Administrativa",
+    
+    # Foro
+    "autor": "Autor",
+    "reu": "Réu",
+    
+    # Empréstimos consignados
+    "sim": "Sim",
+    "nao": "Não",
+    
+    # Fontes de renda
+    "salario": "Salário",
+    "beneficio_deficiencia": "Benefício de Prestação Continuada à Pessoa com Deficiência",
+    "beneficio_idosa": "Benefício de Prestação Continuada à Pessoa Idosa",
+    "pensao_morte": "Benefício de Pensão Por Morte Previdenciária",
+    "aposentadoria_idade": "Aposentadoria Por Idade Previdenciária",
+    "aposentadoria_tempo": "Aposentadoria Por Tempo de Contribuição Previdenciária",
+    "aposentadoria_incapacidade": "Aposentadoria Por Incapacidade Permanente Previdenciária",
+    "maes_pernambuco": "Mães de Pernambuco",
+    "auxilio_gas": "Auxílio Gás dos Brasileiros",
+    "bolsa_familia": "Bolsa Família",
+    "auxilio_incapacidade": "Benefício de Auxílio Por Incapacidade Temporária Previdenciário",
+    "auxilio_acidente": "Benefício de Auxílio-Acidente",
+    
+    # Conjunto probatório
+    "declaracao_hipossuficiencia": "Declaração de Hipossuficiência firmada pela parte autora",
+    "isencao_imposto_renda": "Declaração de isenção de Imposto de Renda",
+    "print_receita_federal": "Print da Receita Federal demonstrando inexistência de dados quanto à Declaração Anual de Imposto de Renda",
+    "extratos_inss": "Extratos de benefício previdenciário (INSS)",
+    "extratos_bancarios": "Extratos bancários atualizados",
+    "ctps_digital": "Carteira de Trabalho e Previdência Social (CTPS) Digital",
+    "cadastro_unico": "Folha resumo do Cadastro Único para Programas Sociais do Governo Federal"
+}
 
 # Configuração de logging
 logging.basicConfig(level=logging.DEBUG)
@@ -79,7 +125,7 @@ def login():
             return redirect(url_for('index'))
         else:
             app.logger.debug("Falha no login")
-            return render_template('login.html', error='Usuário ou senha inválidos')
+            return render_template('login.html', error='Usuário or senha inválidos')
     
     return render_template('login.html')
 
@@ -140,7 +186,9 @@ def get_bacen_taxa_atual():
     except Exception as e:
         app.logger.error(f"Erro ao buscar taxa atual BACEN: {str(e)}")
         return 0.01
+
 @app.route("/peticoes")
+@login_required
 def peticoes():
     return render_template("peticoes.html")
 
@@ -192,20 +240,20 @@ def adicionar_banco():
 @app.route('/documentos')
 @login_required
 def documentos():
-    app.logger.debug("Acessando rota /documentos com banco desativado temporariamente")
-
+    app.logger.debug("Acessando rota /documentos")
+    
     bancos = [
-    {"codigo_banco": "01", "nome_banco": "BANCO DO BRASIL.", "cnpj": "00.000.000/0001-00"},
-    {"codigo_banco": "02", "nome_banco": "CAIXA ECONÔMICA.", "cnpj": "00.000.000/0001-91"},
-    {"codigo_banco": "03", "nome_banco": "BANCO MERCANTIL DO BRASIL S.A.", "cnpj": "17.184.037/0001-10"},
-    {"codigo_banco": "04", "nome_banco": "BANCO CREFISA S.A.", "cnpj": "61.033.106/0001-86"},
-    {"codigo_banco": "05", "nome_banco": "BANCO BMG S.A.", "cnpj": "61.186.680/0001-74"},
-    {"codigo_banco": "06", "nome_banco": "BANCO AGIBANK S.A.", "cnpj": "10.664.513/0001-50"},
-    {"codigo_banco": "07", "nome_banco": "CREFAZ SOCIEDADE DE CREDITO AO MICROEMPREENDEDOR E A EMPRESA DE PEQUENO PORTE S.A.", "cnpj": "18.188.384/0001-83"},
-    {"codigo_banco": "08", "nome_banco": "BANCO BRADESCO S.A.", "cnpj": "60.746.948/0001-12"}
-]
+        {"codigo_banco": "01", "nome_banco": "BANCO DO BRASIL.", "cnpj": "00.000.000/0001-00"},
+        {"codigo_banco": "02", "nome_banco": "CAIXA ECONÔMICA.", "cnpj": "00.000.000/0001-91"},
+        {"codigo_banco": "03", "nome_banco": "BANCO MERCANTIL DO BRASIL S.A.", "cnpj": "17.184.037/0001-10"},
+        {"codigo_banco": "04", "nome_banco": "BANDO CREFISA S.A.", "cnpj": "61.033.106/0001-86"},
+        {"codigo_banco": "05", "nome_banco": "BANCO BMG S.A.", "cnpj": "61.186.680/0001-74"},
+        {"codigo_banco": "06", "nome_banco": "BANCO AGIBANK S.A.", "cnpj": "10.664.513/0001-50"},
+        {"codigo_banco": "07", "nome_banco": "CREFAZ SOCIEDADE DE CREDITO AO MICROEMPREENDEDOR E A EMPRESA DE PEQUENO PORTE S.A.", "cnpj": "18.188.384/0001-83"},
+        {"codigo_banco": "08", "nome_banco": "BANCO BRADESCO S.A.", "cnpj": "60.746.948/0001-12"}
+    ]
+    
     return render_template('documentos.html', bancos=bancos)
-
 
 def calcular_diferenca(valor, taxa_contrato, taxa_media, parcelas):
     try:
@@ -224,7 +272,7 @@ def calcular_diferenca(valor, taxa_contrato, taxa_media, parcelas):
         raise ValueError(f"Erro ao calcular diferença: {str(e)}")
 
 def validar_dados_entrada(form):
-    required_fields = ['renda_mensal', 'parcela_pessoal', 'modelo_peticao']
+    required_fields = ['renda_mensal', 'parcela_pessoal', 'modelo_peticao', 'foro']
     for field in required_fields:
         if field not in form:
             raise ValueError(f"Campo obrigatório '{field}' ausente")
@@ -233,15 +281,20 @@ def validar_dados_entrada(form):
         renda_mensal = Decimal(form['renda_mensal'].replace(",", "."))
         parcela_pessoal = Decimal(form['parcela_pessoal'].replace(",", "."))
         if renda_mensal <= 0 or parcela_pessoal < 0:
-            raise ValueError("Renda mensal deve ser positiva e parcela pessoal não pode ser negativa")
+            raise ValueError("Renda mensal deve ser positiva and parcela pessoal não pode ser negativa")
         
         num_emprestimos = int(form['modelo_peticao'])
         if num_emprestimos not in [1, 2, 3]:
-            raise ValueError("Número de empréstimos inválido (deve ser 1, 2 ou 3)")
+            raise ValueError("Número de empréstimos inválido (deve be 1, 2 ou 3)")
+        
+        foro = form['foro'].lower()
+        if foro not in ['autor', 'reu']:
+            raise ValueError("Foro inválido (deve ser 'autor' ou 'reu')")
+            
     except (ValueError, InvalidOperation) as e:
         raise ValueError(f"Erro na validação de dados: {str(e)}")
     
-    return num_emprestimos
+    return num_emprestimos, foro
 
 def calculos_emprestimo(form, num_emprestimos):
     emprestimos = []
@@ -269,6 +322,7 @@ def calculos_emprestimo(form, num_emprestimos):
         parcela_str = form.get(f'{prefix}[parcela_consignada]', '0').replace(",", ".")
         parcelas_str = form.get(f'{prefix}[parcelas]', '0')
         taxa_contrato_str = form.get(f'{prefix}[taxa]', '0').replace(",", ".")
+        contrato_str = form.get(f'{prefix}[contrato]', 'N/A')  # Capturar número do contrato
         
         try:
             valor = Decimal(valor_str)
@@ -308,6 +362,7 @@ def calculos_emprestimo(form, num_emprestimos):
             'parcela': parcela_str,
             'parcelas': parcelas_str,
             'taxa': taxa_contrato_str,
+            'contrato': contrato_str,  # Adicionar número do contrato
             'taxa_media': f"{taxa_media:.2f}",
             'diferenca': f"{calcular_diferenca(valor, taxa_contrato, taxa_media, parcelas):.2f}",
             'total_emprestimo': f"{total_emprestimo:.2f}",
@@ -338,56 +393,171 @@ def calculos_emprestimo(form, num_emprestimos):
     
     return emprestimos, total_consignado, total_emprestimo_geral, def_emprestimos, parcela_pessoal_atual, dif_bacen, vlr_total_emprestimo1, vlr_total_emprestimo2, org_bacen, org_div, total_dobro, valor_causa, comprometimento_renda, renda_atual, comprometimento_porcentagem, total_emprestimo_bacen, total_dobro_geral, dadovalorcausa
 
-def gerar_documento(dados, num_emprestimos):
-    template_path = os.path.abspath(os.path.join("modelos", f"modelo_{num_emprestimos}.docx"))
+def determinar_template_peticao(foro, num_emprestimos):
+    """Determina qual template usar baseado no foro e número de empréstimos"""
+    template_name = f"Contrato_Foro_{foro.capitalize()}_{num_emprestimos}"
+    
+    # Verificar se o template existe
+    template_path = os.path.join('modelos', f"{template_name}.docx")
+    if not os.path.exists(template_path):
+        # Fallback para template genérico se o específico não existir
+        app.logger.warning(f"Template {template_name} não encontrado, usando fallback")
+        template_name = f"Contrato_Foro_{foro.capitalize()}_1"
+        template_path = os.path.join('modelos', f"{template_name}.docx")
+        
+        if not os.path.exists(template_path):
+            raise FileNotFoundError(f"Nenhum template válido encontrado para foro {foro}")
+    
+    return template_name
+
+def gerar_documento(dados, num_emprestimos, foro='autor'):
+    """Gera documento usando o template correto baseado no foro e número de empréstimos"""
+    template_name = determinar_template_peticao(foro, num_emprestimos)
+    template_path = os.path.abspath(os.path.join("modelos", f"{template_name}.docx"))
+    
     if not os.path.exists(template_path):
         app.logger.error(f"Template {template_path} não encontrado")
-        raise FileNotFoundError(f"Modelo de documento modelo_{num_emprestimos}.docx não encontrado")
+        raise FileNotFoundError(f"Modelo de documento {template_name}.docx não encontrado")
     
     doc = Document(template_path)
+    
+    # DEBUG: Log dos dados recebidos
+    app.logger.debug(f"Dados recebidos para placeholders: {list(dados.keys())}")
+    
+    # Mapeamento completo de placeholders - todos em minúsculo
     replacements = {
-        'renda_mensal': dados['renda_mensal'],
-        'parcela_pessoal': dados['parcela_pessoal'],
-        'valor_liquido': dados['valor_liquido'],
-        'comprometimento': dados['comprometimento'],
-        'emprestimos': dados['emprestimos'],
-        'total_emprestimo': dados['total_emprestimo'],
-        'diario': dados['diario']
+        # Dados básicos
+        'foro': dados.get('foro', 'Autor'),
+        'estado': 'PE',  # Valor padrão
+        'banco': dados.get('banco', 'Banco Não Especificado'),
+        'cnpj_banco': '00.000.000/0001-00',  # Valor padrão
+        'endereco_banco': 'Endereço não especificado',
+        'data': datetime.now().strftime('%d/%m/%Y'),
+        'n_oab': '1252',  # Valor padrão
+        
+        # Dados financeiros
+        'renda_mensal': dados.get('renda_mensal', ''),
+        'parcela_pessoal': dados.get('parcela_pessoal', ''),
+        'valor_liquido': dados.get('valor_liquido', ''),
+        'comprometimento': dados.get('comprometimento', ''),
+        'diario': dados.get('diario', ''),
+        'comprometimento_porcentagem': dados.get('comprometimento_porcentagem', ''),
+        
+        # Dados da petição
+        'tipo_peticao': dados.get('tipo_peticao', ''),
+        'comarca': dados.get('comarca', ''),
+        'advogado': dados.get('advogado', ''),
+        'observacoes': dados.get('observacoes', ''),
+        'possui_emprestimos': dados.get('possui_emprestimos', ''),
+        'fontes_renda': dados.get('fontes_renda', 'Nenhuma fonte de renda selecionada'),
+        'conjunto_probatorio': dados.get('conjunto_probatorio', 'Nenhum documento probatório selecionado'),
+        
+        # Valores calculados
+        'valor_causa': dados.get('valor_causa', ''),
+        'total_dobro_geral': dados.get('total_dobro_geral', ''),
+        'renda_atual': dados.get('renda_atual', ''),
+        
+        # Placeholders específicos do template
+        'beneficio_recebido': 'Benefício Previdenciário',  # Valor padrão
+        'numero_contrato': dados.get('numero_contrato', 'N/A'),
     }
+    
+    # Adicionar dados dos empréstimos se existirem
+    if 'emprestimos' in dados and isinstance(dados['emprestimos'], list):
+        for i, emp in enumerate(dados['emprestimos']):
+            for key, value in emp.items():
+                # Formatar para o padrão do template: emprestimos_0_*
+                replacements[f'emprestimos_{i}_{key}'] = value
+                
+                # Adicionar também placeholders específicos para número de contrato
+                if key == 'contrato':
+                    replacements[f'numero_contrato_{i}'] = value
+    
+    # DEBUG: Log dos replacements
+    app.logger.debug(f"Replacements preparados: {list(replacements.keys())}")
     
     # Dicionário de trechos que devem estar em negrito
     bold_sections = {
         "CONTRATADO: GUILHERME ESTEVES DOS SANTOS MORAES": True,
-        "AÇÃO REVISIONAL DE CONTRATO DE EMPRÉSTIMO PESSOAL NÃO CONSIGNADO, bem como, eventualmente, quando necessário, ingressar com ação judicial de exibição de documentos, EM FACE DO ": True
-        # Adicione outros trechos que precisam de negrito aqui
+        "AÇÃO REVISIONAL DE CONTRATO DE EMPRÉSTIMO PESSOAL NÃO CONSIGNADO": True
     }
     
+    # Função para substituir placeholders em texto
+    def substituir_placeholders(texto):
+        if not texto:
+            return texto
+            
+        novo_texto = texto
+        for key, value in replacements.items():
+            # Tentar ambos os formatos: {{key}} (minúsculo) e {{KEY}} (maiúsculo)
+            placeholder_min = f'{{{{{key}}}}}'
+            placeholder_mai = f'{{{{{key.upper()}}}}}'
+            placeholder_alt = f'{{{{NUMERO_CONTRATO_{key.split("_")[-1]}}}}}' if key.startswith('numero_contrato_') else None
+            
+            if placeholder_min in novo_texto:
+                novo_texto = novo_texto.replace(placeholder_min, str(value))
+                app.logger.debug(f"Substituído {placeholder_min} por {value}")
+            elif placeholder_mai in novo_texto:
+                novo_texto = novo_texto.replace(placeholder_mai, str(value))
+                app.logger.debug(f"Substituído {placeholder_mai} por {value}")
+            elif placeholder_alt and placeholder_alt in novo_texto:
+                novo_texto = novo_texto.replace(placeholder_alt, str(value))
+                app.logger.debug(f"Substituído {placeholder_alt} por {value}")
+        
+        return novo_texto
+    
+    # Substituir placeholders em parágrafos
     for p in doc.paragraphs:
-        # Substituir placeholders
-        for key, value in flatten_dict(replacements).items():
-            p.text = p.text.replace(f'{{{{{key}}}}}', bleach.clean(str(value)))
+        original_text = p.text
+        new_text = substituir_placeholders(original_text)
         
         # Aplicar negrito nos trechos específicos
         for text, should_bold in bold_sections.items():
-            if text in p.text and should_bold:
+            if text in new_text and should_bold:
                 for run in p.runs:
                     if text in run.text:
                         run.bold = True
+        
+        # Atualizar o texto do parágrafo apenas se houve mudanças
+        if new_text != original_text:
+            p.text = new_text
     
+    # Substituir placeholders em tabelas
     for table in doc.tables:
         for row in table.rows:
             for cell in row.cells:
-                # Substituir placeholders
-                for key, value in flatten_dict(replacements).items():
-                    cell.text = cell.text.replace(f'{{{{{key}}}}}', bleach.clean(str(value)))
+                original_text = cell.text
+                new_text = substituir_placeholders(original_text)
                 
                 # Aplicar negrito nos trechos específicos
                 for text, should_bold in bold_sections.items():
-                    if text in cell.text and should_bold:
+                    if text in new_text and should_bold:
                         for paragraph in cell.paragraphs:
                             for run in paragraph.runs:
                                 if text in run.text:
                                     run.bold = True
+                
+                # Atualizar o texto da célula apenas se houve mudanças
+                if new_text != original_text:
+                    cell.text = new_text
+    
+    # Substituir placeholders em cabeçalhos e rodapés
+    for section in doc.sections:
+        # Cabeçalho
+        if section.header:
+            for p in section.header.paragraphs:
+                original_text = p.text
+                new_text = substituir_placeholders(original_text)
+                if new_text != original_text:
+                    p.text = new_text
+        
+        # Rodapé
+        if section.footer:
+            for p in section.footer.paragraphs:
+                original_text = p.text
+                new_text = substituir_placeholders(original_text)
+                if new_text != original_text:
+                    p.text = new_text
     
     output = io.BytesIO()
     doc.save(output)
@@ -419,20 +589,56 @@ def format_brl(valor):
     except Exception:
         return str(valor)
 
+def formatar_lista_selecionados(valores, tipo):
+    """Formata uma lista de valores selecionados para exibição"""
+    if not valores:
+        return "Nenhum selecionado"
+    
+    if tipo == "array":
+        # Se já é uma lista, apenas mapear os valores
+        return ", ".join([MAPEAMENTO_VALORES.get(v, v) for v in valores])
+    else:
+        # Se é uma string JSON, converter para lista primeiro
+        try:
+            valores_lista = json.loads(valores)
+            return ", ".join([MAPEAMENTO_VALORES.get(v, v) for v in valores_lista])
+        except:
+            return valores
+
 @app.route('/gerar-peticao', methods=['POST'])
 @login_required
 def gerar_peticao():
     try:
         app.logger.debug("Iniciando geração de petição")
-        num_emprestimos = validar_dados_entrada(request.form)
+        app.logger.debug(f"Campos recebidos no form: {list(request.form.keys())}")
         
-        dados = {
+        # Validar e obter dados básicos
+        num_emprestimos, foro = validar_dados_entrada(request.form)
+        app.logger.debug(f"Foro selecionado: {foro}, Número de empréstimos: {num_emprestimos}")
+        
+        # Coletar dados da petição (primeira etapa)
+        dados_peticao = {
             'renda_mensal': request.form['renda_mensal'].replace(",", "."),
             'parcela_pessoal': request.form['parcela_pessoal'].replace(",", "."),
+            'foro': MAPEAMENTO_VALORES.get(request.form.get('foro', 'autor'), 'Autor'),
+            'tipo_peticao': MAPEAMENTO_VALORES.get(request.form.get('tipo_peticao', ''), ''),
+            'comarca': request.form.get('comarca', ''),
+            'advogado': request.form.get('advogado', ''),
+            'observacoes': request.form.get('observacoes', ''),
+            'banco': request.form.get('banco', ''),
+            'possui_emprestimos': MAPEAMENTO_VALORES.get(request.form.get('possui_emprestimos', ''), ''),
+            'fontes_renda': formatar_lista_selecionados(request.form.getlist('fontes_renda[]'), "array"),
+            'conjunto_probatorio': formatar_lista_selecionados(request.form.getlist('conjunto_probatorio[]'), "array"),
+            'numero_contrato': request.form.get('numero_contrato', 'N/A'),
         }
         
+        # DEBUG: Log dos dados da petição
+        app.logger.debug(f"Dados da petição coletados: {dados_peticao.keys()}")
+        
+        # Calcular dados dos empréstimos
         emprestimos, total_consignado, total_emprestimo_geral, def_emprestimos, parcela_pessoal_atual, dif_bacen, vlr_total_emprestimo1, vlr_total_emprestimo2, org_bacen, org_div, total_dobro, valor_causa, comprometimento_renda, renda_atual, comprometimento_porcentagem, total_emprestimo_bacen, total_dobro_geral, dadovalorcausa = calculos_emprestimo(request.form, num_emprestimos)
         
+        # Formatar valores para exibição
         for emp in emprestimos:
             emp['valor'] = format_brl(emp['valor'])
             emp['parcela'] = format_brl(emp['parcela'])
@@ -448,38 +654,44 @@ def gerar_peticao():
             emp['renda_atual'] = format_brl(emp['renda_atual'])
             emp['total_emprestimo_bacen'] = format_brl(emp['total_emprestimo_bacen'])
             emp['dadovalorcausa'] = format_brl(emp['dadovalorcausa'])
+            # O número do contrato é uma string, não precisa de formatação monetária
             
-        dados['emprestimos'] = emprestimos
-        renda = Decimal(dados['renda_mensal'])
-        parcela_pessoal = Decimal(dados['parcela_pessoal'])
+        dados_peticao['emprestimos'] = emprestimos
+        renda = Decimal(dados_peticao['renda_mensal'])
+        parcela_pessoal = Decimal(dados_peticao['parcela_pessoal'])
 
-        dados['valor_liquido'] = format_brl(renda - parcela_pessoal - total_consignado)
-        dados['diario'] = format_brl((renda - parcela_pessoal - total_consignado) / 30)
-        dados['comprometimento'] = format_brl(parcela_pessoal + total_consignado)
-        dados['total_emprestimo'] = format_brl(total_emprestimo_geral)
-        dados['def_emprestimos'] = format_brl(def_emprestimos)
-        dados['parcela_pessoal_atual'] = format_brl(parcela_pessoal_atual)
-        dados['dif_bacen'] = format_brl(dif_bacen)
-        dados['vlr_total_emprestimo1'] = format_brl(vlr_total_emprestimo1)
-        dados['vlr_total_emprestimo2'] = format_brl(vlr_total_emprestimo2)
-        dados['org_bacen'] = format_brl(org_bacen)
-        dados['org_div'] = format_brl(org_div)
-        dados['total_dobro'] = format_brl(total_dobro)
-        dados['total_dobro_geral'] = format_brl(total_dobro_geral)
-        dados['valor_causa'] = format_brl(valor_causa)
-        dados['dadovalorcausa'] = format_brl(dadovalorcausa)
-        dados['comprometimento_renda'] = format_brl(comprometimento_renda)
-        dados['renda_atual'] = format_brl(renda_atual)
-        dados['comprometimento_porcentagem'] = format_brl(comprometimento_porcentagem)
-        dados['total_emprestimo_bacen'] = format_brl(total_emprestimo_bacen)
+        # Adicionar todos os campos calculados
+        dados_peticao['valor_liquido'] = format_brl(renda - parcela_pessoal - total_consignado)
+        dados_peticao['diario'] = format_brl((renda - parcela_pessoal - total_consignado) / 30)
+        dados_peticao['comprometimento'] = format_brl(parcela_pessoal + total_consignado)
+        dados_peticao['total_emprestimo'] = format_brl(total_emprestimo_geral)
+        dados_peticao['def_emprestimos'] = format_brl(def_emprestimos)
+        dados_peticao['parcela_pessoal_atual'] = format_brl(parcela_pessoal_atual)
+        dados_peticao['dif_bacen'] = format_brl(dif_bacen)
+        dados_peticao['vlr_total_emprestimo1'] = format_brl(vlr_total_emprestimo1)
+        dados_peticao['vlr_total_emprestimo2'] = format_brl(vlr_total_emprestimo2)
+        dados_peticao['org_bacen'] = format_brl(org_bacen)
+        dados_peticao['org_div'] = format_brl(org_div)
+        dados_peticao['total_dobro'] = format_brl(total_dobro)
+        dados_peticao['total_dobro_geral'] = format_brl(total_dobro_geral)
+        dados_peticao['valor_causa'] = format_brl(valor_causa)
+        dados_peticao['dadovalorcausa'] = format_brl(dadovalorcausa)
+        dados_peticao['comprometimento_renda'] = format_brl(comprometimento_renda)
+        dados_peticao['renda_atual'] = format_brl(renda_atual)
+        dados_peticao['comprometimento_porcentagem'] = format_brl(comprometimento_porcentagem)
+        dados_peticao['total_emprestimo_bacen'] = format_brl(total_emprestimo_bacen)
         
-        documento = gerar_documento(dados, num_emprestimos)
-        app.logger.debug("Documento gerado com sucesso")
+        # DEBUG: Log final dos dados
+        app.logger.debug(f"Dados completos para geração: {list(dados_peticao.keys())}")
+        
+        # Usar a nova função gerar_documento que determina o template correto
+        documento = gerar_documento(dados_peticao, num_emprestimos, foro)
+        app.logger.debug(f"Documento gerado com sucesso para foro: {foro}")
         
         return send_file(
             documento,
             mimetype="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-            download_name=f"peticao_{datetime.now().strftime('%Y%m%d')}.docx",
+            download_name=f"peticao_{foro}_{num_emprestimos}_{datetime.now().strftime('%Y%m%d')}.docx",
             as_attachment=True
         )
     
@@ -491,6 +703,8 @@ def gerar_peticao():
         return str(e), 404
     except Exception as e:
         app.logger.error(f"Erro inesperado: {str(e)}")
+        import traceback
+        app.logger.error(traceback.format_exc())
         return abort(500, "Erro interno ao processar a solicitação")
 
 def flatten_dict(d, parent_key='', sep='_'):
@@ -518,22 +732,67 @@ def gerar_documentos():
         app.logger.error("Nenhum documento selecionado")
         abort(400, 'Nenhum documento selecionado.')
 
-    selecionados = [doc for doc in selecionados if doc in VALID_TEMPLATES]
-    if not selecionados:
+    # Processar dados do formulário
+    placeholders = {}
+    for key in request.form.keys():
+        if key != 'documentos':
+            value = request.form.get(key, '')
+            
+            # Processar campos especiais (listas)
+            if key in ['conjunto_probatorio', 'fontes_renda']:
+                placeholders[key] = formatar_lista_selecionados(value, "json")
+            elif key in ['foro', 'tipo_peticao', 'possui_emprestimos']:
+                placeholders[key] = MAPEAMENTO_VALORES.get(value, value)
+            else:
+                placeholders[key] = value
+
+    # Determinar número de empréstimos se for uma petição
+    num_emprestimos = 1  # padrão
+    if 'modelo_peticao' in request.form:
+        try:
+            num_emprestimos = int(request.form.get('modelo_peticao'))
+            if num_emprestimos not in [1, 2, 3]:
+                num_emprestimos = 1
+        except (ValueError, TypeError):
+            num_emprestimos = 1
+
+    # Determinar foro
+    foro = request.form.get('foro', 'autor').lower()
+    app.logger.debug(f"Foro selecionado para documentos: {foro}")
+
+    # Filtrar documentos selecionados válidos
+    documentos_validos = []
+    for doc in selecionados:
+        if doc in VALID_TEMPLATES:
+            documentos_validos.append(doc)
+        else:
+            # Verificar se é uma petição que precisa ser mapeada
+            if doc.startswith('peticao_'):
+                # Determinar o template correto baseado no foro e número de empréstimos
+                try:
+                    template_name = determinar_template_peticao(foro, num_emprestimos)
+                    if template_name in VALID_TEMPLATES:
+                        documentos_validos.append(template_name)
+                        app.logger.debug(f"Petição mapeada para template: {template_name}")
+                    else:
+                        app.logger.warning(f"Template {template_name} não é válido")
+                except FileNotFoundError as e:
+                    app.logger.warning(str(e))
+            else:
+                app.logger.warning(f"Documento {doc} não é válido")
+
+    if not documentos_validos:
         app.logger.error("Nenhum documento válido selecionado")
         abort(400, 'Nenhum documento válido selecionado.')
-
-    placeholders = {key: request.form.get(key, '') for key in request.form.keys() if key != 'documentos'}
 
     # Dicionário de trechos que devem estar em negrito
     bold_sections = {
         "CONTRATADO: GUILHERME ESTEVES DOS SANTOS MORAES": True,
-        # Adicione outros trechos que precisam de negrito aqui
     }
 
     zip_buffer = io.BytesIO()
     with zipfile.ZipFile(zip_buffer, 'w') as zipf:
-        for doc_tipo in selecionados:
+        for doc_tipo in documentos_validos:
             docx_path = os.path.join('modelos', f"{doc_tipo}.docx")
             if not os.path.exists(docx_path):
                 app.logger.warning(f"Template {doc_tipo}.docx não encontrado.")
@@ -541,11 +800,13 @@ def gerar_documentos():
 
             # Preencher DOCX
             doc = Document(docx_path)
+            
+            # Processar parágrafos
             for p in doc.paragraphs:
                 # Substituir placeholders
                 for chave, valor in placeholders.items():
                     if f'{{{{{chave}}}}}' in p.text:
-                        p.text = p.text.replace(f'{{{{{chave}}}}}', bleach.clean(valor))
+                        p.text = p.text.replace(f'{{{{{chave}}}}}', bleach.clean(str(valor)))
                 
                 # Aplicar negrito nos trechos específicos
                 for text, should_bold in bold_sections.items():
@@ -561,7 +822,7 @@ def gerar_documentos():
                         # Substituir placeholders
                         for chave, valor in placeholders.items():
                             if f'{{{{{chave}}}}}' in cell.text:
-                                cell.text = cell.text.replace(f'{{{{{chave}}}}}', bleach.clean(valor))
+                                cell.text = cell.text.replace(f'{{{{{chave}}}}}', bleach.clean(str(valor)))
                         
                         # Aplicar negrito nos trechos específicos
                         for text, should_bold in bold_sections.items():
@@ -586,6 +847,105 @@ def gerar_documentos():
         as_attachment=True
     )
 
+@app.route('/gerar-peticao-completa', methods=['POST'])
+@login_required
+def gerar_peticao_completa():
+    """Rota para gerar petições específicas baseadas no foro e número de empréstimos"""
+    try:
+        app.logger.debug("Iniciando geração de petição completa")
+        
+        # Obter dados do formulário
+        foro = request.form.get('foro', 'autor').lower()
+        
+        # Determinar número de empréstimos
+        num_emprestimos = 1
+        if 'modelo_peticao' in request.form:
+            try:
+                num_emprestimos = int(request.form.get('modelo_peticao'))
+                if num_emprestimos not in [1, 2, 3]:
+                    num_emprestimos = 1
+            except (ValueError, TypeError):
+                num_emprestimos = 1
+        
+        # Determinar qual template usar
+        template_name = determinar_template_peticao(foro, num_emprestimos)
+        
+        # Processar dados do formulário
+        placeholders = {}
+        for key in request.form.keys():
+            value = request.form.get(key, '')
+            
+            # Processar campos especiais (listas)
+            if key in ['conjunto_probatorio', 'fontes_renda']:
+                placeholders[key] = formatar_lista_selecionados(value, "json")
+            elif key in ['foro', 'tipo_peticao', 'possui_emprestimos']:
+                placeholders[key] = MAPEAMENTO_VALORES.get(value, value)
+            else:
+                placeholders[key] = value
+        
+        # Gerar documento
+        docx_path = os.path.join('modelos', f"{template_name}.docx")
+        if not os.path.exists(docx_path):
+            return f"Template {template_name}.docx não encontrado", 404
+        
+        doc = Document(docx_path)
+        
+        # Dicionário de trechos que devem estar em negrito
+        bold_sections = {
+            "CONTRATADO: GUILHERME ESTEVES DOS SANTOS MORAES": True,
+        }
+        
+        # Processar parágrafos
+        for p in doc.paragraphs:
+            # Substituir placeholders
+            for chave, valor in placeholders.items():
+                if f'{{{{{chave}}}}}' in p.text:
+                    p.text = p.text.replace(f'{{{{{chave}}}}}', bleach.clean(str(valor)))
+            
+            # Aplicar negrito nos trechos específicos
+            for text, should_bold in bold_sections.items():
+                if text in p.text and should_bold:
+                    for run in p.runs:
+                        if text in run.text:
+                            run.bold = True
+        
+        # Processar tabelas
+        for table in doc.tables:
+            for row in table.rows:
+                for cell in row.cells:
+                    # Substituir placeholders
+                    for chave, valor in placeholders.items():
+                        if f'{{{{{chave}}}}}' in cell.text:
+                            cell.text = cell.text.replace(f'{{{{{chave}}}}}', bleach.clean(str(valor)))
+                    
+                    # Aplicar negrito nos trechos específicos
+                    for text, should_bold in bold_sections.items():
+                        if text in cell.text and should_bold:
+                            for paragraph in cell.paragraphs:
+                                for run in paragraph.runs:
+                                    if text in run.text:
+                                        run.bold = True
+        
+        # Salvar e retornar documento
+        output = io.BytesIO()
+        doc.save(output)
+        output.seek(0)
+        
+        return send_file(
+            output,
+            mimetype="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            download_name=f"{template_name}_{datetime.now().strftime('%Y%m%d')}.docx",
+            as_attachment=True
+        )
+    
+    except Exception as e:
+        app.logger.error(f"Erro inesperado ao gerar petição completa: {str(e)}")
+        return abort(500, "Erro interno ao processar a solicitação")
+
+@app.route('/numero_contrato')
+@login_required
+def numero_contrato():
+    return render_template('numero_contrato.html')
 
 if __name__ == '__main__':
     app.run(debug=True, port=5000)

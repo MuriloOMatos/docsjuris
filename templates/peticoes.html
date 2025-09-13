@@ -68,6 +68,10 @@
     .checkbox-item:last-child {
       margin-bottom: 0;
     }
+    .optional-field {
+      border-left: 3px solid #0d6efd;
+      padding-left: 10px;
+    }
   </style>
 </head>
 <body>
@@ -320,11 +324,48 @@
                       <div class="invalid-feedback">Informe o nome do advogado.</div>
                     </div>
 
-                    <!-- Observações -->
-                    <div class="mb-3">
-                      <label for="observacoes" class="form-label">Observações:</label>
-                      <textarea class="form-control" id="observacoes" name="observacoes" 
-                                rows="3" placeholder="Observações adicionais..."></textarea>
+                    <!-- Estado e OAB -->
+                    <div class="row mb-3">
+                      <div class="col-md-6">
+                        <label for="estado_oab" class="form-label">Estado da OAB:</label>
+                        <select class="form-select" id="estado_oab" name="estado_oab" required>
+                          <option value="" selected disabled>Selecione o estado...</option>
+                          <option value="AC">Acre (AC)</option>
+                          <option value="AL">Alagoas (AL)</option>
+                          <option value="AP">Amapá (AP)</option>
+                          <option value="AM">Amazonas (AM)</option>
+                          <option value="BA">Bahia (BA)</option>
+                          <option value="CE">Ceará (CE)</option>
+                          <option value="DF">Distrito Federal (DF)</option>
+                          <option value="ES">Espírito Santo (ES)</option>
+                          <option value="GO">Goiás (GO)</option>
+                          <option value="MA">Maranhão (MA)</option>
+                          <option value="MT">Mato Grosso (MT)</option>
+                          <option value="MS">Mato Grosso do Sul (MS)</option>
+                          <option value="MG">Minas Gerais (MG)</option>
+                          <option value="PA">Pará (PA)</option>
+                          <option value="PB">Paraíba (PB)</option>
+                          <option value="PR">Paraná (PR)</option>
+                          <option value="PE">Pernambuco (PE)</option>
+                          <option value="PI">Piauí (PI)</option>
+                          <option value="RJ">Rio de Janeiro (RJ)</option>
+                          <option value="RN">Rio Grande do Norte (RN)</option>
+                          <option value="RS">Rio Grande do Sul (RS)</option>
+                          <option value="RO">Rondônia (RO)</option>
+                          <option value="RR">Roraima (RR)</option>
+                          <option value="SC">Santa Catarina (SC)</option>
+                          <option value="SP">São Paulo (SP)</option>
+                          <option value="SE">Sergipe (SE)</option>
+                          <option value="TO">Tocantins (TO)</option>
+                        </select>
+                        <div class="invalid-feedback">Selecione o estado da OAB.</div>
+                      </div>
+                      <div class="col-md-6">
+                        <label for="numero_oab" class="form-label">Número da OAB:</label>
+                        <input type="text" class="form-control" id="numero_oab" name="numero_oab" 
+                               placeholder="Ex: 123456" required>
+                        <div class="invalid-feedback">Informe o número da OAB.</div>
+                      </div>
                     </div>
 
                     <button type="button" id="btn-salvar-peticao" class="btn btn-primary w-100 py-2">
@@ -343,6 +384,9 @@
                 </div>
                 <div class="card-body">
                   <form action="/gerar-peticao" method="post" role="form" novalidate>
+                    <!-- CAMPO HIDDEN PARA O FORO -->
+                    <input type="hidden" id="foro_hidden" name="foro">
+                    
                     <!-- Seleção de Modelo -->
                     <div class="mb-3">
                       <label for="modelo_peticao" class="form-label">Número de Empréstimos:</label>
@@ -442,6 +486,19 @@
           this.handleBancoChange(e.target.value);
         });
         
+        // Formatação do número da OAB
+        document.getElementById('numero_oab').addEventListener('input', function(e) {
+          // Remove qualquer caractere não numérico
+          let value = e.target.value.replace(/\D/g, '');
+          
+          // Limita a 6 dígitos
+          if (value.length > 6) {
+            value = value.substring(0, 6);
+          }
+          
+          e.target.value = value;
+        });
+        
         // Carregar dados salvos se existirem
         this.carregarDadosSalvos();
       }
@@ -494,7 +551,8 @@
           comarca: document.getElementById('comarca').value,
           banco: document.getElementById('banco').value,
           advogado: document.getElementById('advogado').value,
-          observacoes: document.getElementById('observacoes').value,
+          estado_oab: document.getElementById('estado_oab').value,
+          numero_oab: document.getElementById('numero_oab').value,
           data_cadastro: new Date().toISOString()
         };
 
@@ -507,6 +565,9 @@
         // Salvar dados
         this.peticaoData = formData;
         localStorage.setItem('peticaoData', JSON.stringify(formData));
+        
+        // PREENCHER O CAMPO HIDDEN COM O VALOR DO FORO
+        document.getElementById('foro_hidden').value = formData.foro;
         
         // Ir para a seção de empréstimo
         this.showSection('emprestimo-section');
@@ -538,7 +599,7 @@
 
       validarDados(data) {
         // Campos obrigatórios
-        const requiredFields = ['tipo_peticao', 'foro', 'possui_emprestimos', 'advogado'];
+        const requiredFields = ['tipo_peticao', 'foro', 'possui_emprestimos', 'advogado', 'estado_oab', 'numero_oab'];
         
         // Validar fontes de renda (sempre obrigatório)
         if (!data.fontes_renda || data.fontes_renda.length === 0) {
@@ -590,6 +651,11 @@
           this.peticaoData = JSON.parse(savedData);
           this.preencherFormulario(this.peticaoData);
           
+          // PREENCHER O CAMPO HIDDEN SE EXISTIR
+          if (this.peticaoData.foro && document.getElementById('foro_hidden')) {
+            document.getElementById('foro_hidden').value = this.peticaoData.foro;
+          }
+          
           // Atualizar a exibição dos campos baseado no foro selecionado
           if (this.peticaoData.foro) {
             this.handleForoChange(this.peticaoData.foro);
@@ -605,7 +671,8 @@
         document.getElementById('comarca').value = data.comarca || '';
         document.getElementById('banco').value = data.banco || '';
         document.getElementById('advogado').value = data.advogado || '';
-        document.getElementById('observacoes').value = data.observacoes || '';
+        document.getElementById('estado_oab').value = data.estado_oab || '';
+        document.getElementById('numero_oab').value = data.numero_oab || '';
         
         // Preencher checkboxes das fontes de renda
         if (data.fontes_renda && Array.isArray(data.fontes_renda)) {
@@ -688,6 +755,12 @@
                   <span class="input-group-text">%</span>
                 </div>
                 <div class="invalid-feedback">Informe uma taxa entre 0 e 100%.</div>
+              </div>
+              <!-- Campo opcional para número do contrato -->
+              <div class="mb-3 optional-field">
+                <label for="contrato_${i}" class="form-label">Número do Contrato (Opcional)</label>
+                <input type="text" class="form-control" id="contrato_${i}"
+                       name="emprestimos[${i}][contrato]" placeholder="Ex: 123456789">
               </div>
             </div>
           `;
