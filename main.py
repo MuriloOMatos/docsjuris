@@ -21,7 +21,7 @@ import re
 
 # Lista de templates válidos - atualizada com os novos templates
 VALID_TEMPLATES = [
-    'declaracao_hiposuficiencia',
+    'declaracao_hiposuficencia',
     'contratos_honorarios',
     'declaracao_contrato_digital',
     'declaracao_procuradores',
@@ -71,7 +71,42 @@ MAPEAMENTO_VALORES = {
     "extratos_inss": "Extratos de benefício previdenciário (INSS)",
     "extratos_bancarios": "Extratos bancários atualizados",
     "ctps_digital": "Carteira de Trabalho e Previdência Social (CTPS) Digital",
-    "cadastro_unico": "Folha resumo do Cadastro Único para Programas Sociais do Governo Federal"
+    "cadastro_unico": "Folha resumo do Cadastro Único para Programas Sociais do Governo Federal",
+    
+    # Estados
+    "AC": "Acre",
+    "AL": "Alagoas",
+    "AP": "Amapá",
+    "AM": "Amazonas",
+    "BA": "Bahia",
+    "CE": "Ceará",
+    "DF": "Distrito Federal",
+    "ES": "Espírito Santo",
+    "GO": "Goiás",
+    "MA": "Maranhão",
+    "MT": "Mato Grosso",
+    "MS": "Mato Grosso do Sul",
+    "MG": "Minas Gerais",
+    "PA": "Pará",
+    "PB": "Paraíba",
+    "PR": "Paraná",
+    "PE": "Pernambuco",
+    "PI": "Piauí",
+    "RJ": "Rio de Janeiro",
+    "RN": "Rio Grande do Norte",
+    "RS": "Rio Grande do Sul",
+    "RO": "Rondônia",
+    "RR": "Roraima",
+    "SC": "Santa Catarina",
+    "SP": "São Paulo",
+    "SE": "Sergipe",
+    "TO": "Tocantins",
+    
+    # Novos campos
+    "estado_comarca": "Estado da Comarca",
+    "cidade_comarca": "Cidade da Comarca", 
+    "estado_oab": "Estado da OAB",
+    "numero_oab": "Número da OAB",
 }
 
 # Configuração de logging
@@ -424,16 +459,20 @@ def gerar_documento(dados, num_emprestimos, foro='autor'):
     # DEBUG: Log dos dados recebidos
     app.logger.debug(f"Dados recebidos para placeholders: {list(dados.keys())}")
     
-    # Mapeamento completo de placeholders - todos em minúsculo
+    # Mapeamento completo de placeholders - INCLUINDO DADOS DA COMARCA
     replacements = {
-        # Dados básicos
+        # Dados básicos da petição
         'foro': dados.get('foro', 'Autor'),
-        'estado': 'PE',  # Valor padrão
+        'tipo_peticao': dados.get('tipo_peticao', ''),
         'banco': dados.get('banco', 'Banco Não Especificado'),
-        'cnpj_banco': '00.000.000/0001-00',  # Valor padrão
-        'endereco_banco': 'Endereço não especificado',
-        'data': datetime.now().strftime('%d/%m/%Y'),
-        'n_oab': '1252',  # Valor padrão
+        'possui_emprestimos': dados.get('possui_emprestimos', ''),
+        'fontes_renda': dados.get('fontes_renda', 'Nenhuma fonte de renda selecionada'),
+        'conjunto_probatorio': dados.get('conjunto_probatorio', 'Nenhum documento probatório selecionado'),
+        'estado_comarca': dados.get('estado_comarca', ''),
+        'cidade_comarca': dados.get('cidade_comarca', ''),
+        'advogado': dados.get('advogado', ''),
+        'estado_oab': dados.get('estado_oab', ''),
+        'numero_oab': dados.get('numero_oab', ''),
         
         # Dados financeiros
         'renda_mensal': dados.get('renda_mensal', ''),
@@ -443,23 +482,32 @@ def gerar_documento(dados, num_emprestimos, foro='autor'):
         'diario': dados.get('diario', ''),
         'comprometimento_porcentagem': dados.get('comprometimento_porcentagem', ''),
         
-        # Dados da petição
-        'tipo_peticao': dados.get('tipo_peticao', ''),
-        'comarca': dados.get('comarca', ''),
-        'advogado': dados.get('advogado', ''),
-        'observacoes': dados.get('observacoes', ''),
-        'possui_emprestimos': dados.get('possui_emprestimos', ''),
-        'fontes_renda': dados.get('fontes_renda', 'Nenhuma fonte de renda selecionada'),
-        'conjunto_probatorio': dados.get('conjunto_probatorio', 'Nenhum documento probatório selecionado'),
-        
         # Valores calculados
         'valor_causa': dados.get('valor_causa', ''),
         'total_dobro_geral': dados.get('total_dobro_geral', ''),
         'renda_atual': dados.get('renda_atual', ''),
+        'total_emprestimo': dados.get('total_emprestimo', ''),
+        'def_emprestimos': dados.get('def_emprestimos', ''),
+        'parcela_pessoal_atual': dados.get('parcela_pessoal_atual', ''),
+        'dif_bacen': dados.get('dif_bacen', ''),
+        'vlr_total_emprestimo1': dados.get('vlr_total_emprestimo1', ''),
+        'vlr_total_emprestimo2': dados.get('vlr_total_emprestimo2', ''),
+        'org_bacen': dados.get('org_bacen', ''),
+        'org_div': dados.get('org_div', ''),
+        'total_dobro': dados.get('total_dobro', ''),
+        'dadovalorcausa': dados.get('dadovalorcausa', ''),
+        'total_emprestimo_bacen': dados.get('total_emprestimo_bacen', ''),
         
-        # Placeholders específicos do template
-        'beneficio_recebido': 'Benefício Previdenciário',  # Valor padrão
+        # Placeholders específicos do template - ADICIONAR VARIANTES
+        'comarca': f"{dados.get('cidade_comarca', '')}/{dados.get('estado_comarca', '')}",
+        'cidade': dados.get('cidade_comarca', ''),
+        'estado': dados.get('estado_comarca', ''),
+        'beneficio_recebido': 'Benefício Previdenciário',
         'numero_contrato': dados.get('numero_contrato', 'N/A'),
+        'data': datetime.now().strftime('%d/%m/%Y'),
+        'n_oab': dados.get('numero_oab', '1252'),
+        'cnpj_banco': '00.000.000/0001-00',
+        'endereco_banco': 'Endereço não especificado',
     }
     
     # Adicionar dados dos empréstimos se existirem
@@ -482,27 +530,24 @@ def gerar_documento(dados, num_emprestimos, foro='autor'):
         "AÇÃO REVISIONAL DE CONTRATO DE EMPRÉSTIMO PESSOAL NÃO CONSIGNADO": True
     }
     
-    # Função para substituir placeholders em texto
+    # Função para substituir placeholders em texto - MELHORADA
     def substituir_placeholders(texto):
         if not texto:
             return texto
             
         novo_texto = texto
         for key, value in replacements.items():
-            # Tentar ambos os formatos: {{key}} (minúsculo) e {{KEY}} (maiúsculo)
-            placeholder_min = f'{{{{{key}}}}}'
-            placeholder_mai = f'{{{{{key.upper()}}}}}'
-            placeholder_alt = f'{{{{NUMERO_CONTRATO_{key.split("_")[-1]}}}}}' if key.startswith('numero_contrato_') else None
+            # Tentar múltiplos formatos de placeholders
+            placeholders_to_try = [
+                f'{{{{{key}}}}}',           # {{key}}
+                f'{{{{{key.upper()}}}}}',   # {{KEY}}
+                f'{{{{{key.lower()}}}}}',   # {{key}} (minúsculo)
+            ]
             
-            if placeholder_min in novo_texto:
-                novo_texto = novo_texto.replace(placeholder_min, str(value))
-                app.logger.debug(f"Substituído {placeholder_min} por {value}")
-            elif placeholder_mai in novo_texto:
-                novo_texto = novo_texto.replace(placeholder_mai, str(value))
-                app.logger.debug(f"Substituído {placeholder_mai} por {value}")
-            elif placeholder_alt and placeholder_alt in novo_texto:
-                novo_texto = novo_texto.replace(placeholder_alt, str(value))
-                app.logger.debug(f"Substituído {placeholder_alt} por {value}")
+            for placeholder in placeholders_to_try:
+                if placeholder in novo_texto:
+                    novo_texto = novo_texto.replace(placeholder, str(value))
+                    app.logger.debug(f"Substituído {placeholder} por {value}")
         
         return novo_texto
     
@@ -610,30 +655,31 @@ def formatar_lista_selecionados(valores, tipo):
 def gerar_peticao():
     try:
         app.logger.debug("Iniciando geração de petição")
-        app.logger.debug(f"Campos recebidos no form: {list(request.form.keys())}")
         
         # Validar e obter dados básicos
         num_emprestimos, foro = validar_dados_entrada(request.form)
         app.logger.debug(f"Foro selecionado: {foro}, Número de empréstimos: {num_emprestimos}")
         
-        # Coletar dados da petição (primeira etapa)
+        # Coletar dados da petição (primeira etapa) - INCLUIR DADOS DA COMARCA
         dados_peticao = {
             'renda_mensal': request.form['renda_mensal'].replace(",", "."),
             'parcela_pessoal': request.form['parcela_pessoal'].replace(",", "."),
             'foro': MAPEAMENTO_VALORES.get(request.form.get('foro', 'autor'), 'Autor'),
             'tipo_peticao': MAPEAMENTO_VALORES.get(request.form.get('tipo_peticao', ''), ''),
-            'comarca': request.form.get('comarca', ''),
-            'advogado': request.form.get('advogado', ''),
-            'observacoes': request.form.get('observacoes', ''),
             'banco': request.form.get('banco', ''),
             'possui_emprestimos': MAPEAMENTO_VALORES.get(request.form.get('possui_emprestimos', ''), ''),
             'fontes_renda': formatar_lista_selecionados(request.form.getlist('fontes_renda[]'), "array"),
             'conjunto_probatorio': formatar_lista_selecionados(request.form.getlist('conjunto_probatorio[]'), "array"),
+            'estado_comarca': MAPEAMENTO_VALORES.get(request.form.get('estado_comarca', ''), request.form.get('estado_comarca', '')),
+            'cidade_comarca': request.form.get('cidade_comarca', ''),
+            'advogado': request.form.get('advogado', ''),
+            'estado_oab': request.form.get('estado_oab', ''),
+            'numero_oab': request.form.get('numero_oab', ''),
             'numero_contrato': request.form.get('numero_contrato', 'N/A'),
         }
         
         # DEBUG: Log dos dados da petição
-        app.logger.debug(f"Dados da petição coletados: {dados_peticao.keys()}")
+        app.logger.debug(f"Dados da petição coletados: {dados_peticao}")
         
         # Calcular dados dos empréstimos
         emprestimos, total_consignado, total_emprestimo_geral, def_emprestimos, parcela_pessoal_atual, dif_bacen, vlr_total_emprestimo1, vlr_total_emprestimo2, org_bacen, org_div, total_dobro, valor_causa, comprometimento_renda, renda_atual, comprometimento_porcentagem, total_emprestimo_bacen, total_dobro_geral, dadovalorcausa = calculos_emprestimo(request.form, num_emprestimos)
@@ -654,7 +700,6 @@ def gerar_peticao():
             emp['renda_atual'] = format_brl(emp['renda_atual'])
             emp['total_emprestimo_bacen'] = format_brl(emp['total_emprestimo_bacen'])
             emp['dadovalorcausa'] = format_brl(emp['dadovalorcausa'])
-            # O número do contrato é uma string, não precisa de formatação monetária
             
         dados_peticao['emprestimos'] = emprestimos
         renda = Decimal(dados_peticao['renda_mensal'])
@@ -682,7 +727,7 @@ def gerar_peticao():
         dados_peticao['total_emprestimo_bacen'] = format_brl(total_emprestimo_bacen)
         
         # DEBUG: Log final dos dados
-        app.logger.debug(f"Dados completos para geração: {list(dados_peticao.keys())}")
+        app.logger.debug(f"Dados completos para geração: {dados_peticao}")
         
         # Usar a nova função gerar_documento que determina o template correto
         documento = gerar_documento(dados_peticao, num_emprestimos, foro)
