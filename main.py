@@ -21,7 +21,7 @@ import re
 
 # Lista de templates válidos - atualizada com os novos templates
 VALID_TEMPLATES = [
-    'declaracao_hiposuficencia',
+    'declaracao_hiposuficiencia',
     'contratos_honorarios',
     'declaracao_contrato_digital',
     'declaracao_procuradores',
@@ -459,7 +459,7 @@ def gerar_documento(dados, num_emprestimos, foro='autor'):
     # DEBUG: Log dos dados recebidos
     app.logger.debug(f"Dados recebidos para placeholders: {list(dados.keys())}")
     
-    # Mapeamento completo de placeholders - INCLUINDO DADOS DA COMARCA
+    # Mapeamento completo de placeholders - INCLUINDO BENEFICIOS
     replacements = {
         # Dados básicos da petição
         'foro': dados.get('foro', 'Autor'),
@@ -473,6 +473,8 @@ def gerar_documento(dados, num_emprestimos, foro='autor'):
         'advogado': dados.get('advogado', ''),
         'estado_oab': dados.get('estado_oab', ''),
         'numero_oab': dados.get('numero_oab', ''),
+        'beneficios': dados.get('beneficios', dados.get('fontes_renda', 'Nenhuma fonte de renda selecionada')),  # NOVO CAMPO
+        'BENEFICIOS': dados.get('beneficios', dados.get('fontes_renda', 'Nenhuma fonte de renda selecionada')),  # NOVO CAMPO em maiúsculas
         
         # Dados financeiros
         'renda_mensal': dados.get('renda_mensal', ''),
@@ -660,7 +662,7 @@ def gerar_peticao():
         num_emprestimos, foro = validar_dados_entrada(request.form)
         app.logger.debug(f"Foro selecionado: {foro}, Número de empréstimos: {num_emprestimos}")
         
-        # Coletar dados da petição (primeira etapa) - INCLUIR DADOS DA COMARCA
+        # Coletar dados da petição (primeira etapa) - INCLUIR BENEFICIOS
         dados_peticao = {
             'renda_mensal': request.form['renda_mensal'].replace(",", "."),
             'parcela_pessoal': request.form['parcela_pessoal'].replace(",", "."),
@@ -676,6 +678,8 @@ def gerar_peticao():
             'estado_oab': request.form.get('estado_oab', ''),
             'numero_oab': request.form.get('numero_oab', ''),
             'numero_contrato': request.form.get('numero_contrato', 'N/A'),
+            # ADICIONAR O NOVO CAMPO BENEFICIOS
+            'beneficios': request.form.get('beneficios', ''),
         }
         
         # DEBUG: Log dos dados da petição
@@ -788,6 +792,10 @@ def gerar_documentos():
                 placeholders[key] = formatar_lista_selecionados(value, "json")
             elif key in ['foro', 'tipo_peticao', 'possui_emprestimos']:
                 placeholders[key] = MAPEAMENTO_VALORES.get(value, value)
+            # ADICIONAR O CAMPO BENEFICIOS
+            elif key == 'beneficios':
+                placeholders[key] = value  # Já vem formatado do frontend
+                placeholders['BENEFICIOS'] = value  # Também adicionar versão em maiúsculas
             else:
                 placeholders[key] = value
 
@@ -925,6 +933,10 @@ def gerar_peticao_completa():
                 placeholders[key] = formatar_lista_selecionados(value, "json")
             elif key in ['foro', 'tipo_peticao', 'possui_emprestimos']:
                 placeholders[key] = MAPEAMENTO_VALORES.get(value, value)
+            # ADICIONAR O CAMPO BENEFICIOS
+            elif key == 'beneficios':
+                placeholders[key] = value
+                placeholders['BENEFICIOS'] = value
             else:
                 placeholders[key] = value
         
