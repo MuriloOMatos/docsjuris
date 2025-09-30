@@ -64,15 +64,6 @@ MAPEAMENTO_VALORES = {
     "auxilio_incapacidade": "Benefício de Auxílio Por Incapacidade Temporária Previdenciário",
     "auxilio_acidente": "Benefício de Auxílio-Acidente",
     
-    # Conjunto probatório
-    "declaracao_hipossuficiencia": "Declaração de Hipossuficiência firmada pela parte autora",
-    "isencao_imposto_renda": "Declaração de isenção de Imposto de Renda",
-    "print_receita_federal": "Print da Receita Federal demonstrando inexistência de dados quanto à Declaração Anual de Imposto de Renda",
-    "extratos_inss": "Extratos de benefício previdenciário (INSS)",
-    "extratos_bancarios": "Extratos bancários atualizados",
-    "ctps_digital": "Carteira de Trabalho e Previdência Social (CTPS) Digital",
-    "cadastro_unico": "Folha resumo do Cadastro Único para Programas Sociais do Governo Federal",
-    
     # Estados
     "AC": "Acre",
     "AL": "Alagoas",
@@ -144,6 +135,54 @@ def get_db_connection():
     except psycopg2.Error as e:
         app.logger.error(f"Erro ao conectar ao banco de dados: {str(e)}")
         raise
+
+# Função para obter dados completos do banco
+def get_banco_data(codigo_banco):
+    """Retorna dados completos do banco baseado no código"""
+    bancos_data = {
+        "banco_brasil": {
+            "nome": "BANCO DO BRASIL S.A.",
+            "cnpj": "00.000.000/0001-00",
+            "endereco": "SETOR BANCÁRIO SUL, QUADRA 1, BLOCO 3, ED. SEDE III - BRASÍLIA/DF"
+        },
+        "caixa": {
+            "nome": "CAIXA ECONÔMICA FEDERAL",
+            "cnpj": "00.000.000/0001-91", 
+            "endereco": "SETOR BANCÁRIO SUL, QUADRA 4, BLOCO A - BRASÍLIA/DF"
+        },
+        "bradesco": {
+            "nome": "BANCO BRADESCO S.A.",
+            "cnpj": "60.746.948/0001-12",
+            "endereco": "CIDADE DE DEUS, S/N - VILA YARA - OSASCO/SP"
+        },
+        "itau": {
+            "nome": "BANCO ITAÚ S.A.",
+            "cnpj": "60.872.504/0001-23",
+            "endereco": "PRAÇA ALFREDO EGYDIO DE SOUZA ARANHA, 100 - SÃO PAULO/SP"
+        },
+        "santander": {
+            "nome": "BANCO SANTANDER (BRASIL) S.A.",
+            "cnpj": "90.400.888/0001-42",
+            "endereco": "AV. PRESIDENTE JUSCELINO KUBITSCHEK, 2041 - SÃO PAULO/SP"
+        },
+        "sicoob": {
+            "nome": "SICOOB CREDIRIODÓSUL",
+            "cnpj": "05.993.936/0001-66", 
+            "endereco": "RUA MARECHAL DEODORO, 630 - SANTA MARIA/RS"
+        },
+        "sicredi": {
+            "nome": "SICREDI",
+            "cnpj": "97.957.817/0001-14",
+            "endereco": "RUA CAPITÃO MONTANHA, 177 - PORTO ALEGRE/RS"
+        },
+        "outro": {
+            "nome": "BANCO NÃO IDENTIFICADO",
+            "cnpj": "00.000.000/0000-00",
+            "endereco": "ENDEREÇO NÃO INFORMADO"
+        }
+    }
+    
+    return bancos_data.get(codigo_banco, bancos_data["outro"])
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -456,15 +495,22 @@ def gerar_documento(dados, num_emprestimos, foro='autor'):
     
     doc = Document(template_path)
     
+    # Obter dados completos do banco
+    banco_selecionado = dados.get('banco', 'outro')
+    banco_data = get_banco_data(banco_selecionado)
+    
     # DEBUG: Log dos dados recebidos
     app.logger.debug(f"Dados recebidos para placeholders: {list(dados.keys())}")
+    app.logger.debug(f"Dados do banco: {banco_data}")
     
-    # Mapeamento completo de placeholders - INCLUINDO BENEFICIOS
+    # Mapeamento completo de placeholders - INCLUINDO DADOS DO BANCO
     replacements = {
         # Dados básicos da petição
         'foro': dados.get('foro', 'Autor'),
         'tipo_peticao': dados.get('tipo_peticao', ''),
-        'banco': dados.get('banco', 'Banco Não Especificado'),
+        'banco': banco_data['nome'],  # Usar nome completo do banco
+        'cnpj_banco': banco_data['cnpj'],  # CNPJ do banco
+        'endereco_banco': banco_data['endereco'],  # Endereço do banco
         'possui_emprestimos': dados.get('possui_emprestimos', ''),
         'fontes_renda': dados.get('fontes_renda', 'Nenhuma fonte de renda selecionada'),
         'conjunto_probatorio': dados.get('conjunto_probatorio', 'Nenhum documento probatório selecionado'),
@@ -473,8 +519,8 @@ def gerar_documento(dados, num_emprestimos, foro='autor'):
         'advogado': dados.get('advogado', ''),
         'estado_oab': dados.get('estado_oab', ''),
         'numero_oab': dados.get('numero_oab', ''),
-        'beneficios': dados.get('beneficios', dados.get('fontes_renda', 'Nenhuma fonte de renda selecionada')),  # NOVO CAMPO
-        'BENEFICIOS': dados.get('beneficios', dados.get('fontes_renda', 'Nenhuma fonte de renda selecionada')),  # NOVO CAMPO em maiúsculas
+        'beneficios': dados.get('beneficios', dados.get('fontes_renda', 'Nenhuma fonte de renda selecionada')),
+        'BENEFICIOS': dados.get('beneficios', dados.get('fontes_renda', 'Nenhuma fonte de renda selecionada')),
         
         # Dados financeiros
         'renda_mensal': dados.get('renda_mensal', ''),
@@ -500,7 +546,7 @@ def gerar_documento(dados, num_emprestimos, foro='autor'):
         'dadovalorcausa': dados.get('dadovalorcausa', ''),
         'total_emprestimo_bacen': dados.get('total_emprestimo_bacen', ''),
         
-        # Placeholders específicos do template - ADICIONAR VARIANTES
+        # Placeholders específicos do template
         'comarca': f"{dados.get('cidade_comarca', '')}/{dados.get('estado_comarca', '')}",
         'cidade': dados.get('cidade_comarca', ''),
         'estado': dados.get('estado_comarca', ''),
@@ -508,8 +554,6 @@ def gerar_documento(dados, num_emprestimos, foro='autor'):
         'numero_contrato': dados.get('numero_contrato', 'N/A'),
         'data': datetime.now().strftime('%d/%m/%Y'),
         'n_oab': dados.get('numero_oab', '1252'),
-        'cnpj_banco': '00.000.000/0001-00',
-        'endereco_banco': 'Endereço não especificado',
     }
     
     # Adicionar dados dos empréstimos se existirem
@@ -668,7 +712,7 @@ def gerar_peticao():
             'parcela_pessoal': request.form['parcela_pessoal'].replace(",", "."),
             'foro': MAPEAMENTO_VALORES.get(request.form.get('foro', 'autor'), 'Autor'),
             'tipo_peticao': MAPEAMENTO_VALORES.get(request.form.get('tipo_peticao', ''), ''),
-            'banco': request.form.get('banco', ''),
+            'banco': request.form.get('banco', ''),  # Código do banco
             'possui_emprestimos': MAPEAMENTO_VALORES.get(request.form.get('possui_emprestimos', ''), ''),
             'fontes_renda': formatar_lista_selecionados(request.form.getlist('fontes_renda[]'), "array"),
             'conjunto_probatorio': formatar_lista_selecionados(request.form.getlist('conjunto_probatorio[]'), "array"),
@@ -794,8 +838,14 @@ def gerar_documentos():
                 placeholders[key] = MAPEAMENTO_VALORES.get(value, value)
             # ADICIONAR O CAMPO BENEFICIOS
             elif key == 'beneficios':
-                placeholders[key] = value  # Já vem formatado do frontend
-                placeholders['BENEFICIOS'] = value  # Também adicionar versão em maiúsculas
+                placeholders[key] = value
+                placeholders['BENEFICIOS'] = value
+            # Processar campo banco para obter dados completos
+            elif key == 'banco':
+                banco_data = get_banco_data(value)
+                placeholders['banco'] = banco_data['nome']
+                placeholders['cnpj_banco'] = banco_data['cnpj']
+                placeholders['endereco_banco'] = banco_data['endereco']
             else:
                 placeholders[key] = value
 
@@ -937,6 +987,12 @@ def gerar_peticao_completa():
             elif key == 'beneficios':
                 placeholders[key] = value
                 placeholders['BENEFICIOS'] = value
+            # Processar campo banco para obter dados completos
+            elif key == 'banco':
+                banco_data = get_banco_data(value)
+                placeholders['banco'] = banco_data['nome']
+                placeholders['cnpj_banco'] = banco_data['cnpj']
+                placeholders['endereco_banco'] = banco_data['endereco']
             else:
                 placeholders[key] = value
         
