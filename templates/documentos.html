@@ -108,16 +108,18 @@
             <input type="text" class="form-control" id="estado" name="estado" maxlength="2" required>
           </div>
 
-          <!-- Campo Banco com CNPJ -->
+          <!-- Campo Banco com CNPJ - MODIFICADO -->
           <div class="col-md-4">
             <label for="banco" class="form-label">Banco</label>
             <select name="banco" id="banco" class="form-control" required>
               <option value="">Selecione um banco</option>
-              {% for banco in bancos %}
-                <option value="{{ banco.nome_banco }}" data-cnpj="{{ banco.cnpj }}">
-                  {{ banco.codigo_banco }} - {{ banco.nome_banco }}
-                </option>
-              {% endfor %}
+              <option value="banco_brasil" data-cnpj="00.000.000/0001-00">01 - BANCO DO BRASIL</option>
+              <option value="caixa" data-cnpj="00.000.000/0001-91">02 - CAIXA ECONÔMICA FEDERAL</option>
+              <option value="bradesco" data-cnpj="60.746.948/0001-12">03 - BANCO BRADESCO S.A.</option>
+              <option value="itau" data-cnpj="60.872.504/0001-23">04 - BANCO ITAÚ S.A.</option>
+              <option value="santander" data-cnpj="90.400.888/0001-42">05 - BANCO SANTANDER</option>
+              <option value="sicoob" data-cnpj="05.993.936/0001-66">06 - SICOOB CREDIRIODÓSUL</option>
+              <option value="sicredi" data-cnpj="97.957.817/0001-14">07 - SICREDI</option>
             </select>
           </div>
 
