@@ -184,6 +184,40 @@ def get_banco_data(codigo_banco):
     
     return bancos_data.get(codigo_banco, bancos_data["outro"])
 
+# Função para formatar o conjunto probatório em tópicos
+def formatar_conjunto_probatorio(conjunto_probatorio):
+    """Formata o conjunto probatório em tópicos para exibição"""
+    if not conjunto_probatorio:
+        return "Nenhum documento probatório selecionado"
+    
+    # Mapeamento dos valores para nomes amigáveis
+    mapeamento_probatorio = {
+        'declaracao_hipossuficiencia': 'Declaração de Hipossuficiência firmada pela parte autora',
+        'isencao_imposto_renda': 'Declaração de isenção de Imposto de Renda',
+        'print_receita_federal': 'Print da Receita Federal demonstrando inexistência de dados quanto à Declaração Anual de Imposto de Renda',
+        'extratos_inss': 'Extratos de benefício previdenciário (INSS)',
+        'extratos_bancarios': 'Extratos bancários atualizados',
+        'ctps_digital': 'Carteira de Trabalho e Previdência Social (CTPS) Digital',
+        'cadastro_unico': 'Folha resumo do Cadastro Único para Programas Sociais do Governo Federal'
+    }
+    
+    # Se for uma string JSON, converter para lista
+    if isinstance(conjunto_probatorio, str):
+        try:
+            conjunto_lista = json.loads(conjunto_probatorio)
+        except:
+            conjunto_lista = [conjunto_probatorio]
+    else:
+        conjunto_lista = conjunto_probatorio
+    
+    # Converter valores para nomes amigáveis
+    probatorio_nomes = [mapeamento_probatorio.get(valor, valor) for valor in conjunto_lista]
+    
+    # Formatar em tópicos (com quebras de linha)
+    probatorio_formatado = "• " + "\n• ".join(probatorio_nomes)
+    
+    return probatorio_formatado
+
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     app.logger.debug("Acessando rota /login")
@@ -499,11 +533,14 @@ def gerar_documento(dados, num_emprestimos, foro='autor'):
     banco_selecionado = dados.get('banco', 'outro')
     banco_data = get_banco_data(banco_selecionado)
     
+    # FORMATAR O CONJUNTO PROBATÓRIO EM TÓPICOS
+    conjunto_probatorio_formatado = formatar_conjunto_probatorio(dados.get('conjunto_probatorio', ''))
+    
     # DEBUG: Log dos dados recebidos
     app.logger.debug(f"Dados recebidos para placeholders: {list(dados.keys())}")
-    app.logger.debug(f"Dados do banco: {banco_data}")
+    app.logger.debug(f"Conjunto probatório formatado: {conjunto_probatorio_formatado}")
     
-    # Mapeamento completo de placeholders - INCLUINDO DADOS DO BANCO
+    # Mapeamento completo de placeholders - INCLUINDO DADOS DO BANCO E CONJUNTO PROBATÓRIO FORMATADO
     replacements = {
         # Dados básicos da petição
         'foro': dados.get('foro', 'Autor'),
@@ -513,7 +550,8 @@ def gerar_documento(dados, num_emprestimos, foro='autor'):
         'endereco_banco': banco_data['endereco'],  # Endereço do banco
         'possui_emprestimos': dados.get('possui_emprestimos', ''),
         'fontes_renda': dados.get('fontes_renda', 'Nenhuma fonte de renda selecionada'),
-        'conjunto_probatorio': dados.get('conjunto_probatorio', 'Nenhum documento probatório selecionado'),
+        'conjunto_probatorio': conjunto_probatorio_formatado,  # USAR A VERSÃO FORMATADA
+        'CONJUNTO_PROBATORIO': conjunto_probatorio_formatado,  # Também em maiúsculas
         'estado_comarca': dados.get('estado_comarca', ''),
         'cidade_comarca': dados.get('cidade_comarca', ''),
         'advogado': dados.get('advogado', ''),
@@ -554,6 +592,9 @@ def gerar_documento(dados, num_emprestimos, foro='autor'):
         'numero_contrato': dados.get('numero_contrato', 'N/A'),
         'data': datetime.now().strftime('%d/%m/%Y'),
         'n_oab': dados.get('numero_oab', '1252'),
+        'pessoal_consignados': "pessoal + consignados" if dados.get("possui_emprestimos", "").lower() == "sim" else "pessoal",
+
+
     }
     
     # Adicionar dados dos empréstimos se existirem
@@ -706,6 +747,12 @@ def gerar_peticao():
         num_emprestimos, foro = validar_dados_entrada(request.form)
         app.logger.debug(f"Foro selecionado: {foro}, Número de empréstimos: {num_emprestimos}")
         
+        # USAR O CONJUNTO PROBATÓRIO FORMATADO SE ESTIVER DISPONÍVEL
+        conjunto_probatorio_input = request.form.get('conjunto_probatorio_formatado')
+        if not conjunto_probatorio_input:
+            # Fallback para a formatação normal se o campo formatado não existir
+            conjunto_probatorio_input = formatar_lista_selecionados(request.form.getlist('conjunto_probatorio[]'), "array")
+        
         # Coletar dados da petição (primeira etapa) - INCLUIR BENEFICIOS
         dados_peticao = {
             'renda_mensal': request.form['renda_mensal'].replace(",", "."),
@@ -715,7 +762,7 @@ def gerar_peticao():
             'banco': request.form.get('banco', ''),  # Código do banco
             'possui_emprestimos': MAPEAMENTO_VALORES.get(request.form.get('possui_emprestimos', ''), ''),
             'fontes_renda': formatar_lista_selecionados(request.form.getlist('fontes_renda[]'), "array"),
-            'conjunto_probatorio': formatar_lista_selecionados(request.form.getlist('conjunto_probatorio[]'), "array"),
+            'conjunto_probatorio': conjunto_probatorio_input,  # USAR O FORMATADO
             'estado_comarca': MAPEAMENTO_VALORES.get(request.form.get('estado_comarca', ''), request.form.get('estado_comarca', '')),
             'cidade_comarca': request.form.get('cidade_comarca', ''),
             'advogado': request.form.get('advogado', ''),
@@ -846,6 +893,10 @@ def gerar_documentos():
                 placeholders['banco'] = banco_data['nome']
                 placeholders['cnpj_banco'] = banco_data['cnpj']
                 placeholders['endereco_banco'] = banco_data['endereco']
+            # Processar conjunto probatório formatado
+            elif key == 'conjunto_probatorio_formatado':
+                placeholders['conjunto_probatorio'] = value
+                placeholders['CONJUNTO_PROBATORIO'] = value
             else:
                 placeholders[key] = value
 
@@ -993,6 +1044,10 @@ def gerar_peticao_completa():
                 placeholders['banco'] = banco_data['nome']
                 placeholders['cnpj_banco'] = banco_data['cnpj']
                 placeholders['endereco_banco'] = banco_data['endereco']
+            # Processar conjunto probatório formatado
+            elif key == 'conjunto_probatorio_formatado':
+                placeholders['conjunto_probatorio'] = value
+                placeholders['CONJUNTO_PROBATORIO'] = value
             else:
                 placeholders[key] = value
         
@@ -1059,6 +1114,12 @@ def gerar_peticao_completa():
 @login_required
 def numero_contrato():
     return render_template('numero_contrato.html')
+@app.route('/prazos')
+@login_required
+def prazos():
+    """Rota para a página de controle de prazos"""
+    app.logger.debug("Acessando rota /prazos")
+    return render_template('prazos.html')
 
 if __name__ == '__main__':
     app.run(debug=True, port=5000)
