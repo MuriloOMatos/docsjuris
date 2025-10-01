@@ -175,6 +175,31 @@ def get_banco_data(codigo_banco):
             "cnpj": "97.957.817/0001-14",
             "endereco": "RUA CAPITÃO MONTANHA, 177 - PORTO ALEGRE/RS"
         },
+        "mercantil": {
+            "nome": "BANCO MERCANTIL DO BRASIL S.A.",
+            "cnpj": "17.184.037/0001-10",
+            "endereco": "ENDEREÇO DO BANCO MERCANTIL DO BRASIL"
+        },
+        "bmg": {
+            "nome": "BANCO BMG S.A.",
+            "cnpj": "61.186.680/0001-74",
+            "endereco": "ENDEREÇO DO BANCO BMG"
+        },
+        "crefisa": {
+            "nome": "BANCO CREFISA S.A.",
+            "cnpj": "61.033.106/0001-86",
+            "endereco": "ENDEREÇO DO BANCO CREFISA"
+        },
+        "agbank": {
+            "nome": "BANCO AGBANK S.A.",
+            "cnpj": "10.664.513/0001-50",
+            "endereco": "ENDEREÇO DO BANCO AGBANK"
+        },
+        "crefaz": {
+            "nome": "CREFAZ SOCIEDADE DE CRÉDITO AO MICROEMPREENDEDOR E A EMPRESA DE PEQUENO PORTE S.A.",
+            "cnpj": "18.188.384/0001-83",
+            "endereco": "ENDEREÇO DA CREFIAZ"
+        },
         "outro": {
             "nome": "BANCO NÃO IDENTIFICADO",
             "cnpj": "00.000.000/0000-00",
