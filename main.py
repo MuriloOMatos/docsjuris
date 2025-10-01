@@ -21,7 +21,7 @@ import re
 
 # Lista de templates válidos - atualizada com os novos templates
 VALID_TEMPLATES = [
-    'declaracao_hiposuficiencia',
+    'declaracao_hiposuficencia',
     'contratos_honorarios',
     'declaracao_contrato_digital',
     'declaracao_procuradores',
@@ -769,7 +769,6 @@ def gerar_peticao():
             'estado_oab': request.form.get('estado_oab', ''),
             'numero_oab': request.form.get('numero_oab', ''),
             'numero_contrato': request.form.get('numero_contrato', 'N/A'),
-            # ADICIONAR O NOVO CAMPO BENEFICIOS
             'beneficios': request.form.get('beneficios', ''),
         }
         
@@ -1117,7 +1116,6 @@ def numero_contrato():
 @app.route('/prazos')
 @login_required
 def prazos():
-    """Rota para a página de controle de prazos"""
     app.logger.debug("Acessando rota /prazos")
     return render_template('prazos.html')
 
