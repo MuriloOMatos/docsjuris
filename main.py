@@ -192,30 +192,30 @@ def get_banco_data(codigo_banco):
         "mercantil": {
             "nome": "BANCO MERCANTIL DO BRASIL S.A.",
             "cnpj": "17.184.037/0001-10",
-            "endereco": "ENDEREÇO DO BANCO MERCANTIL DO BRASIL",
-            "cidade": "CIDADE DO BANCO MERCANTIL", 
-            "estado": "ESTADO"
+            "endereco": "AV. DO CONTORNO, 5800, ANDAR 11, 12, 13, 14 E 15 - SAVASSI - BELO HORIZONTE/MG",
+            "cidade": "BELO HORIZONTE", 
+            "estado": "MG"
         },
         "bmg": {
             "nome": "BANCO BMG S.A.",
             "cnpj": "61.186.680/0001-74", 
-            "endereco": "ENDEREÇO DO BANCO BMG",
-            "cidade": "CIDADE DO BMG",
-            "estado": "ESTADO"
+            "endereco": "AV. PRESIDENTE JUSCELINO KUBITSCHEK, 1830, ANDAR 9, 10, 14, BLOCO 01 A 04 - VILA NOVA CONCEIÇÃO - SÃO PAULO/SP",
+            "cidade": "SÃO PAULO",
+            "estado": "SP"
         },
         "crefisa": {
             "nome": "BANCO CREFISA S.A.",
-            "cnpj": "61.033.106/0001-86",
-            "endereco": "ENDEREÇO DO BANCO CREFISA",
-            "cidade": "CIDADE DO CREFISA",
-            "estado": "ESTADO" 
+            "cnpj": "60.779.196/0001-96",
+            "endereco": "RUA CANADÁ, 387 - JARDIM AMÉRICA - SÃO PAULO/SP",
+            "cidade": "SÃO PAULO",
+            "estado": "SP" 
         },
         "agbank": {
             "nome": "BANCO AGBANK S.A.",
             "cnpj": "10.664.513/0001-50",
-            "endereco": "ENDEREÇO DO BANCO AGBANK",
-            "cidade": "CIDADE DO AGBANK",
-            "estado": "ESTADO"
+            "endereco": "RUA SÉRGIO FERNANDES BORGES SOARES, 1000 - DISTRITO INDUSTRIAL - CAMPINAS/SP",
+            "cidade": "CAMPINAS",
+            "estado": "SP"
         },
         "crefaz": {
             "nome": "CREFAZ SOCIEDADE DE CRÉDITO AO MICROEMPREENDEDOR E A EMPRESA DE PEQUENO PORTE S.A.",
@@ -223,6 +223,105 @@ def get_banco_data(codigo_banco):
             "endereco": "ENDEREÇO DA CREFIAZ", 
             "cidade": "CIDADE DA CREFIAZ",
             "estado": "ESTADO"
+        },
+        # NOVOS BANCOS ADICIONADOS
+        "daycoval": {
+            "nome": "BANCO DAYCOVAL S.A.",
+            "cnpj": "62.232.889/0001-90",
+            "endereco": "AVENIDA PAULISTA, 1793 - JARDIM PAULISTA - SÃO PAULO/SP",
+            "cidade": "SÃO PAULO",
+            "estado": "SP"
+        },
+        "inbursa": {
+            "nome": "BANCO INBURSA",
+            "cnpj": "04.866.275/0001-63",
+            "endereco": "AVENIDA BRIGADEIRO FARIA LIMA, 3900, 6º ANDAR - ITAIM BIBI - SÃO PAULO/SP",
+            "cidade": "SÃO PAULO",
+            "estado": "SP"
+        },
+        "inter": {
+            "nome": "BANCO INTER S.A.",
+            "cnpj": "00.416.968/0001-01",
+            "endereco": "AV. PRESIDENTE JUSCELINO KUBITSCHEK, 1327, 18º ANDAR - VILA NOVA CONCEIÇÃO - SÃO PAULO/SP",
+            "cidade": "SÃO PAULO",
+            "estado": "SP"
+        },
+        "jbcred": {
+            "nome": "BANCO JB CRED S.A.",
+            "cnpj": "04.230.630/0001-03",
+            "endereco": "RUA LIBERO BADARÓ, 293, 20º ANDAR, CONJ ABCD - CENTRO - SÃO PAULO/SP",
+            "cidade": "SÃO PAULO",
+            "estado": "SP"
+        },
+        "master": {
+            "nome": "BANCO MASTER S.A.",
+            "cnpj": "62.232.889/0001-90",
+            "endereco": "AVENIDA BRIGADEIRO FARIA LIMA, 3900 - ITAIM BIBI - SÃO PAULO/SP",
+            "cidade": "SÃO PAULO",
+            "estado": "SP"
+        },
+        "pan": {
+            "nome": "BANCO PAN S.A.",
+            "cnpj": "59.285.411/0001-13",
+            "endereco": "AVENIDA PAULISTA, 1374, 16º ANDAR - BELA VISTA - SÃO PAULO/SP",
+            "cidade": "SÃO PAULO",
+            "estado": "SP"
+        },
+        "pkl": {
+            "nome": "BANCO PKL ONE S.A.",
+            "cnpj": "27.490.629/0001-13",
+            "endereco": "RUA TABAPUÃ, 888 - ITAIM BIBI - SÃO PAULO/SP",
+            "cidade": "SÃO PAULO",
+            "estado": "SP"
+        },
+        "safra": {
+            "nome": "BANCO SAFRA S.A.",
+            "cnpj": "58.160.789/0001-28",
+            "endereco": "AVENIDA PAULISTA, 2100 - CERQUEIRA CÉSAR - SÃO PAULO/SP",
+            "cidade": "SÃO PAULO",
+            "estado": "SP"
+        },
+        "c6": {
+            "nome": "BANCO C6 S.A.",
+            "cnpj": "31.872.495/0001-72",
+            "endereco": "AV. NOVE DE JULHO, 3186 - JARDIM PAULISTA - SÃO PAULO/SP",
+            "cidade": "SÃO PAULO",
+            "estado": "SP"
+        },
+        "brb": {
+            "nome": "BRB - BANCO DE BRASÍLIA S.A.",
+            "cnpj": "00.000.208/0001-00",
+            "endereco": "CENTRO EMPRESARIAL CNC - ST SAUN, QUADRA 5, LOTE C, BLOCO B E C - BRASÍLIA/DF",
+            "cidade": "BRASÍLIA",
+            "estado": "DF"
+        },
+        "nubank": {
+            "nome": "NU PAGAMENTOS S.A. - INSTITUIÇÃO DE PAGAMENTO",
+            "cnpj": "18.236.120/0001-58",
+            "endereco": "RUA CAPOTE VALENTE, 120, ANDAR 01 AO 08 E 09 ANDAR CONJ 902 E 16 ANDAR - PINHEIROS - SÃO PAULO/SP",
+            "cidade": "SÃO PAULO",
+            "estado": "SP"
+        },
+        "bullha": {
+            "nome": "BULLHA INSTITUIÇÃO DE PAGAMENTO S.A.",
+            "cnpj": "08.422.119/0001-64",
+            "endereco": "AV. REBOUÇAS, 2516, ANDAR 6, CONJ 61 E 62 - PINHEIROS - SÃO PAULO/SP",
+            "cidade": "SÃO PAULO",
+            "estado": "SP"
+        },
+        "facta": {
+            "nome": "FACTA FINANCEIRA S.A. CRÉDITO, FINANCIAMENTO E INVESTIMENTO",
+            "cnpj": "15.581.638/0001-30",
+            "endereco": "RUA DOS ANDRADAS, 1409, SALA 701 E 702 - CENTRO HISTÓRICO - PORTO ALEGRE/RS",
+            "cidade": "PORTO ALEGRE",
+            "estado": "RS"
+        },
+        "mercadopago": {
+            "nome": "MERCADO PAGO INSTITUIÇÃO DE PAGAMENTO LTDA",
+            "cnpj": "10.573.521/0001-91",
+            "endereco": "AV. DAS NAÇÕES UNIDAS, 3003, LETRA PARTE E - BONFIM - OSASCO/SP",
+            "cidade": "OSASCO",
+            "estado": "SP"
         },
         "outro": {
             "nome": "BANCO NÃO IDENTIFICADO",
@@ -402,14 +501,32 @@ def documentos():
     app.logger.debug("Acessando rota /documentos")
     
     bancos = [
-        {"codigo_banco": "01", "nome_banco": "BANCO DO BRASIL.", "cnpj": "00.000.000/0001-00"},
-        {"codigo_banco": "02", "nome_banco": "CAIXA ECONÔMICA.", "cnpj": "00.000.000/0001-91"},
+        {"codigo_banco": "01", "nome_banco": "BANCO DO BRASIL S.A.", "cnpj": "00.000.000/0001-00"},
+        {"codigo_banco": "02", "nome_banco": "CAIXA ECONÔMICA FEDERAL", "cnpj": "00.000.000/0001-91"},
         {"codigo_banco": "03", "nome_banco": "BANCO MERCANTIL DO BRASIL S.A.", "cnpj": "17.184.037/0001-10"},
-        {"codigo_banco": "04", "nome_banco": "BANDO CREFISA S.A.", "cnpj": "61.033.106/0001-86"},
+        {"codigo_banco": "04", "nome_banco": "BANCO CREFISA S.A.", "cnpj": "60.779.196/0001-96"},
         {"codigo_banco": "05", "nome_banco": "BANCO BMG S.A.", "cnpj": "61.186.680/0001-74"},
-        {"codigo_banco": "06", "nome_banco": "BANCO AGIBANK S.A.", "cnpj": "10.664.513/0001-50"},
+        {"codigo_banco": "06", "nome_banco": "BANCO AGBANK S.A.", "cnpj": "10.664.513/0001-50"},
         {"codigo_banco": "07", "nome_banco": "CREFAZ SOCIEDADE DE CREDITO AO MICROEMPREENDEDOR E A EMPRESA DE PEQUENO PORTE S.A.", "cnpj": "18.188.384/0001-83"},
-        {"codigo_banco": "08", "nome_banco": "BANCO BRADESCO S.A.", "cnpj": "60.746.948/0001-12"}
+        {"codigo_banco": "08", "nome_banco": "BANCO BRADESCO S.A.", "cnpj": "60.746.948/0001-12"},
+        {"codigo_banco": "09", "nome_banco": "BANCO ITAÚ S.A.", "cnpj": "60.872.504/0001-23"},
+        {"codigo_banco": "10", "nome_banco": "BANCO SANTANDER (BRASIL) S.A.", "cnpj": "90.400.888/0001-42"},
+        {"codigo_banco": "11", "nome_banco": "BANCO DAYCOVAL S.A.", "cnpj": "62.232.889/0001-90"},
+        {"codigo_banco": "12", "nome_banco": "BANCO INBURSA", "cnpj": "04.866.275/0001-63"},
+        {"codigo_banco": "13", "nome_banco": "BANCO INTER S.A.", "cnpj": "00.416.968/0001-01"},
+        {"codigo_banco": "14", "nome_banco": "BANCO JB CRED S.A.", "cnpj": "04.230.630/0001-03"},
+        {"codigo_banco": "15", "nome_banco": "BANCO MASTER S.A.", "cnpj": "62.232.889/0001-90"},
+        {"codigo_banco": "16", "nome_banco": "BANCO PAN S.A.", "cnpj": "59.285.411/0001-13"},
+        {"codigo_banco": "17", "nome_banco": "BANCO PKL ONE S.A.", "cnpj": "27.490.629/0001-13"},
+        {"codigo_banco": "18", "nome_banco": "BANCO SAFRA S.A.", "cnpj": "58.160.789/0001-28"},
+        {"codigo_banco": "19", "nome_banco": "BANCO C6 S.A.", "cnpj": "31.872.495/0001-72"},
+        {"codigo_banco": "20", "nome_banco": "BRB - BANCO DE BRASÍLIA S.A.", "cnpj": "00.000.208/0001-00"},
+        {"codigo_banco": "21", "nome_banco": "NU PAGAMENTOS S.A. - INSTITUIÇÃO DE PAGAMENTO", "cnpj": "18.236.120/0001-58"},
+        {"codigo_banco": "22", "nome_banco": "BULLHA INSTITUIÇÃO DE PAGAMENTO S.A.", "cnpj": "08.422.119/0001-64"},
+        {"codigo_banco": "23", "nome_banco": "FACTA FINANCEIRA S.A. CRÉDITO, FINANCIAMENTO E INVESTIMENTO", "cnpj": "15.581.638/0001-30"},
+        {"codigo_banco": "24", "nome_banco": "MERCADO PAGO INSTITUIÇÃO DE PAGAMENTO LTDA", "cnpj": "10.573.521/0001-91"},
+        {"codigo_banco": "25", "nome_banco": "SICOOB CREDIRIODÓSUL", "cnpj": "05.993.936/0001-66"},
+        {"codigo_banco": "26", "nome_banco": "SICREDI", "cnpj": "97.957.817/0001-14"}
     ]
     
     return render_template('documentos.html', bancos=bancos)
