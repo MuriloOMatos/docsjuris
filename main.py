@@ -21,7 +21,7 @@ import re
 
 # Lista de templates válidos - atualizada com os novos templates
 VALID_TEMPLATES = [
-    'declaracao_hiposuficiencia',
+    'declaracao_hiposuficencia',
     'contratos_honorarios',
     'declaracao_contrato_digital',
     'declaracao_procuradores',
