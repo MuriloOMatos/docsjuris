@@ -21,7 +21,7 @@ import re
 
 # Lista de templates válidos - atualizada com os novos templates
 VALID_TEMPLATES = [
-    'declaracao_hiposuficencia',
+    'declaracao_hiposuficiencia',
     'contratos_honorarios',
     'declaracao_contrato_digital',
     'declaracao_procuradores',
@@ -136,74 +136,100 @@ def get_db_connection():
         app.logger.error(f"Erro ao conectar ao banco de dados: {str(e)}")
         raise
 
-# Função para obter dados completos do banco
+# Função para obter dados completos do banco - ATUALIZADA
 def get_banco_data(codigo_banco):
     """Retorna dados completos do banco baseado no código"""
     bancos_data = {
         "banco_brasil": {
             "nome": "BANCO DO BRASIL S.A.",
             "cnpj": "00.000.000/0001-00",
-            "endereco": "SETOR BANCÁRIO SUL, QUADRA 1, BLOCO 3, ED. SEDE III - BRASÍLIA/DF"
+            "endereco": "SETOR BANCÁRIO SUL, QUADRA 1, BLOCO 3, ED. SEDE III - BRASÍLIA/DF",
+            "cidade": "BRASÍLIA",
+            "estado": "DF"
         },
         "caixa": {
-            "nome": "CAIXA ECONÔMICA FEDERAL",
-            "cnpj": "00.000.000/0001-91", 
-            "endereco": "SETOR BANCÁRIO SUL, QUADRA 4, BLOCO A - BRASÍLIA/DF"
+            "nome": "CAIXA ECONÔMICA FEDERAL", 
+            "cnpj": "00.000.000/0001-91",
+            "endereco": "SETOR BANCÁRIO SUL, QUADRA 4, BLOCO A - BRASÍLIA/DF",
+            "cidade": "BRASÍLIA",
+            "estado": "DF"
         },
         "bradesco": {
             "nome": "BANCO BRADESCO S.A.",
             "cnpj": "60.746.948/0001-12",
-            "endereco": "CIDADE DE DEUS, S/N - VILA YARA - OSASCO/SP"
+            "endereco": "CIDADE DE DEUS, S/N - VILA YARA - OSASCO/SP",
+            "cidade": "OSASCO", 
+            "estado": "SP"
         },
         "itau": {
             "nome": "BANCO ITAÚ S.A.",
             "cnpj": "60.872.504/0001-23",
-            "endereco": "PRAÇA ALFREDO EGYDIO DE SOUZA ARANHA, 100 - SÃO PAULO/SP"
+            "endereco": "PRAÇA ALFREDO EGYDIO DE SOUZA ARANHA, 100 - SÃO PAULO/SP",
+            "cidade": "SÃO PAULO",
+            "estado": "SP"
         },
         "santander": {
             "nome": "BANCO SANTANDER (BRASIL) S.A.",
-            "cnpj": "90.400.888/0001-42",
-            "endereco": "AV. PRESIDENTE JUSCELINO KUBITSCHEK, 2041 - SÃO PAULO/SP"
+            "cnpj": "90.400.888/0001-42", 
+            "endereco": "AV. PRESIDENTE JUSCELINO KUBITSCHEK, 2041 - SÃO PAULO/SP",
+            "cidade": "SÃO PAULO",
+            "estado": "SP"
         },
         "sicoob": {
             "nome": "SICOOB CREDIRIODÓSUL",
-            "cnpj": "05.993.936/0001-66", 
-            "endereco": "RUA MARECHAL DEODORO, 630 - SANTA MARIA/RS"
+            "cnpj": "05.993.936/0001-66",
+            "endereco": "RUA MARECHAL DEODORO, 630 - SANTA MARIA/RS", 
+            "cidade": "SANTA MARIA",
+            "estado": "RS"
         },
         "sicredi": {
             "nome": "SICREDI",
             "cnpj": "97.957.817/0001-14",
-            "endereco": "RUA CAPITÃO MONTANHA, 177 - PORTO ALEGRE/RS"
+            "endereco": "RUA CAPITÃO MONTANHA, 177 - PORTO ALEGRE/RS",
+            "cidade": "PORTO ALEGRE",
+            "estado": "RS"
         },
         "mercantil": {
             "nome": "BANCO MERCANTIL DO BRASIL S.A.",
             "cnpj": "17.184.037/0001-10",
-            "endereco": "ENDEREÇO DO BANCO MERCANTIL DO BRASIL"
+            "endereco": "ENDEREÇO DO BANCO MERCANTIL DO BRASIL",
+            "cidade": "CIDADE DO BANCO MERCANTIL", 
+            "estado": "ESTADO"
         },
         "bmg": {
             "nome": "BANCO BMG S.A.",
-            "cnpj": "61.186.680/0001-74",
-            "endereco": "ENDEREÇO DO BANCO BMG"
+            "cnpj": "61.186.680/0001-74", 
+            "endereco": "ENDEREÇO DO BANCO BMG",
+            "cidade": "CIDADE DO BMG",
+            "estado": "ESTADO"
         },
         "crefisa": {
             "nome": "BANCO CREFISA S.A.",
             "cnpj": "61.033.106/0001-86",
-            "endereco": "ENDEREÇO DO BANCO CREFISA"
+            "endereco": "ENDEREÇO DO BANCO CREFISA",
+            "cidade": "CIDADE DO CREFISA",
+            "estado": "ESTADO" 
         },
         "agbank": {
             "nome": "BANCO AGBANK S.A.",
             "cnpj": "10.664.513/0001-50",
-            "endereco": "ENDEREÇO DO BANCO AGBANK"
+            "endereco": "ENDEREÇO DO BANCO AGBANK",
+            "cidade": "CIDADE DO AGBANK",
+            "estado": "ESTADO"
         },
         "crefaz": {
             "nome": "CREFAZ SOCIEDADE DE CRÉDITO AO MICROEMPREENDEDOR E A EMPRESA DE PEQUENO PORTE S.A.",
             "cnpj": "18.188.384/0001-83",
-            "endereco": "ENDEREÇO DA CREFIAZ"
+            "endereco": "ENDEREÇO DA CREFIAZ", 
+            "cidade": "CIDADE DA CREFIAZ",
+            "estado": "ESTADO"
         },
         "outro": {
             "nome": "BANCO NÃO IDENTIFICADO",
             "cnpj": "00.000.000/0000-00",
-            "endereco": "ENDEREÇO NÃO INFORMADO"
+            "endereco": "ENDEREÇO NÃO INFORMADO",
+            "cidade": "CIDADE NÃO INFORMADA", 
+            "estado": "ESTADO"
         }
     }
     
@@ -565,7 +591,7 @@ def gerar_documento(dados, num_emprestimos, foro='autor'):
     app.logger.debug(f"Dados recebidos para placeholders: {list(dados.keys())}")
     app.logger.debug(f"Conjunto probatório formatado: {conjunto_probatorio_formatado}")
     
-    # Mapeamento completo de placeholders - INCLUINDO DADOS DO BANCO E CONJUNTO PROBATÓRIO FORMATADO
+    # Mapeamento completo de placeholders - ATUALIZADO COM NOVOS CAMPOS
     replacements = {
         # Dados básicos da petição
         'foro': dados.get('foro', 'Autor'),
@@ -573,6 +599,14 @@ def gerar_documento(dados, num_emprestimos, foro='autor'):
         'banco': banco_data['nome'],  # Usar nome completo do banco
         'cnpj_banco': banco_data['cnpj'],  # CNPJ do banco
         'endereco_banco': banco_data['endereco'],  # Endereço do banco
+        'cidade_banco': banco_data['cidade'],  # NOVO: Cidade do banco
+        'estado_banco': banco_data['estado'],  # NOVO: Estado do banco
+        'cidade_reu': banco_data['cidade'],  # NOVO: Cidade do réu (banco)
+        'estado_reu': banco_data['estado'],  # NOVO: Estado do réu (banco)
+        'CIDADE_REU': banco_data['cidade'].upper(),  # NOVO: Cidade do réu em MAIÚSCULAS
+        'ESTADO_REU': banco_data['estado'].upper(),  # NOVO: Estado do réu em MAIÚSCULAS
+        'CIDADE_AUTOR': dados.get('cidade_comarca', '').upper(),  # NOVO: Cidade do autor em MAIÚSCULAS
+        'ESTADO_AUTOR': dados.get('estado_comarca', '').upper(),  # NOVO: Estado do autor em MAIÚSCULAS
         'possui_emprestimos': dados.get('possui_emprestimos', ''),
         'fontes_renda': dados.get('fontes_renda', 'Nenhuma fonte de renda selecionada'),
         'conjunto_probatorio': conjunto_probatorio_formatado,  # USAR A VERSÃO FORMATADA
@@ -618,8 +652,6 @@ def gerar_documento(dados, num_emprestimos, foro='autor'):
         'data': datetime.now().strftime('%d/%m/%Y'),
         'n_oab': dados.get('numero_oab', '1252'),
         'pessoal_consignados': "pessoal + consignados" if dados.get("possui_emprestimos", "").lower() == "sim" else "pessoal",
-
-
     }
     
     # Adicionar dados dos empréstimos se existirem
@@ -778,13 +810,27 @@ def gerar_peticao():
             # Fallback para a formatação normal se o campo formatado não existir
             conjunto_probatorio_input = formatar_lista_selecionados(request.form.getlist('conjunto_probatorio[]'), "array")
         
-        # Coletar dados da petição (primeira etapa) - INCLUIR BENEFICIOS
+        # Obter dados completos do banco
+        banco_selecionado = request.form.get('banco', 'outro')
+        banco_data = get_banco_data(banco_selecionado)
+        
+        # Coletar dados da petição (primeira etapa) - INCLUIR BENEFICIOS E NOVOS CAMPOS
         dados_peticao = {
             'renda_mensal': request.form['renda_mensal'].replace(",", "."),
             'parcela_pessoal': request.form['parcela_pessoal'].replace(",", "."),
             'foro': MAPEAMENTO_VALORES.get(request.form.get('foro', 'autor'), 'Autor'),
             'tipo_peticao': MAPEAMENTO_VALORES.get(request.form.get('tipo_peticao', ''), ''),
-            'banco': request.form.get('banco', ''),  # Código do banco
+            'banco': banco_selecionado,  # Código do banco
+            'cnpj_banco': banco_data['cnpj'],
+            'endereco_banco': banco_data['endereco'],
+            'cidade_banco': banco_data['cidade'],  # NOVO
+            'estado_banco': banco_data['estado'],  # NOVO
+            'cidade_reu': banco_data['cidade'],    # NOVO
+            'estado_reu': banco_data['estado'],    # NOVO
+            'CIDADE_REU': banco_data['cidade'].upper(),  # NOVO
+            'ESTADO_REU': banco_data['estado'].upper(),  # NOVO
+            'CIDADE_AUTOR': request.form.get('cidade_comarca', '').upper(),  # NOVO
+            'ESTADO_AUTOR': request.form.get('estado_comarca', '').upper(),  # NOVO
             'possui_emprestimos': MAPEAMENTO_VALORES.get(request.form.get('possui_emprestimos', ''), ''),
             'fontes_renda': formatar_lista_selecionados(request.form.getlist('fontes_renda[]'), "array"),
             'conjunto_probatorio': conjunto_probatorio_input,  # USAR O FORMATADO
@@ -917,6 +963,14 @@ def gerar_documentos():
                 placeholders['banco'] = banco_data['nome']
                 placeholders['cnpj_banco'] = banco_data['cnpj']
                 placeholders['endereco_banco'] = banco_data['endereco']
+                placeholders['cidade_banco'] = banco_data['cidade']  # NOVO
+                placeholders['estado_banco'] = banco_data['estado']  # NOVO
+                placeholders['cidade_reu'] = banco_data['cidade']    # NOVO
+                placeholders['estado_reu'] = banco_data['estado']    # NOVO
+                placeholders['CIDADE_REU'] = banco_data['cidade'].upper()  # NOVO
+                placeholders['ESTADO_REU'] = banco_data['estado'].upper()  # NOVO
+                placeholders['CIDADE_AUTOR'] = request.form.get('cidade_comarca', '').upper()  # NOVO
+                placeholders['ESTADO_AUTOR'] = request.form.get('estado_comarca', '').upper()  # NOVO
             # Processar conjunto probatório formatado
             elif key == 'conjunto_probatorio_formatado':
                 placeholders['conjunto_probatorio'] = value
@@ -1068,6 +1122,14 @@ def gerar_peticao_completa():
                 placeholders['banco'] = banco_data['nome']
                 placeholders['cnpj_banco'] = banco_data['cnpj']
                 placeholders['endereco_banco'] = banco_data['endereco']
+                placeholders['cidade_banco'] = banco_data['cidade']  # NOVO
+                placeholders['estado_banco'] = banco_data['estado']  # NOVO
+                placeholders['cidade_reu'] = banco_data['cidade']    # NOVO
+                placeholders['estado_reu'] = banco_data['estado']    # NOVO
+                placeholders['CIDADE_REU'] = banco_data['cidade'].upper()  # NOVO
+                placeholders['ESTADO_REU'] = banco_data['estado'].upper()  # NOVO
+                placeholders['CIDADE_AUTOR'] = request.form.get('cidade_comarca', '').upper()  # NOVO
+                placeholders['ESTADO_AUTOR'] = request.form.get('estado_comarca', '').upper()  # NOVO
             # Processar conjunto probatório formatado
             elif key == 'conjunto_probatorio_formatado':
                 placeholders['conjunto_probatorio'] = value
