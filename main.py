@@ -224,7 +224,7 @@ def get_banco_data(codigo_banco):
             "cidade": "CIDADE DA CREFIAZ",
             "estado": "ESTADO"
         },
-        # NOVOS BANCOS ADICIONADOS
+
         "daycoval": {
             "nome": "BANCO DAYCOVAL S.A.",
             "cnpj": "62.232.889/0001-90",
