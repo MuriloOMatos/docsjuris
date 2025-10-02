@@ -183,22 +183,41 @@
                       <div class="invalid-feedback">Selecione o foro.</div>
                     </div>
 
-                    <!-- Campo para selecionar banco (agora sempre visível) -->
-                    <div class="mb-3">
-                      <label for="banco" class="form-label">Selecione o banco:</label>
-                      <select class="form-select" id="banco" name="banco" required>
-                        <option value="" selected disabled>Selecione o banco...</option>
-                        <option value="banco_brasil">Banco do Brasil</option>
-                        <option value="caixa">Caixa Econômica Federal</option>
-                        <option value="bradesco">Bradesco</option>
-                        <option value="itau">Itaú</option>
-                        <option value="santander">Santander</option>
-                        <option value="sicoob">Sicoob</option>
-                        <option value="sicredi">Sicredi</option>
-                        <option value="outro">Outro</option>
-                      </select>
-                      <div class="invalid-feedback">Selecione o banco.</div>
-                    </div>
+<!-- Campo para selecionar banco (agora sempre visível) -->
+<div class="mb-3">
+  <label for="banco" class="form-label">Selecione o banco:</label>
+  <select class="form-select" id="banco" name="banco" required>
+    <option value="" selected disabled>Selecione o banco...</option>
+    <option value="banco_brasil">Banco do Brasil</option>
+    <option value="caixa">Caixa Econômica Federal</option>
+    <option value="bradesco">Bradesco</option>
+    <option value="itau">Itaú</option>
+    <option value="santander">Santander</option>
+    <option value="sicoob">Sicoob</option>
+    <option value="sicredi">Sicredi</option>
+    <option value="mercantil">Banco Mercantil</option>
+    <option value="bmg">Banco BMG</option>
+    <option value="crefisa">Banco Crefisa</option>
+    <option value="agbank">Banco Agibank</option>
+    <option value="crefaz">Crediaz</option>
+    <option value="daycoval">Banco Daycoval</option>
+    <option value="inbursa">Banco Inbursa</option>
+    <option value="inter">Banco Inter</option>
+    <option value="jbcred">Banco JB Cred</option>
+    <option value="master">Banco Master</option>
+    <option value="pan">Banco Pan</option>
+    <option value="pkl">Banco PKL One</option>
+    <option value="safra">Banco Safra</option>
+    <option value="c6">Banco C6</option>
+    <option value="brb">BRB - Banco de Brasília</option>
+    <option value="nubank">Nubank</option>
+    <option value="bullha">Bullha Pagamentos</option>
+    <option value="facta">Facta Financeira</option>
+    <option value="mercadopago">Mercado Pago</option>
+    <option value="outro">Outro</option>
+  </select>
+  <div class="invalid-feedback">Selecione o banco.</div>
+</div>
 
                     <!-- Campo para empréstimos consignados (independente) -->
                     <div class="mb-3">
@@ -517,17 +536,36 @@
   <!-- JavaScript Bootstrap 5 -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
   <script>
-    // Dados de comarcas por banco (simulando busca no sistema)
-    const comarcasPorBanco = {
-      'banco_brasil': 'Comarca de Brasília - DF',
-      'caixa': 'Comarca de São Paulo - SP',
-      'bradesco': 'Comarca de Osasco - SP',
-      'itau': 'Comarca de São Paulo - SP',
-      'santander': 'Comarca de São Paulo - SP',
-      'sicoob': 'Comarca de Brasília - DF',
-      'sicredi': 'Comarca de Porto Alegre - RS',
-      'outro': 'Comarca a definir'
-    };
+// Dados de comarcas por banco (simulando busca no sistema)
+const comarcasPorBanco = {
+  'banco_brasil': 'Comarca de Brasília - DF',
+  'caixa': 'Comarca de São Paulo - SP',
+  'bradesco': 'Comarca de Osasco - SP',
+  'itau': 'Comarca de São Paulo - SP',
+  'santander': 'Comarca de São Paulo - SP',
+  'sicoob': 'Comarca de Brasília - DF',
+  'sicredi': 'Comarca de Porto Alegre - RS',
+  'mercantil': 'Comarca de Belo Horizonte - MG',
+  'bmg': 'Comarca de São Paulo - SP',
+  'crefisa': 'Comarca de São Paulo - SP',
+  'agbank': 'Comarca de Campinas - SP',
+  'crefaz': 'Comarca a definir',
+  'daycoval': 'Comarca de São Paulo - SP',
+  'inbursa': 'Comarca de São Paulo - SP',
+  'inter': 'Comarca de São Paulo - SP',
+  'jbcred': 'Comarca de São Paulo - SP',
+  'master': 'Comarca de São Paulo - SP',
+  'pan': 'Comarca de São Paulo - SP',
+  'pkl': 'Comarca de São Paulo - SP',
+  'safra': 'Comarca de São Paulo - SP',
+  'c6': 'Comarca de São Paulo - SP',
+  'brb': 'Comarca de Brasília - DF',
+  'nubank': 'Comarca de São Paulo - SP',
+  'bullha': 'Comarca de São Paulo - SP',
+  'facta': 'Comarca de Porto Alegre - RS',
+  'mercadopago': 'Comarca de Osasco - SP',
+  'outro': 'Comarca a definir'
+};
 
     // Gerenciador de dados da petição
     class PeticaoManager {
