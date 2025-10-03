@@ -1,1423 +1,1886 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-br">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Controle de Prazos – G&M (HTML v18 – Backup Diário, Status Aguardando Docs, Contadores)</title>
-<style>
-:root{
-/* Paleta clara (mais variedade de tons) */
---bg:#f4f6fb;
---bg2:#eef2ff; /* indigo-50 */
---panel:#ffffff;
---muted:#64748b; /* slate-500 */
---text:#1f2937; /* gray-800 */
---accent:#2563eb; /* blue-600 */
---accent-2:#7c3aed; /* violet-600 */
---accent-3:#059669; /* emerald-600 */
---warn:#d97706;
---danger:#dc2626;
---card:#f9fafb;
---border:#d1d5db;
---input:#fbfdff;
---chip:#eef2ff;
---chip-border:#c7d2fe;
-}
-*{box-sizing:border-box}
-body{
-margin:0;
-background:radial-gradient(1200px 600px at 80% -10%, var(--bg2) 0%, transparent 60%), linear-gradient(145deg,#ffffff 0%, var(--bg) 60%, #ffffff 100%);
-font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,'Helvetica Neue',Arial,'Noto Sans',sans-serif;
-color:var(--text)
-}
-.container{max-width:1200px;margin:40px auto;padding:0 20px}
-header{display:flex;align-items:center;gap:14px;margin-bottom:20px}
-.logo{
-width:48px;height:48px;border-radius:14px;
-background:linear-gradient(135deg,#60a5fa,#2563eb);
-display:grid;place-items:center;color:white;font-weight:800;
-box-shadow:0 10px 28px rgba(37,99,235,.25)
-}
-h1{font-size:1.15rem;margin:0;letter-spacing:.2px}
-/* Painéis */
-.panel{
-background:linear-gradient(180deg,#ffffff 0%, #fafbff 100%);
-backdrop-filter:blur(8px);
-border:1px solid var(--border);border-radius:18px;padding:18px;
-box-shadow:0 12px 40px rgba(0,0,0,.08)
-}
-.grid{display:grid;gap:14px}
-.grid.cols-4{grid-template-columns:1.3fr 1fr 1fr 1fr}
-.grid.cols-5{grid-template-columns:2fr 1fr 1fr 1fr 1fr}
-label{font-size:.85rem;color:var(--muted)}
-input,select,textarea,button{
-width:100%;padding:12px 12px;border-radius:12px;
-border:1px solid var(--border);background:var(--input);color:var(--text)
-}
-input[type="date"]{color-scheme:light}
-textarea{min-height:44px;resize:vertical}
-input:focus,select:focus,textarea:focus{
-outline:none;border-color:#a5b4fc;box-shadow:0 0 0 3px rgba(165,180,252,.35)
-}
-button{cursor:pointer;background:#f3f4f6;border-color:#d1d5db;transition:.2s;will-change:transform,filter}
-button.primary{background:linear-gradient(135deg,#3b82f6,#2563eb);border:none;color:#ffffff;font-weight:800}
-button:hover{filter:brightness(1.06)}
-/* Result badges */
-.results{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
-.badge{padding:8px 12px;border-radius:999px;font-size:.78rem;border:1px solid var(--chip-border);background:var(--chip)}
-/* Tabela */
-table{width:100%;border-collapse:separate;border-spacing:0;margin-top:18px;background:var(--panel);border:1px solid var(--border);border-radius:14px;overflow:hidden}
-th,td{padding:12px 14px;border-bottom:1px solid var(--border);text-align:left;vertical-align:top}
-thead th{font-size:.85rem;color:var(--muted);background:#f4f6ff;position:sticky;top:0;z-index:1}
-tbody tr:last-child td{border-bottom:none}
-tbody tr{transition:background .15s ease, transform .06s ease}
-tbody tr:hover{background:#f3f6ff}
-.cell{line-height:1.25rem}
-.meta{font-size:.8rem;color:var(--muted)}
-.actions{display:flex;gap:8px}
-.pill{font-size:.75rem;padding:8px 12px;border-radius:999px;border:1px solid var(--border);background:#f8fafc}
-/* Status de prazo */
-.status{font-weight:800}
-.status.normal{color:#16a34a}
-.status.urgente{color:var(--warn)}
-.status.vencido{color:var(--danger)}
-.status.fatal{color:var(--danger); text-decoration:underline}
-/* Status do caso */
-.caseStatus{display:inline-block;padding:6px 10px;border-radius:999px;font-size:.75rem;border:1px solid var(--border);background:#f9fafb}
-.caseStatus.Pendente{background:#f9fafb;color:#1f2937}
-.caseStatus.OK{background:#ecfdf5;color:#15803d;border-color:#10b981}
-.caseStatus[title="Cliente sumiu"],
-.caseStatus.Cliente\ sumiu{background:#fff7ed;color:#b45309;border-color:#fbbf24}
-.caseStatus.Repetido{background:#eff6ff;color:#2563eb;border-color:#3b82f6}
-.caseStatus[title="Não vamos fazer nada"],
-.caseStatus.Não\ vamos\ fazer\ nada{background:#f3f4f6;color:#6b7280}
-.caseStatus.Concluído{background:#f0fdf4;color:#15803d;border-color:#22c55e}
-.caseStatus.Aguardando\ documentos{background:#fef3c7;color:#92400e;border-color:#f59e0b}
-/* Subpainéis (Filtros/Export) */
-.tools{display:grid;grid-template-columns:1fr;gap:12px;align-items:start;margin-bottom:10px}
-.subpanel{
-background:linear-gradient(180deg,#ffffff 0%, #f8fbff 100%);
-border:1px solid var(--border);border-radius:14px;padding:12px
-}
-.subhead{font-weight:700;color:#475569;margin:0 0 8px 4px;letter-spacing:.2px;display:flex;align-items:center;justify-content:space-between}
-.subhead .mini-actions{display:flex;gap:8px}
-/* Filtros – layout mais agradável e "só aplica ao clicar" */
-.filters{
-display:grid;
-grid-template-columns:repeat(8,1fr);
-gap:10px;width:100%;align-items:end
-}
-.filters .group{background:#fbfcff;border:1px dashed #e5e7eb;border-radius:12px;padding:8px}
-.filters .group label{display:block;margin:0 0 6px 6px}
-.filters .bar{
-grid-column:1/-1;display:flex;gap:8px;justify-content:flex-end;margin-top:2px
-}
-.filters .bar .apply{background:linear-gradient(135deg,#818cf8,#6366f1);color:#fff;border:none}
-.filters .bar .clear{background:#f1f5f9}
-/* Exportações */
-.exports{display:flex;flex-wrap:wrap;gap:8px;justify-content:flex-start}
-.exports .item{display:flex;gap:8px}
-/* Cabeçalhos sortáveis */
-.th-sort{cursor:pointer;user-select:none;display:flex;align-items:center;gap:6px}
-.th-sort .dir{font-size:.8rem;color:#6b7280}
-/* Modal */
-dialog{border:none;border-radius:16px;padding:0;background:var(--panel);color:var(--text);width:min(860px,94vw)}
-dialog::backdrop{background:rgba(0,0,0,.35)}
-.modal-head{padding:16px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:#f4f6ff}
-.modal-body{padding:16px 18px}
-.modal-foot{padding:16px 18px;border-top:1px solid var(--border);display:flex;gap:10px;justify-content:space-between;flex-wrap:wrap;background:#f4f6ff}
-.btn-outline{background:#f9fafb;border-color:#d1d5db}
-/* Animações */
-@keyframes pop{0%{transform:scale(.98);opacity:.0} 100%{transform:scale(1);opacity:1}}
-@keyframes flash{0%{box-shadow:0 0 0 0 rgba(37,99,235,.6)} 100%{box-shadow:0 0 0 14px rgba(37,99,235,0)}}
-@keyframes fadeUp{0%{opacity:0;transform:translateY(6px)}100%{opacity:1;transform:translateY(0)}}
-@keyframes slideDownRight{0%{opacity:0;transform:translate(12px,-12px)}100%{opacity:1;transform:translate(0,0)}}
-.animate-pop{animation:pop .25s ease-out}
-.animate-flash{animation:flash 1s ease-out}
-.animate-fadeUp{animation:fadeUp .25s ease-out}
-/* Toast & Center success */
-.toast{position:fixed;right:18px;top:18px;background:#111827;border:1px solid #374151;color:#e5e7eb;padding:12px 14px;border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,.25);opacity:0;transform:translate(12px,-12px);transition:.25s}
-.toast.show{opacity:1;transform:translate(0,0);animation:slideDownRight .25s ease-out}
-.center-ok{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%) scale(.92);background:#ffffff;border:1px solid var(--border);border-radius:16px;box-shadow:0 20px 60px rgba(0,0,0,.18);padding:18px 22px;display:flex;align-items:center;gap:12px;opacity:0;pointer-events:none}
-.center-ok.show{opacity:1;transform:translate(-50%,-50%) scale(1);transition:.25s ease-out}
-.center-ok .icon{width:28px;height:28px;border-radius:999px;background:linear-gradient(135deg,#34d399,#10b981);display:grid;place-items:center;color:white;font-weight:900}
-/* Badges flags */
-.flag{display:inline-block;font-size:.72rem;padding:4px 8px;border-radius:999px;border:1px solid var(--border);background:#fafcff;margin-right:6px}
-.flag.on{background:#ecfdf5;border-color:#86efac;color:#065f46}
-.flag.off{background:#f3f4f6;color:#6b7280}
-/* Botões maiores para filtros */
-.filters .bar .apply,
-.filters .bar .clear {
-padding: 10px 16px;
-font-size: 0.85rem;
-}
-/* Contadores */
-.counters {
-display: flex;
-gap: 12px;
-margin-bottom: 12px;
-flex-wrap: wrap;
-}
-.counter-item {
-background: linear-gradient(135deg, #f0f9ff, #e0f2fe);
-border: 1px solid #bae6fd;
-border-radius: 10px;
-padding: 8px 12px;
-font-size: 0.8rem;
-display: flex;
-align-items: center;
-gap: 6px;
-}
-.counter-item .count {
-font-weight: 800;
-font-size: 1rem;
-color: #0369a1;
-}
-@media (max-width:1100px){
-.grid.cols-4{grid-template-columns:1fr 1fr}
-.tools{grid-template-columns:1fr}
-.filters{grid-template-columns:1fr 1fr}
-}
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Girardi & Moraes Advogados - Controle de Prazos</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+  <style>
+    :root {
+      --primary-color: #0d6efd;
+      --secondary-color: #6c757d;
+      --dark-color: #0d0d0e;
+      --light-color: #f8f9fa;
+    }
+    
+    body {
+      background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+      min-height: 100vh;
+    }
+    
+    .sidebar {
+      background: linear-gradient(135deg, var(--dark-color) 0%, var(--primary-color) 100%);
+      color: white;
+      min-height: 100vh;
+      position: fixed;
+      width: 220px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      z-index: 1000;
+    }
+    
+    .main-content {
+      margin-left: 220px;
+      padding: 20px;
+      min-height: 100vh;
+    }
+    
+    .logo-container {
+      padding: 1.5rem 1rem;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+      text-align: center;
+    }
+    
+    .logo {
+      font-size: 1.8rem;
+      font-weight: bold;
+      color: white;
+    }
+    
+    .nav-link {
+      color: rgba(255,255,255,0.8);
+      padding: 0.75rem 1rem;
+      border-radius: 0.375rem;
+      margin-bottom: 0.25rem;
+      transition: all 0.3s;
+    }
+    
+    .nav-link:hover, .nav-link.active {
+      color: white;
+      background-color: rgba(255,255,255,0.15);
+    }
+    
+    .nav-link i {
+      width: 20px;
+      text-align: center;
+      margin-right: 10px;
+    }
+    
+    .card {
+      border: none;
+      border-radius: 10px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      transition: transform 0.3s, box-shadow 0.3s;
+    }
+    
+    .card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+    }
+    
+    .card-header {
+      background: linear-gradient(135deg, var(--primary-color) 0%, #0a58ca 100%);
+      color: white;
+      border-radius: 10px 10px 0 0 !important;
+    }
+    
+    @media (max-width: 768px) {
+      .sidebar {
+        width: 100%;
+        position: relative;
+        min-height: auto;
+      }
+      
+      .main-content {
+        margin-left: 0;
+      }
+    }
+
+    /* Estilos específicos do controle de prazos */
+    .panel {
+      background: linear-gradient(180deg, #ffffff 0%, #fafbff 100%);
+      border: 1px solid #d1d5db;
+      border-radius: 18px;
+      padding: 18px;
+      box-shadow: 0 12px 40px rgba(0,0,0,.08);
+    }
+    
+    .grid {
+      display: grid;
+      gap: 14px;
+    }
+    
+    .grid.cols-4 {
+      grid-template-columns: 1.3fr 1fr 1fr 1fr;
+    }
+    
+    .grid.cols-5 {
+      grid-template-columns: 2fr 1fr 1fr 1fr 1fr;
+    }
+    
+    label {
+      font-size: .85rem;
+      color: #64748b;
+    }
+    
+    input, select, textarea, button {
+      width: 100%;
+      padding: 12px 12px;
+      border-radius: 12px;
+      border: 1px solid #d1d5db;
+      background: #fbfdff;
+      color: #1f2937;
+    }
+    
+    input:focus, select:focus, textarea:focus {
+      outline: none;
+      border-color: #a5b4fc;
+      box-shadow: 0 0 0 3px rgba(165,180,252,.35);
+    }
+    
+    button {
+      cursor: pointer;
+      background: #f3f4f6;
+      border-color: #d1d5db;
+      transition: .2s;
+    }
+    
+    button.primary {
+      background: linear-gradient(135deg, #3b82f6, #2563eb);
+      border: none;
+      color: #ffffff;
+      font-weight: 800;
+    }
+    
+    button:hover {
+      filter: brightness(1.06);
+    }
+    
+    .results {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 12px;
+    }
+    
+    .badge {
+      padding: 8px 12px;
+      border-radius: 999px;
+      font-size: .78rem;
+      border: 1px solid #c7d2fe;
+      background: #eef2ff;
+    }
+    
+    table {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0;
+      margin-top: 18px;
+      background: #ffffff;
+      border: 1px solid #d1d5db;
+      border-radius: 14px;
+      overflow: hidden;
+    }
+    
+    th, td {
+      padding: 12px 14px;
+      border-bottom: 1px solid #d1d5db;
+      text-align: left;
+      vertical-align: top;
+    }
+    
+    thead th {
+      font-size: .85rem;
+      color: #64748b;
+      background: #f4f6ff;
+      position: sticky;
+      top: 0;
+      z-index: 1;
+    }
+    
+    tbody tr:last-child td {
+      border-bottom: none;
+    }
+    
+    tbody tr {
+      transition: background .15s ease;
+    }
+    
+    tbody tr:hover {
+      background: #f3f6ff;
+    }
+    
+    .cell {
+      line-height: 1.25rem;
+    }
+    
+    .meta {
+      font-size: .8rem;
+      color: #64748b;
+    }
+    
+    .actions {
+      display: flex;
+      gap: 8px;
+    }
+    
+    .pill {
+      font-size: .75rem;
+      padding: 8px 12px;
+      border-radius: 999px;
+      border: 1px solid #d1d5db;
+      background: #f8fafc;
+    }
+    
+    /* Status de prazo */
+    .status {
+      font-weight: 800;
+    }
+    
+    .status.normal {
+      color: #16a34a;
+    }
+    
+    .status.urgente {
+      color: #d97706;
+    }
+    
+    .status.vencido {
+      color: #dc2626;
+    }
+    
+    .status.fatal {
+      color: #dc2626;
+      text-decoration: underline;
+    }
+    
+    /* Status do caso */
+    .caseStatus {
+      display: inline-block;
+      padding: 6px 10px;
+      border-radius: 999px;
+      font-size: .75rem;
+      border: 1px solid #d1d5db;
+      background: #f9fafb;
+    }
+    
+    .caseStatus.Pendente {
+      background: #f9fafb;
+      color: #1f2937;
+    }
+    
+    .caseStatus.OK {
+      background: #ecfdf5;
+      color: #15803d;
+      border-color: #10b981;
+    }
+    
+    .caseStatus[title="Cliente sumiu"],
+    .caseStatus.Cliente\ sumiu {
+      background: #fff7ed;
+      color: #b45309;
+      border-color: #fbbf24;
+    }
+    
+    .caseStatus.Repetido {
+      background: #eff6ff;
+      color: #2563eb;
+      border-color: #3b82f6;
+    }
+    
+    .caseStatus[title="Não vamos fazer nada"],
+    .caseStatus.Não\ vamos\ fazer\ nada {
+      background: #f3f4f6;
+      color: #6b7280;
+    }
+    
+    .caseStatus.Concluído {
+      background: #f0fdf4;
+      color: #15803d;
+      border-color: #22c55e;
+    }
+    
+    .caseStatus.Aguardando\ documentos {
+      background: #fef3c7;
+      color: #92400e;
+      border-color: #f59e0b;
+    }
+    
+    /* Subpainéis */
+    .tools {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 12px;
+      align-items: start;
+      margin-bottom: 10px;
+    }
+    
+    .subpanel {
+      background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
+      border: 1px solid #d1d5db;
+      border-radius: 14px;
+      padding: 12px;
+    }
+    
+    .subhead {
+      font-weight: 700;
+      color: #475569;
+      margin: 0 0 8px 4px;
+      letter-spacing: .2px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    
+    .subhead .mini-actions {
+      display: flex;
+      gap: 8px;
+    }
+    
+    /* Filtros */
+    .filters {
+      display: grid;
+      grid-template-columns: repeat(8, 1fr);
+      gap: 10px;
+      width: 100%;
+      align-items: end;
+    }
+    
+    .filters .group {
+      background: #fbfcff;
+      border: 1px dashed #e5e7eb;
+      border-radius: 12px;
+      padding: 8px;
+    }
+    
+    .filters .group label {
+      display: block;
+      margin: 0 0 6px 6px;
+    }
+    
+    .filters .bar {
+      grid-column: 1/-1;
+      display: flex;
+      gap: 8px;
+      justify-content: flex-end;
+      margin-top: 2px;
+    }
+    
+    .filters .bar .apply {
+      background: linear-gradient(135deg, #818cf8, #6366f1);
+      color: #fff;
+      border: none;
+    }
+    
+    .filters .bar .clear {
+      background: #f1f5f9;
+    }
+    
+    /* Exportações */
+    .exports {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: flex-start;
+    }
+    
+    .exports .item {
+      display: flex;
+      gap: 8px;
+    }
+    
+    /* Cabeçalhos sortáveis */
+    .th-sort {
+      cursor: pointer;
+      user-select: none;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    
+    .th-sort .dir {
+      font-size: .8rem;
+      color: #6b7280;
+    }
+    
+    /* Modal */
+    dialog {
+      border: none;
+      border-radius: 16px;
+      padding: 0;
+      background: #ffffff;
+      color: #1f2937;
+      width: min(860px, 94vw);
+    }
+    
+    dialog::backdrop {
+      background: rgba(0,0,0,.35);
+    }
+    
+    .modal-head {
+      padding: 16px 18px;
+      border-bottom: 1px solid #d1d5db;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: #f4f6ff;
+    }
+    
+    .modal-body {
+      padding: 16px 18px;
+    }
+    
+    .modal-foot {
+      padding: 16px 18px;
+      border-top: 1px solid #d1d5db;
+      display: flex;
+      gap: 10px;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      background: #f4f6ff;
+    }
+    
+    .btn-outline {
+      background: #f9fafb;
+      border-color: #d1d5db;
+    }
+    
+    /* Animações */
+    @keyframes pop {
+      0% { transform: scale(.98); opacity: .0; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+    
+    @keyframes flash {
+      0% { box-shadow: 0 0 0 0 rgba(37,99,235,.6); }
+      100% { box-shadow: 0 0 0 14px rgba(37,99,235,0); }
+    }
+    
+    @keyframes fadeUp {
+      0% { opacity: 0; transform: translateY(6px); }
+      100% { opacity: 1; transform: translateY(0); }
+    }
+    
+    .animate-pop {
+      animation: pop .25s ease-out;
+    }
+    
+    .animate-flash {
+      animation: flash 1s ease-out;
+    }
+    
+    .animate-fadeUp {
+      animation: fadeUp .25s ease-out;
+    }
+    
+    /* Toast & Center success */
+    .toast {
+      position: fixed;
+      right: 18px;
+      top: 18px;
+      background: #111827;
+      border: 1px solid #374151;
+      color: #e5e7eb;
+      padding: 12px 14px;
+      border-radius: 12px;
+      box-shadow: 0 10px 30px rgba(0,0,0,.25);
+      opacity: 0;
+      transform: translate(12px,-12px);
+      transition: .25s;
+    }
+    
+    .toast.show {
+      opacity: 1;
+      transform: translate(0,0);
+    }
+    
+    .center-ok {
+      position: fixed;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%,-50%) scale(.92);
+      background: #ffffff;
+      border: 1px solid #d1d5db;
+      border-radius: 16px;
+      box-shadow: 0 20px 60px rgba(0,0,0,.18);
+      padding: 18px 22px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      opacity: 0;
+      pointer-events: none;
+    }
+    
+    .center-ok.show {
+      opacity: 1;
+      transform: translate(-50%,-50%) scale(1);
+      transition: .25s ease-out;
+    }
+    
+    .center-ok .icon {
+      width: 28px;
+      height: 28px;
+      border-radius: 999px;
+      background: linear-gradient(135deg, #34d399, #10b981);
+      display: grid;
+      place-items: center;
+      color: white;
+      font-weight: 900;
+    }
+    
+    /* Badges flags */
+    .flag {
+      display: inline-block;
+      font-size: .72rem;
+      padding: 4px 8px;
+      border-radius: 999px;
+      border: 1px solid #d1d5db;
+      background: #fafcff;
+      margin-right: 6px;
+    }
+    
+    .flag.on {
+      background: #ecfdf5;
+      border-color: #86efac;
+      color: #065f46;
+    }
+    
+    .flag.off {
+      background: #f3f4f6;
+      color: #6b7280;
+    }
+    
+    /* Contadores */
+    .counters {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 12px;
+      flex-wrap: wrap;
+    }
+    
+    .counter-item {
+      background: linear-gradient(135deg, #f0f9ff, #e0f2fe);
+      border: 1px solid #bae6fd;
+      border-radius: 10px;
+      padding: 8px 12px;
+      font-size: 0.8rem;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    
+    .counter-item .count {
+      font-weight: 800;
+      font-size: 1rem;
+      color: #0369a1;
+    }
+    
+    @media (max-width: 1100px) {
+      .grid.cols-4 {
+        grid-template-columns: 1fr 1fr;
+      }
+      
+      .tools {
+        grid-template-columns: 1fr;
+      }
+      
+      .filters {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+  </style>
 </head>
 <body>
-<div class="container">
-<header>
-<div class="logo">G&M</div>
-<h1>Controle de Prazos – Girardi & Moraes Advocacia</h1>
-</header>
-<section class="panel animate-pop">
-<div class="grid cols-4">
-<div>
-<label for="cliente">Nome do cliente</label>
-<input id="cliente" type="text" placeholder="Ex.: Maria da Silva" />
-</div>
-<div>
-<label for="processo">Nº do processo</label>
-<input id="processo" type="text" placeholder="Ex.: 1001234-56.2025.8.26.0001" />
-</div>
-<div>
-<label for="tipo">Tipo de prazo</label>
-<select id="tipo">
-<option value="ap">Apelação (15 dias)</option>
-<option value="ed">Embargos de Declaração (5 dias)</option>
-<option value="rc">Réplica à Contestação (15 dias úteis)</option>
-</select>
-</div>
-<div>
-<label for="data">Data da publicação</label>
-<input id="data" type="date" />
-<div class="meta" style="margin-top:6px">
-<label style="display:flex;align-items:center;gap:8px">
-<input id="corridos" type="checkbox" style="width:auto" />
-Contar em dias corridos (padrão: dias úteis)
-</label>
-</div>
-</div>
-</div>
-<div class="grid cols-5" style="margin-top:12px">
-<div class="col" style="grid-column:1/3">
-<label for="obs">Observações</label>
-<textarea id="obs" placeholder="Notas internas, peculiaridades do caso, feriados locais etc."></textarea>
-</div>
-<div>
-<label class="meta" for="responsavel">Responsável</label>
-<select id="responsavel">
-<option>Marcelo</option>
-<option>Beatriz</option>
-<option>Clara</option>
-<option>Pedro</option>
-<option>Stephanie</option>
-</select>
-</div>
-<div>
-<label class="meta" style="display:flex;align-items:center;gap:8px" for="prazoLivre">
-<input id="prazoLivre" type="checkbox" style="width:auto" />
-Prazo editável
-</label>
-<input id="nomePrazo" type="text" placeholder="Nome do prazo (ex.: Contrarrazões)" style="margin-top:8px;display:none" />
-<input id="diasCustom" type="number" min="1" placeholder="Dias do prazo" style="margin-top:8px;display:none" />
-</div>
-<div>
-<label>&nbsp;</label>
-<button id="btnAdicionar" type="button" class="primary">Adicionar à lista</button>
-</div>
-</div>
-
-<!-- Status do caso -->
-<div class="grid" style="grid-template-columns:1fr 1fr; margin-top:10px">
-<div>
-<label class="meta" for="statusCaso">Status do caso</label>
-<select id="statusCaso">
-<option value="">(sem status)</option>
-<option>Pendente</option>
-<option>OK</option>
-<option>Cliente sumiu</option>
-<option>Repetido</option>
-<option>Não vamos fazer nada</option>
-<option>Concluído</option>
-<option>Aguardando documentos</option>
-</select>
-</div>
-<div>
-<label class="meta" for="dilacao">Dilação solicitada?</label>
-<select id="dilacao"><option>Não</option><option>Sim</option></select>
-</div>
-</div>
-
-<div id="resultado" class="results" aria-live="polite" style="display:none"></div>
-<div class="footer-note">Regra: <strong>publicação + prazo legal − 2 dias</strong>, mantendo úteis/corridos. Se cair em sábado/domingo, prorroga para o próximo útil. <strong>Feriados não são considerados automaticamente.</strong></div>
-</section>
-
-<section class="panel animate-pop" style="margin-top:16px">
-<!-- Contadores -->
-<div class="counters" id="counters">
-<div class="counter-item">
-<span>Total:</span>
-<span class="count" id="count-total">0</span>
-</div>
-<div class="counter-item">
-<span>Pendentes:</span>
-<span class="count" id="count-pendentes">0</span>
-</div>
-<div class="counter-item">
-<span>Urgentes:</span>
-<span class="count" id="count-urgentes">0</span>
-</div>
-<div class="counter-item">
-<span>Vencidos:</span>
-<span class="count" id="count-vencidos">0</span>
-</div>
-<div class="counter-item">
-<span>Aguardando docs:</span>
-<span class="count" id="count-aguardando-docs">0</span>
-</div>
-</div>
-
-<!-- Subpainéis -->
-<div class="tools">
-<div class="subpanel">
-<div class="subhead">
-<span>Filtros</span>
-<span class="mini-actions">
-<button id="btnSortAsc" class="pill" title="Ordenar por prazo (mais próximo primeiro)">Prazo ↑</button>
-<button id="btnSortDesc" class="pill" title="Ordenar por prazo (mais distante primeiro)">Prazo ↓</button>
-</span>
-</div>
-<div class="filters">
-<div class="group"><label class="meta">Tipo</label>
-<select id="uiTipo" class="pill">
-<option value="all">Todos</option>
-<option value="ap">Apelação</option>
-<option value="ed">Embargos</option>
-<option value="rc">Réplica</option>
-<option value="custom">Personalizado</option>
-</select>
-</div>
-<div class="group"><label class="meta">Prazo</label>
-<select id="uiPrazo" class="pill">
-<option value="all">Todos</option><option value="normal">Normal</option>
-<option value="urgente">Urgente</option><option value="fatal">Prazo fatal</option><option value="vencido">Prazo vencido</option>
-</select>
-</div>
-<div class="group"><label class="meta">Status</label>
-<select id="uiStatus" class="pill">
-<option value="all">Todos</option><option>Pendente</option><option>OK</option><option>Cliente sumiu</option><option>Repetido</option><option>Não vamos fazer nada</option><option>Concluído</option><option>Aguardando documentos</option>
-</select>
-</div>
-<div class="group"><label class="meta">Responsável</label>
-<select id="uiResp" class="pill"><option value="all">Todos</option><option>Marcelo</option><option>Beatriz</option><option>Clara</option><option>Pedro</option><option>Stephanie</option></select>
-</div>
-<div class="group"><label class="meta">Dilação?</label>
-<select id="uiDilacao" class="pill"><option value="all">Todos</option><option value="Sim">Sim</option><option value="Não">Não</option></select>
-</div>
-<div class="group"><label class="meta">Pesquisar</label>
-<input id="uiSearch" class="pill" placeholder="Cliente ou nº do processo" />
-</div>
-<div class="bar">
-<button id="btnAplicarFiltros" class="pill apply">Aplicar</button>
-<button id="btnLimparFiltros" class="pill clear" title="Limpa os filtros e a pesquisa">Limpar</button>
-</div>
-</div>
-</div>
-
-<div class="subpanel">
-<div class="subhead">Exportações & Backup</div>
-<div class="exports">
-<div class="item">
-<button id="btnExportar" class="pill">CSV</button>
-<button id="btnExportarWord" class="pill">Word</button>
-<button id="btnExportarExcel" class="pill">Excel</button>
-</div>
-<div class="item">
-<button id="btnBackup" class="pill">Backup</button>
-<button id="btnVersoes" class="pill">Versões</button>
-<label class="pill" style="display:flex;align-items:center;gap:8px;cursor:pointer">
-<input id="restoreInput" type="file" accept="application/json" style="display:none" />
-<span>Restaurar</span>
-</label>
-<button id="btnLimpar" class="pill" title="Remove todos os itens salvos">Limpar lista</button>
-</div>
-</div>
-</div>
-</div>
-
-<table id="tabela">
-<thead>
-<tr>
-<th style="width:26%"><span class="th-sort" data-sort="cliente">Caso <span class="dir" id="dir-cliente"></span></span></th>
-<th style="width:32%"><span class="th-sort" data-sort="publicacao">Parâmetros <span class="dir" id="dir-publicacao"></span></span></th>
-<th style="width:18%"><span class="th-sort" data-sort="prazoOperacional">Prazo Operacional <span class="dir" id="dir-prazo"></span></span></th>
-<th style="width:14%"><span class="th-sort" data-sort="statusCaso">Status <span class="dir" id="dir-status"></span></span></th>
-<th style="width:8%"><span class="th-sort" data-sort="responsavel">Resp. <span class="dir" id="dir-resp"></span></span></th>
-<th style="width:6%">Ações</th>
-</tr>
-</thead>
-<tbody></tbody>
-</table>
-<div class="footer-note" id="summary"></div>
-</section>
-</div>
-
-<!-- Modal -->
-<dialog id="dlg">
-<div class="modal-head">
-<strong>Detalhes do prazo</strong>
-<button id="dlgClose" class="pill btn-outline" style="width:auto">Fechar</button>
-</div>
-<div class="modal-body">
-<div class="grid" style="grid-template-columns:1fr 1fr; gap:10px">
-<div>
-<label class="meta" for="mdCliente">Cliente</label>
-<input id="mdCliente" />
-</div>
-<div>
-<label class="meta" for="mdProcesso">Processo</label>
-<input id="mdProcesso" />
-</div>
-<div>
-<label class="meta" for="mdTipo">Tipo</label>
-<select id="mdTipo">
-<option value="ap">Apelação (15 dias)</option>
-<option value="ed">Embargos de Declaração (5 dias)</option>
-<option value="rc">Réplica à Contestação (15 dias úteis)</option>
-<option value="custom">Personalizado</option>
-</select>
-</div>
-<div>
-<label class="meta" for="mdPubData">Data da publicação</label>
-<input id="mdPubData" type="date" />
-<label class="meta" style="display:flex;align-items:center;gap:8px;margin-top:6px">
-<input id="mdCorridos" type="checkbox" style="width:auto"/>
-Contar em dias corridos (padrão úteis)
-</label>
-</div>
-<div id="wrapMdCustom" style="display:none; grid-column:1/3">
-<div class="grid" style="grid-template-columns:1fr 180px; gap:10px">
-<div>
-<label class="meta" for="mdNomePrazo">Nome do prazo (personalizado)</label>
-<input id="mdNomePrazo" placeholder="Ex.: Contrarrazões" />
-</div>
-<div>
-<label class="meta" for="mdDiasCustom">Dias de prazo</label>
-<input id="mdDiasCustom" type="number" min="1" placeholder="Ex.: 7"/>
-</div>
-</div>
-</div>
-<div>
-<div class="meta">Prazo legal</div>
-<div id="mdLegal" class="cell"></div>
-</div>
-<div>
-<div class="meta">Prazo operacional (-2)</div>
-<div id="mdOper" class="cell"></div>
-</div>
-<div>
-<label class="meta" for="mdResp">Responsável</label>
-<select id="mdResp">
-<option>Marcelo</option>
-<option>Beatriz</option>
-<option>Clara</option>
-<option>Pedro</option>
-<option>Stephanie</option>
-</select>
-</div>
-<div style="grid-column:1/3">
-<label class="meta" for="mdObs">Observações</label>
-<textarea id="mdObs"></textarea>
-</div>
-<div>
-<label class="meta" for="mdDilacao">Dilação solicitada?</label>
-<select id="mdDilacao"><option>Não</option><option>Sim</option></select>
-</div>
-<div style="grid-column:1/3">
-<label class="meta" for="mdStatus">Status do caso</label>
-<select id="mdStatus">
-<option value="">(sem status)</option>
-<option>Pendente</option>
-<option>OK</option>
-<option>Cliente sumiu</option>
-<option>Repetido</option>
-<option>Não vamos fazer nada</option>
-<option>Concluído</option>
-<option>Aguardando documentos</option>
-</select>
-<div id="mdBadge" style="margin-top:6px"></div>
-</div>
-</div>
-</div>
-<div class="modal-foot">
-<div class="left" style="display:flex;gap:8px;flex-wrap:wrap">
-<button id="btnRecalcular" class="pill btn-outline" type="button">Recalcular prazos</button>
-</div>
-<div class="right" style="display:flex;gap:8px">
-<button id="btnConcluir" class="primary" type="button">Concluir</button>
-<button id="btnExcluir" class="pill btn-outline" type="button">Excluir</button>
-</div>
-</div>
-</dialog>
-
-<!-- Toasts -->
-<div id="toast" class="toast" role="status" aria-live="polite"></div>
-<div id="centerOk" class="center-ok" aria-live="polite">
-<div class="icon">✓</div>
-<div><strong>Prazo adicionado com sucesso</strong></div>
-</div>
-
-<script>
-(function(){
-// ===== Helpers e estado =====
-const KEY = 'gm_prazos_v18_html'; // atualiza versão
-const $ = (sel)=>document.querySelector(sel);
-// Ordenação atual
-let sort = { key:'prazoOperacional', dir: 'asc' };
-// Estado dos filtros que realmente estão aplicados
-let currentFilters = { tipo:'all', prazo:'all', status:'all', resp:'all', dil:'all', q:'' };
-
-function uuid(){
-if (window.crypto && typeof window.crypto.randomUUID === 'function'){
-return window.crypto.randomUUID();
-}
-const rnd = (len)=>Array.from({length:len},()=>Math.floor(Math.random()*16).toString(16)).join('');
-return `${Date.now().toString(16)}-${rnd(4)}-${rnd(4)}-${rnd(4)}-${rnd(12)}`;
-}
-
-const storage = {
-load(){
-try{
-return JSON.parse(localStorage.getItem(KEY)||'[]');
-}catch{
-return []
-}
-},
-save(list){
-localStorage.setItem(KEY, JSON.stringify(list));
-}
-};
-
-const toast = (msg)=>{
-const t=$('#toast');
-t.textContent=msg;
-t.classList.add('show');
-setTimeout(()=>t.classList.remove('show'),1900)
-};
-
-const centerOk = (show=true)=>{
-const c=$('#centerOk');
-if(show){
-c.classList.add('show');
-setTimeout(()=>c.classList.remove('show'),1200)
-}
-};
-
-const escapeHtml = (s)=> String(s||'').replace(/[&<>"']/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[c]));
-
-// ===== Datas =====
-const isBusinessDay = (d)=>{
-const day = d.getDay();
-return day!==0 && day!==6;
-};
-
-const startNextBusinessDay = (d)=>{
-const x = new Date(d);
-x.setDate(x.getDate()+1);
-while(!isBusinessDay(x)) x.setDate(x.getDate()+1);
-return x
-};
-
-const startNextDay = (d)=>{
-const x = new Date(d);
-x.setDate(x.getDate()+1);
-return x
-};
-
-const compareToToday = (date)=>{
-const a=new Date(date);
-a.setHours(0,0,0,0);
-const b=new Date();
-b.setHours(0,0,0,0);
-return a<b?-1:(a>b?1:0)
-};
-
-function addBusinessDaysExclusiveStart(startDate, n){
-let cur=startNextBusinessDay(startDate);
-let counted=0;
-while(counted<n){
-if(isBusinessDay(cur)) counted++;
-if(counted===n) break;
-cur.setDate(cur.getDate()+1);}
-while(!isBusinessDay(cur)) cur.setDate(cur.getDate()+1);
-return cur;
-}
-
-function addCalendarDaysExclusiveStart(startDate, n){
-const cur=startNextDay(startDate);
-cur.setDate(cur.getDate()+(n-1));
-return cur;
-}
-
-function subtractBusinessDays(date, n){
-const d=new Date(date);
-let left=n;
-while(left>0){
-d.setDate(d.getDate()-1);
-if(isBusinessDay(d)) left--;
-}
-return d;
-}
-
-const subtractCalendarDays=(date,n)=>{
-const d=new Date(date);
-d.setDate(d.getDate()-n);
-return d
-};
-
-const formatBR = (d)=>{
-const pad=(x)=>String(x).padStart(2,'0');
-return `${pad(d.getDate())}/${pad(d.getMonth()+1)}/${d.getFullYear()}`
-};
-
-function diffDaysInclusive(toModeBusiness, fromDate, toDate){
-const today=new Date();
-today.setHours(0,0,0,0);
-const start=new Date(today);
-start.setDate(start.getDate()+1);
-const end=new Date(toDate);
-end.setHours(0,0,0,0);
-if(end<today) return -1;
-if(!toModeBusiness){
-const ms=end-start;
-return Math.floor(ms/86400000)+1
-}
-let count=0;
-let cur=new Date(start);
-while(cur<=end){
-if(isBusinessDay(cur)) count++;
-cur.setDate(cur.getDate()+1)}
-return count;
-}
-
-// Prazos por tipo
-const PRAZO_DIAS = { ap:15, ed:5, rc:15 };
-const tipoDescricao = (code, diasCustom, nomeCustom)=> {
-if(code==='ap') return 'Apelação (15 dias)';
-if(code==='ed') return 'Embargos de Declaração (5 dias)';
-if(code==='rc') return 'Réplica à Contestação (15 dias úteis)';
-return `Personalizado${nomeCustom? ` – ${nomeCustom}`:''} (${diasCustom||'?'} dias)`;
-};
-
-function calcularItem({tipo, publicacao, corridos, diasCustom}){
-if(!publicacao) return null;
-const base=new Date(publicacao+'T00:00:00');
-const dias = tipo==='custom' ? Number(diasCustom||0) : PRAZO_DIAS[tipo];
-if(!dias || dias<1) return null;
-let prazoLegal = corridos? addCalendarDaysExclusiveStart(base,dias) : addBusinessDaysExclusiveStart(base,dias);
-let prazoOper = corridos? subtractCalendarDays(prazoLegal,2) : subtractBusinessDays(prazoLegal,2);
-if(!corridos){
-while(!isBusinessDay(prazoOper)) prazoOper.setDate(prazoOper.getDate()+1)
-}
-return {
-prazoLegal: prazoLegal.toISOString().slice(0,10),
-prazoOperacional: prazoOper.toISOString().slice(0,10)
-};
-}
-
-// ===== UI principal =====
-function calcular(){
-const cliente = $('#cliente').value.trim();
-const processo = $('#processo').value.trim();
-const tipo = $('#tipo').value;
-const publicacao = $('#data').value;
-const corridos = $('#corridos').checked;
-const observacoes = $('#obs').value.trim();
-const responsavel = $('#responsavel').value;
-const statusCaso = $('#statusCaso').value || '';
-const dilacao = $('#dilacao').value || 'Não';
-const tipoFinal = $('#prazoLivre').checked? 'custom' : tipo;
-const nomePrazo = $('#prazoLivre').checked? String($('#nomePrazo').value||'').trim() : '';
-const diasCustom = $('#prazoLivre').checked? Number($('#diasCustom').value) : null;
-
-if(!publicacao){
-toast('Informe a data da publicação.');
-return null;
-}
-
-if(tipoFinal==='custom'){
-if(!diasCustom || diasCustom<1){
-toast('Informe os dias do prazo personalizado.');
-return null;
-}
-if(!nomePrazo){
-toast('Informe o nome do prazo personalizado.');
-return null;
-}
-}
-
-const prazos = calcularItem({tipo:tipoFinal, publicacao, corridos, diasCustom});
-if(!prazos){
-toast('Não foi possível calcular o prazo.');
-return null;
-}
-
-return {
-id: uuid(),
-cliente: cliente||'(sem nome)',
-processo: processo||'—',
-tipo: tipoFinal,
-nomePrazo: nomePrazo || '',
-diasCustom,
-tipoDesc: tipoDescricao(tipoFinal,diasCustom,nomePrazo),
-publicacao,
-prazoLegal: prazos.prazoLegal,
-prazoOperacional: prazos.prazoOperacional,
-corridos,
-statusCaso,
-responsavel,
-observacoes,
-dilacao
-};
-}
-
-function renderResultado(res){
-const el = $('#resultado');
-el.style.display='flex';
-const op = new Date(res.prazoOperacional+'T00:00:00');
-const cmp = compareToToday(op);
-const rest = cmp<0? -1 : diffDaysInclusive(!res.corridos, new Date(), op);
-let cls='normal', label='normal';
-if(cmp<0){cls='vencido';label='prazo vencido'}
-else if(cmp===0){cls='fatal';label='prazo fatal'}
-else if(rest<=3){cls='urgente';label='urgente'}
-el.innerHTML = `
-<div class="badge animate-fadeUp"><strong>Cliente:</strong> ${escapeHtml(res.cliente)}</div>
-<div class="badge animate-fadeUp"><strong>Processo:</strong> ${escapeHtml(res.processo)}</div>
-<div class="badge animate-fadeUp"><strong>Tipo:</strong> ${escapeHtml(res.tipoDesc)}${res.corridos ? ' (corridos)' : ' (úteis)'}</div>
-<div class="badge animate-fadeUp"><strong>Prazo operacional (-2):</strong> ${formatBR(op)}</div>
-<div class="badge animate-fadeUp"><strong>Dias restantes:</strong> ${rest < 0 ? '—' : rest}</div>
-<div class="badge animate-fadeUp"><strong>Responsável:</strong> ${escapeHtml(res.responsavel||'—')}</div>
-<div class="badge status ${cls} animate-fadeUp">${label}</div>
-`;
-}
-
-function prazoStatus(item){
-const op=new Date(item.prazoOperacional+'T00:00:00');
-const cmp=compareToToday(op);
-if(cmp<0) return 'vencido';
-if(cmp===0) return 'fatal';
-const rest=diffDaysInclusive(!item.corridos,new Date(),op);
-return rest<=3?'urgente':'normal';
-}
-
-function updateCounters(list){
-const total = list.length;
-const pendentes = list.filter(x => (x.statusCaso || '') === 'Pendente').length;
-const urgentes = list.filter(x => prazoStatus(x) === 'urgente').length;
-const vencidos = list.filter(x => prazoStatus(x) === 'vencido').length;
-const aguardandoDocs = list.filter(x => (x.statusCaso || '') === 'Aguardando documentos').length;
-
-$('#count-total').textContent = total;
-$('#count-pendentes').textContent = pendentes;
-$('#count-urgentes').textContent = urgentes;
-$('#count-vencidos').textContent = vencidos;
-$('#count-aguardando-docs').textContent = aguardandoDocs;
-}
-
-function updateSummary(list){
-const total = list.length;
-const porStatus = list.reduce((acc,x)=>{
-const k=(x.statusCaso||'(sem status)');
-acc[k]=(acc[k]||0)+1;
-return acc;
-},{});
-const porResp = list.reduce((acc,x)=>{
-const k=(x.responsavel||'(sem)');
-acc[k]=(acc[k]||0)+1;
-return acc;
-},{});
-
-const s = Object.entries(porStatus).map(([k,v])=>`${escapeHtml(k)}: <strong>${v}</strong>`).join(' · ');
-const r = Object.entries(porResp).map(([k,v])=>`${escapeHtml(k)}: <strong>${v}</strong>`).join(' · ');
-$('#summary').innerHTML = `Itens: <strong>${total}</strong> — Status: ${s} — Resp.: ${r}`;
-}
-
-function renderTable(){
-const tbody = $('#tabela tbody');
-let list = storage.load();
-// usar filtros aplicados (estado), não os inputs
-const {tipo:fTipo,prazo:fPrazo,status:fStatus,resp:fResp,dil:fDil,q} = currentFilters;
-
-list = list.map(item=>{
-const _op=new Date(item.prazoOperacional+'T00:00:00');
-const _rest = (()=>{
-const cmp=compareToToday(_op);
-return cmp<0? -1 : diffDaysInclusive(!item.corridos, new Date(), _op)
-})();
-const _ps=prazoStatus(item);
-const _cls=_ps==='vencido'?'vencido':_ps==='fatal'?'fatal':_ps==='urgente'?'urgente':'normal';
-return {...item,_op,_rest,_ps,_cls};
-});
-
-list = list.filter(x=>
-(fTipo==='all'||x.tipo===fTipo) &&
-(fPrazo==='all'||x._ps===fPrazo) &&
-(fStatus==='all'||(x.statusCaso||'')===fStatus) &&
-(fResp==='all'||(x.responsavel||'')===fResp) &&
-(fDil==='all'||(x.dilacao||'Não')===fDil) &&
-(!q || x.cliente.toLowerCase().includes(q) || (x.processo||'').toLowerCase().includes(q))
-);
-
-// Ordenação
-list.sort((a,b)=>{
-const dir = sort.dir==='asc'? 1 : -1;
-const ka = sort.key==='prazoOperacional'? a.prazoOperacional : (sort.key==='cliente'? a.cliente.toLowerCase() : (sort.key==='responsavel'? (a.responsavel||'').toLowerCase() : (sort.key==='statusCaso'? (a.statusCaso||'').toLowerCase() : a.publicacao)));
-const kb = sort.key==='prazoOperacional'? b.prazoOperacional : (sort.key==='cliente'? b.cliente.toLowerCase() : (sort.key==='responsavel'? (b.responsavel||'').toLowerCase() : (sort.key==='statusCaso'? (b.statusCaso||'').toLowerCase() : b.publicacao)));
-return ka<kb? -1*dir : ka>kb? 1*dir : 0;
-});
-
-tbody.innerHTML = list.map(item=>{
-const prazoText = item._ps==='fatal'?'prazo fatal':(item._ps==='vencido'?'prazo vencido':(item._ps==='urgente'?'urgente':'normal'));
-const tipoLinha = item.tipoDesc + (item.tipo==='custom' && item.diasCustom? ` (${item.diasCustom}d)`:'');
-const badge = (item.statusCaso? `<div class="caseStatus ${escapeHtml(item.statusCaso)}" title="${escapeHtml(item.statusCaso)}">${escapeHtml(item.statusCaso)}</div>` : '<span class="meta">(sem status)</span>');
-const f3 = `<span class="flag ${item.dilacao==='Sim'?'on':'off'}">Dilação: ${item.dilacao||'Não'}</span>`;
-
-return `<tr data-id="${item.id}" class="row-item animate-fadeUp" style="cursor:pointer">
-<td class="cell">
-<div><strong>${escapeHtml(item.cliente)}</strong></div>
-<div class="meta">Proc.: ${escapeHtml(item.processo)}</div>
-${item.observacoes? `<div class="meta" style="margin-top:6px;max-width:360px">${escapeHtml(item.observacoes)}</div>`: ''}
-</td>
-<td class="cell">
-<div class="meta">${escapeHtml(tipoLinha)}${item.corridos?' (corridos)':' (úteis)'} | Pub.: ${formatBR(new Date(item.publicacao+'T00:00:00'))}</div>
-<div style="margin-top:6px">${f3}</div>
-</td>
-<td class="cell">
-<div class="meta"><strong>${formatBR(item._op)}</strong> | <span class="status ${item._cls}">${prazoText}</span> | Restantes: ${item._rest<0? '—' : item._rest}</div>
-</td>
-<td class="cell">${badge}</td>
-<td class="cell">${escapeHtml(item.responsavel||'—')}</td>
-<td class="actions">
-<button class="pill btn-edit" data-id="${item.id}">Editar</button>
-<button class="pill btn-del" data-id="${item.id}">Excluir</button>
-</td>
-</tr>`
-}).join('');
-
-updateCounters(list);
-updateSummary(list);
-
-// Bind de eventos por linha
-tbody.querySelectorAll('.row-item').forEach(tr=>
-tr.addEventListener('click', ()=> openModal(tr.getAttribute('data-id')))
-);
-tbody.querySelectorAll('.btn-edit').forEach(btn=>
-btn.addEventListener('click', (e)=>{
-e.stopPropagation();
-openModal(btn.getAttribute('data-id'));
-}));
-tbody.querySelectorAll('.btn-del').forEach(btn=>
-btn.addEventListener('click', (e)=>{
-e.stopPropagation();
-removeFromList(btn.getAttribute('data-id'));
-}));
-}
-
-function addItem(){
-const it=calcular();
-if(!it) return;
-const list=storage.load();
-list.push(it);
-storage.save(list);
-renderResultado(it);
-renderTable();
-// limpar campos
-$('#cliente').value='';
-$('#processo').value='';
-$('#obs').value='';
-$('#diasCustom').value='';
-$('#nomePrazo').value='';
-$('#prazoLivre').checked=false;
-$('#diasCustom').style.display='none';
-$('#nomePrazo').style.display='none';
-$('#statusCaso').value='';
-$('#dilacao').value='Não';
-toast('Prazo adicionado');
-centerOk(true);
-}
-
-function removeFromList(id){
-const list=storage.load().filter(x=>x.id!==id);
-storage.save(list);
-renderTable();
-toast('Removido');
-}
-
-// ===== Modal =====
-let currentId=null;
-function statusBadgeHTML(status){
-if(!status) return '';
-return `<span class="caseStatus ${escapeHtml(status)}" title="${escapeHtml(status)}">${escapeHtml(status)}</span>`
-}
-
-function syncMdCustomVisibility(){
-const sel=$('#mdTipo').value;
-$('#wrapMdCustom').style.display = (sel==='custom')? 'block':'none';
-}
-
-function openModal(id){
-const it=storage.load().find(x=>x.id===id);
-if(!it) return;
-currentId=id;
-$('#mdCliente').value=it.cliente;
-$('#mdProcesso').value=it.processo;
-$('#mdTipo').value=it.tipo;
-$('#mdPubData').value=it.publicacao;
-$('#mdCorridos').checked=!!it.corridos;
-$('#mdObs').value=it.observacoes||'';
-$('#mdStatus').value=it.statusCaso||'';
-$('#mdBadge').innerHTML=statusBadgeHTML(it.statusCaso||'');
-$('#mdDiasCustom').value=it.diasCustom||'';
-$('#mdNomePrazo').value=it.nomePrazo||'';
-$('#mdResp').value=it.responsavel||'Marcelo';
-$('#mdDilacao').value=it.dilacao||'Não';
-syncMdCustomVisibility();
-$('#mdLegal').textContent=formatBR(new Date(it.prazoLegal+'T00:00:00'));
-$('#mdOper').textContent=formatBR(new Date(it.prazoOperacional+'T00:00:00'));
-$('#dlg').showModal();
-}
-
-function closeModal(){
-$('#dlg').close();
-currentId=null;
-}
-
-function recalcFromModal(){
-const tipo=$('#mdTipo').value;
-const publicacao=$('#mdPubData').value;
-const corridos=$('#mdCorridos').checked;
-const diasCustom=(tipo==='custom')? Number($('#mdDiasCustom').value):null;
-if(!publicacao){
-toast('Informe a data da publicação.');
-return;
-}
-if(tipo==='custom' && (!diasCustom || diasCustom<1)){
-toast('Informe os dias do prazo personalizado.');
-return;
-}
-const prazos=calcularItem({tipo,publicacao,corridos,diasCustom});
-$('#mdLegal').textContent=formatBR(new Date(prazos.prazoLegal+'T00:00:00'));
-$('#mdOper').textContent=formatBR(new Date(prazos.prazoOperacional+'T00:00:00'));
-return prazos;
-}
-
-// ===== Exportações =====
-function exportCSV(){
-const list=storage.load();
-if(!list.length){ toast('Nada para exportar.'); return }
-const header=['Cliente','Processo','Tipo','Nome do Prazo','Publicação','Prazo Legal','Prazo Operacional (-2)','Modo','Dilação solicitada?','Status do caso','Responsável','Observações'];
-const rows=list.map(x=>[
-x.cliente,x.processo,x.tipo==='custom'?`Personalizado (${x.diasCustom||'?'} dias)`:x.tipoDesc,x.nomePrazo||'',
-formatBR(new Date(x.publicacao+'T00:00:00')),formatBR(new Date(x.prazoLegal+'T00:00:00')),formatBR(new Date(x.prazoOperacional+'T00:00:00')),
-x.corridos?'Corridos':'Úteis',x.dilacao||'Não',x.statusCaso||'',x.responsavel||'',(x.observacoes||'').replace(/\n/g,' ')
-]);
-const csv=[header,...rows].map(r=>r.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(';')).join('\n');
-const blob=new Blob(["\ufeff"+csv],{type:'text/csv;charset=utf-8;'});
-const url=URL.createObjectURL(blob);
-const a=document.createElement('a');
-a.href=url;
-a.download='prazos_girardi_moraes.csv';
-a.click();
-URL.revokeObjectURL(url);
-toast('CSV exportado');
-}
-
-function exportWord(){
-const list=storage.load();
-if(!list.length){ toast('Nada para exportar.'); return }
-const rows=list.map(x=> `
-<tr>
-<td>${escapeHtml(x.cliente)}</td>
-<td>${escapeHtml(x.processo)}</td>
-<td>${escapeHtml(x.tipo==='custom'?`Personalizado (${x.diasCustom||'?'} dias)`:x.tipoDesc)}</td>
-<td>${escapeHtml(x.nomePrazo||'')}</td>
-<td>${formatBR(new Date(x.publicacao+'T00:00:00'))}</td>
-<td>${formatBR(new Date(x.prazoLegal+'T00:00:00'))}</td>
-<td>${formatBR(new Date(x.prazoOperacional+'T00:00:00'))}</td>
-<td>${x.corridos?'Corridos':'Úteis'}</td>
-<td>${escapeHtml(x.dilacao||'Não')}</td>
-<td>${escapeHtml(x.statusCaso||'')}</td>
-<td>${escapeHtml(x.responsavel||'')}</td>
-<td>${escapeHtml(x.observacoes||'')}</td>
-</tr>`).join('');
-const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><style>
-table{border-collapse:collapse;width:100%;font-family:Arial,sans-serif;font-size:12px}
-th,td{border:1px solid #999;padding:6px;text-align:left}
-th{background:#f3f4f6}
-</style></head><body>
-<h2>Relatório de Prazos – Girardi & Moraes</h2>
-<table><thead><tr>
-<th>Cliente</th><th>Processo</th><th>Tipo</th><th>Nome do Prazo</th><th>Publicação</th>
-<th>Prazo Legal</th><th>Prazo Operacional (-2)</th><th>Modo</th>
-<th>Dilação?</th><th>Status</th><th>Responsável</th><th>Observações</th>
-</tr></thead><tbody>${rows}</tbody></table>
-</body></html>`;
-const blob = new Blob([html], {type:'application/msword'});
-const url = URL.createObjectURL(blob);
-const a=document.createElement('a');
-a.href=url;
-a.download='prazos_girardi_moraes.doc';
-a.click();
-URL.revokeObjectURL(url);
-toast('Word exportado');
-}
-
-function exportExcel(){
-const list=storage.load();
-if(!list.length){ toast('Nada para exportar.'); return }
-function esc(x){ return String(x||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;') }
-const rows = list.map(x=>[
-x.cliente, x.processo, x.tipo==='custom'?`Personalizado (${x.diasCustom||'?'} dias)`:x.tipoDesc,
-x.nomePrazo||'', formatBR(new Date(x.publicacao+'T00:00:00')),
-formatBR(new Date(x.prazoLegal+'T00:00:00')), formatBR(new Date(x.prazoOperacional+'T00:00:00')),
-x.corridos?'Corridos':'Úteis', x.dilacao||'Não', x.statusCaso||'', x.responsavel||'',
-(x.observacoes||'').replace(/\n/g,' ')
-]).map(r=>`<Row>${r.map(v=>`<Cell><Data ss:Type="String">${esc(v)}</Data></Cell>`).join('')}</Row>`).join('');
-const xml = `<?xml version="1.0"?>
-<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet" xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet">
-<Worksheet ss:Name="Prazos">
-<Table>
-<Row>
-<Cell><Data ss:Type="String">Cliente</Data></Cell>
-<Cell><Data ss:Type="String">Processo</Data></Cell>
-<Cell><Data ss:Type="String">Tipo</Data></Cell>
-<Cell><Data ss:Type="String">Nome do Prazo</Data></Cell>
-<Cell><Data ss:Type="String">Publicação</Data></Cell>
-<Cell><Data ss:Type="String">Prazo Legal</Data></Cell>
-<Cell><Data ss:Type="String">Prazo Operacional (-2)</Data></Cell>
-<Cell><Data ss:Type="String">Modo</Data></Cell>
-<Cell><Data ss:Type="String">Dilação?</Data></Cell>
-<Cell><Data ss:Type="String">Status</Data></Cell>
-<Cell><Data ss:Type="String">Responsável</Data></Cell>
-<Cell><Data ss:Type="String">Observações</Data></Cell>
-</Row>
-${rows}
-</Table>
-</Worksheet>
-</Workbook>`;
-const blob = new Blob([xml], {type:'application/vnd.ms-excel'});
-const url = URL.createObjectURL(blob);
-const a=document.createElement('a');
-a.href=url;
-a.download='prazos_girardi_moraes.xls';
-a.click();
-URL.revokeObjectURL(url);
-toast('Excel exportado');
-}
-
-// ===== Backup e Versões =====
-function nowStamp(){
-const d=new Date();
-const p=(n)=>String(n).padStart(2,'0');
-return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}_${p(d.getHours())}-${p(d.getMinutes())}-${p(d.getSeconds())}`;
-}
-
-function backupDownloadManual(){
-const data={version:18,exportedAt:new Date().toISOString(),items:storage.load()};
-const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
-const url=URL.createObjectURL(blob);
-const a=document.createElement('a');
-a.href=url;
-a.download=`backup_prazos_gm_v18_${nowStamp()}.json`;
-a.click();
-URL.revokeObjectURL(url);
-toast('Backup gerado');
-}
-
-function backupBeforeClear(items){
-if(!items || !items.length){ return; } // nada a salvar
-const data={version:18,exportedAt:new Date().toISOString(),items};
-const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
-const url=URL.createObjectURL(blob);
-const a=document.createElement('a');
-a.href=url;
-a.download=`backup_prazos_gm_v18_auto_${nowStamp()}.json`;
-a.click();
-URL.revokeObjectURL(url);
-}
-
-function backupRestore(file){
-const reader=new FileReader();
-reader.onload=(e)=>{
-try{
-const json=JSON.parse(e.target.result);
-const items = Array.isArray(json.items)? json.items : (Array.isArray(json)? json : null);
-if(!items) throw new Error('Arquivo inválido');
-storage.save(items);
-renderTable();
-toast('Backup restaurado');
-}catch(err){
-alert('Falha ao restaurar backup: '+err.message);
-}
-};
-reader.readAsText(file);
-}
-
-// Backup automático diário (Word e Excel)
-function autoDailyBackup(){
-const today = new Date().toDateString();
-const lastBackup = localStorage.getItem('lastAutoBackupDate');
-if (lastBackup === today) return; // Já fez backup hoje
-
-const list = storage.load();
-if (list.length === 0) return; // Nada para fazer backup
-
-// Backup em Word
-const rows = list.map(x=> `
-<tr>
-<td>${escapeHtml(x.cliente)}</td>
-<td>${escapeHtml(x.processo)}</td>
-<td>${escapeHtml(x.tipo==='custom'?`Personalizado (${x.diasCustom||'?'} dias)`:x.tipoDesc)}</td>
-<td>${escapeHtml(x.nomePrazo||'')}</td>
-<td>${formatBR(new Date(x.publicacao+'T00:00:00'))}</td>
-<td>${formatBR(new Date(x.prazoLegal+'T00:00:00'))}</td>
-<td>${formatBR(new Date(x.prazoOperacional+'T00:00:00'))}</td>
-<td>${x.corridos?'Corridos':'Úteis'}</td>
-<td>${escapeHtml(x.dilacao||'Não')}</td>
-<td>${escapeHtml(x.statusCaso||'')}</td>
-<td>${escapeHtml(x.responsavel||'')}</td>
-<td>${escapeHtml(x.observacoes||'')}</td>
-</tr>`).join('');
-const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><style>
-table{border-collapse:collapse;width:100%;font-family:Arial,sans-serif;font-size:12px}
-th,td{border:1px solid #999;padding:6px;text-align:left}
-th{background:#f3f4f6}
-</style></head><body>
-<h2>Relatório de Prazos – Girardi & Moraes (Backup Automático ${new Date().toLocaleDateString('pt-BR')})</h2>
-<table><thead><tr>
-<th>Cliente</th><th>Processo</th><th>Tipo</th><th>Nome do Prazo</th><th>Publicação</th>
-<th>Prazo Legal</th><th>Prazo Operacional (-2)</th><th>Modo</th>
-<th>Dilação?</th><th>Status</th><th>Responsável</th><th>Observações</th>
-</tr></thead><tbody>${rows}</tbody></table>
-</body></html>`;
-const blobWord = new Blob([html], {type:'application/msword'});
-const urlWord = URL.createObjectURL(blobWord);
-const aWord=document.createElement('a');
-aWord.href=urlWord;
-aWord.download=`backup_auto_word_${nowStamp()}.doc`;
-aWord.click();
-URL.revokeObjectURL(urlWord);
-
-// Backup em Excel
-function esc(x){ return String(x||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;') }
-const rowsExcel = list.map(x=>[
-x.cliente, x.processo, x.tipo==='custom'?`Personalizado (${x.diasCustom||'?'} dias)`:x.tipoDesc,
-x.nomePrazo||'', formatBR(new Date(x.publicacao+'T00:00:00')),
-formatBR(new Date(x.prazoLegal+'T00:00:00')), formatBR(new Date(x.prazoOperacional+'T00:00:00')),
-x.corridos?'Corridos':'Úteis', x.dilacao||'Não', x.statusCaso||'', x.responsavel||'',
-(x.observacoes||'').replace(/\n/g,' ')
-]).map(r=>`<Row>${r.map(v=>`<Cell><Data ss:Type="String">${esc(v)}</Data></Cell>`).join('')}</Row>`).join('');
-const xml = `<?xml version="1.0"?>
-<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet" xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet">
-<Worksheet ss:Name="Prazos">
-<Table>
-<Row>
-<Cell><Data ss:Type="String">Cliente</Data></Cell>
-<Cell><Data ss:Type="String">Processo</Data></Cell>
-<Cell><Data ss:Type="String">Tipo</Data></Cell>
-<Cell><Data ss:Type="String">Nome do Prazo</Data></Cell>
-<Cell><Data ss:Type="String">Publicação</Data></Cell>
-<Cell><Data ss:Type="String">Prazo Legal</Data></Cell>
-<Cell><Data ss:Type="String">Prazo Operacional (-2)</Data></Cell>
-<Cell><Data ss:Type="String">Modo</Data></Cell>
-<Cell><Data ss:Type="String">Dilação?</Data></Cell>
-<Cell><Data ss:Type="String">Status</Data></Cell>
-<Cell><Data ss:Type="String">Responsável</Data></Cell>
-<Cell><Data ss:Type="String">Observações</Data></Cell>
-</Row>
-${rowsExcel}
-</Table>
-</Worksheet>
-</Workbook>`;
-const blobExcel = new Blob([xml], {type:'application/vnd.ms-excel'});
-const urlExcel = URL.createObjectURL(blobExcel);
-const aExcel=document.createElement('a');
-aExcel.href=urlExcel;
-aExcel.download=`backup_auto_excel_${nowStamp()}.xls`;
-aExcel.click();
-URL.revokeObjectURL(urlExcel);
-
-localStorage.setItem('lastAutoBackupDate', today);
-console.log('Backup automático diário realizado');
-}
-
-// Exportar versões (Word e Excel)
-function exportVersions(){
-const list = storage.load();
-if(!list.length){ toast('Nada para exportar.'); return }
-
-// Word
-const rows = list.map(x=> `
-<tr>
-<td>${escapeHtml(x.cliente)}</td>
-<td>${escapeHtml(x.processo)}</td>
-<td>${escapeHtml(x.tipo==='custom'?`Personalizado (${x.diasCustom||'?'} dias)`:x.tipoDesc)}</td>
-<td>${escapeHtml(x.nomePrazo||'')}</td>
-<td>${formatBR(new Date(x.publicacao+'T00:00:00'))}</td>
-<td>${formatBR(new Date(x.prazoLegal+'T00:00:00'))}</td>
-<td>${formatBR(new Date(x.prazoOperacional+'T00:00:00'))}</td>
-<td>${x.corridos?'Corridos':'Úteis'}</td>
-<td>${escapeHtml(x.dilacao||'Não')}</td>
-<td>${escapeHtml(x.statusCaso||'')}</td>
-<td>${escapeHtml(x.responsavel||'')}</td>
-<td>${escapeHtml(x.observacoes||'')}</td>
-</tr>`).join('');
-const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><style>
-table{border-collapse:collapse;width:100%;font-family:Arial,sans-serif;font-size:12px}
-th,td{border:1px solid #999;padding:6px;text-align:left}
-th{background:#f3f4f6}
-</style></head><body>
-<h2>Relatório de Prazos – Girardi & Moraes (Versão ${new Date().toLocaleDateString('pt-BR')})</h2>
-<table><thead><tr>
-<th>Cliente</th><th>Processo</th><th>Tipo</th><th>Nome do Prazo</th><th>Publicação</th>
-<th>Prazo Legal</th><th>Prazo Operacional (-2)</th><th>Modo</th>
-<th>Dilação?</th><th>Status</th><th>Responsável</th><th>Observações</th>
-</tr></thead><tbody>${rows}</tbody></table>
-</body></html>`;
-const blobWord = new Blob([html], {type:'application/msword'});
-const urlWord = URL.createObjectURL(blobWord);
-const aWord=document.createElement('a');
-aWord.href=urlWord;
-aWord.download=`versao_word_${nowStamp()}.doc`;
-aWord.click();
-URL.revokeObjectURL(urlWord);
-
-// Excel
-function esc(x){ return String(x||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;') }
-const rowsExcel = list.map(x=>[
-x.cliente, x.processo, x.tipo==='custom'?`Personalizado (${x.diasCustom||'?'} dias)`:x.tipoDesc,
-x.nomePrazo||'', formatBR(new Date(x.publicacao+'T00:00:00')),
-formatBR(new Date(x.prazoLegal+'T00:00:00')), formatBR(new Date(x.prazoOperacional+'T00:00:00')),
-x.corridos?'Corridos':'Úteis', x.dilacao||'Não', x.statusCaso||'', x.responsavel||'',
-(x.observacoes||'').replace(/\n/g,' ')
-]).map(r=>`<Row>${r.map(v=>`<Cell><Data ss:Type="String">${esc(v)}</Data></Cell>`).join('')}</Row>`).join('');
-const xml = `<?xml version="1.0"?>
-<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet" xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet">
-<Worksheet ss:Name="Prazos">
-<Table>
-<Row>
-<Cell><Data ss:Type="String">Cliente</Data></Cell>
-<Cell><Data ss:Type="String">Processo</Data></Cell>
-<Cell><Data ss:Type="String">Tipo</Data></Cell>
-<Cell><Data ss:Type="String">Nome do Prazo</Data></Cell>
-<Cell><Data ss:Type="String">Publicação</Data></Cell>
-<Cell><Data ss:Type="String">Prazo Legal</Data></Cell>
-<Cell><Data ss:Type="String">Prazo Operacional (-2)</Data></Cell>
-<Cell><Data ss:Type="String">Modo</Data></Cell>
-<Cell><Data ss:Type="String">Dilação?</Data></Cell>
-<Cell><Data ss:Type="String">Status</Data></Cell>
-<Cell><Data ss:Type="String">Responsável</Data></Cell>
-<Cell><Data ss:Type="String">Observações</Data></Cell>
-</Row>
-${rowsExcel}
-</Table>
-</Worksheet>
-</Workbook>`;
-const blobExcel = new Blob([xml], {type:'application/vnd.ms-excel'});
-const urlExcel = URL.createObjectURL(blobExcel);
-const aExcel=document.createElement('a');
-aExcel.href=urlExcel;
-aExcel.download=`versao_excel_${nowStamp()}.xls`;
-aExcel.click();
-URL.revokeObjectURL(urlExcel);
-
-toast('Versões exportadas (Word e Excel)');
-}
-
-// ===== Eventos =====
-document.addEventListener('DOMContentLoaded', ()=>{
-// principal
-$('#btnAdicionar').addEventListener('click', addItem);
-$('#prazoLivre').addEventListener('change', ()=>{
-const on = $('#prazoLivre').checked;
-$('#diasCustom').style.display = on? 'block':'none';
-$('#nomePrazo').style.display = on? 'block':'none';
-});
-
-// filtros – só aplicam ao clicar
-$('#btnAplicarFiltros').addEventListener('click', ()=>{
-currentFilters = {
-tipo: $('#uiTipo').value,
-prazo: $('#uiPrazo').value,
-status: $('#uiStatus').value,
-resp: $('#uiResp').value,
-dil: $('#uiDilacao').value,
-q: ($('#uiSearch').value||'').trim().toLowerCase()
-};
-renderTable();
-toast('Filtros aplicados');
-});
-
-$('#btnLimparFiltros').addEventListener('click', ()=>{
-// reset UI
-$('#uiTipo').value='all';
-$('#uiPrazo').value='all';
-$('#uiStatus').value='all';
-$('#uiResp').value='all';
-$('#uiDilacao').value='all';
-$('#uiSearch').value='';
-// reset estado
-currentFilters = { tipo:'all', prazo:'all', status:'all', resp:'all', dil:'all', q:'' };
-renderTable();
-toast('Filtros limpos');
-});
-
-// Ordenação rápida
-$('#btnSortAsc').addEventListener('click', ()=>{
-sort={key:'prazoOperacional',dir:'asc'};
-renderTable();
-toast('Ordenado por prazo (mais próximo)');
-});
-
-$('#btnSortDesc').addEventListener('click', ()=>{
-sort={key:'prazoOperacional',dir:'desc'};
-renderTable();
-toast('Ordenado por prazo (mais distante)');
-});
-
-// Sort por cabeçalho
-document.querySelectorAll('.th-sort').forEach(th=>{
-th.addEventListener('click', ()=>{
-const key = th.getAttribute('data-sort');
-sort.dir = (sort.key===key && sort.dir==='asc')? 'desc' : 'asc';
-sort.key = key;
-renderTable();
-document.querySelectorAll('.th-sort .dir').forEach(el=> el.textContent='');
-const dirSpan = th.querySelector('.dir');
-dirSpan.textContent = sort.dir==='asc'?'▲':'▼';
-});
-});
-
-// export/backup
-$('#btnExportar').addEventListener('click', exportCSV);
-$('#btnExportarWord').addEventListener('click', exportWord);
-$('#btnExportarExcel').addEventListener('click', exportExcel);
-$('#btnBackup').addEventListener('click', backupDownloadManual);
-$('#btnVersoes').addEventListener('click', exportVersions);
-
-$('#restoreInput').addEventListener('change', (ev)=>{
-const f=ev.target.files?.[0];
-if(f) backupRestore(f);
-ev.target.value='';
-});
-
-// Limpar lista com backup automático (Word e Excel)
-$('#btnLimpar').addEventListener('click', ()=>{
-const items = storage.load();
-if(!items.length){
-if(confirm('A lista já está vazia. Deseja confirmar a limpeza mesmo assim?')){
-storage.save([]);
-renderTable();
-toast('Lista limpa');
-}
-return;
-}
-if(confirm('Isto vai limpar toda a lista. Backups em Word e Excel serão baixados automaticamente. Deseja continuar?')){
-// Exportar Word e Excel antes de limpar
-exportVersions();
-storage.save([]); // limpa
-renderTable();
-toast('Lista limpa (backups salvos)');
-}
-});
-
-// modal
-$('#dlgClose').addEventListener('click', closeModal);
-$('#mdTipo').addEventListener('change', syncMdCustomVisibility);
-$('#mdStatus').addEventListener('change', (e)=>{
-$('#mdBadge').innerHTML = statusBadgeHTML(e.target.value)
-});
-$('#btnRecalcular').addEventListener('click', ()=>{
-const p=recalcFromModal();
-if(p){
-toast('Prazos recalculados');
-$('#mdOper').classList.add('animate-flash');
-setTimeout(()=>$('#mdOper').classList.remove('animate-flash'),1000)
-}
-});
-$('#btnConcluir').addEventListener('click', ()=>{
-if(!currentId) return;
-const list=storage.load();
-const idx=list.findIndex(x=>x.id===currentId);
-if(idx<0) return;
-const tipo=$('#mdTipo').value;
-const publicacao=$('#mdPubData').value;
-const corridos=$('#mdCorridos').checked;
-const diasCustom=(tipo==='custom')? Number($('#mdDiasCustom').value):null;
-const nomePrazo=(tipo==='custom')? String($('#mdNomePrazo').value||'').trim() : '';
-if(!publicacao){
-toast('Informe a data da publicação.');
-return;
-}
-if(tipo==='custom'){
-if(!diasCustom || diasCustom<1){
-toast('Informe os dias do prazo personalizado.');
-return;
-}
-if(!nomePrazo){
-toast('Informe o nome do prazo personalizado.');
-return;
-}
-}
-const prazos=calcularItem({tipo,publicacao,corridos,diasCustom});
-list[idx] = {
-...list[idx],
-cliente:$('#mdCliente').value.trim()||'(sem nome)',
-processo:$('#mdProcesso').value.trim()||'—',
-tipo,
-diasCustom,
-nomePrazo,
-tipoDesc:tipoDescricao(tipo,diasCustom,nomePrazo),
-publicacao,
-prazoLegal:prazos.prazoLegal,
-prazoOperacional:prazos.prazoOperacional,
-corridos,
-observacoes:$('#mdObs').value.trim(),
-statusCaso:$('#mdStatus').value,
-responsavel:$('#mdResp').value,
-dilacao: $('#mdDilacao').value
-};
-storage.save(list);
-renderTable();
-toast('Alterações salvas');
-closeModal();
-});
-
-// Backup automático diário
-setTimeout(autoDailyBackup, 2000); // Executa 2 segundos após carregar
-
-// primeira render
-renderTable();
-});
-})();
-</script>
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <div class="logo-container">
+      <div class="logo">G&M</div>
+      <small class="text-white-50">Advocacia</small>
+    </div>
+    
+    <div class="d-flex flex-column p-3">
+      <ul class="nav flex-column">
+        <li class="nav-item">
+          <a href="/" class="nav-link d-flex align-items-center">
+            <i class="bi bi-house-door"></i> Página Inicial
+          </a>
+        </li>
+        <li class="nav-item">
+          <a href="/documentos" class="nav-link d-flex align-items-center">
+            <i class="bi bi-file-earmark-text"></i> Gerar Documentos
+          </a>
+        </li>
+        <li class="nav-item">
+          <a href="/peticoes" class="nav-link d-flex align-items-center">
+            <i class="bi bi-journal-text"></i> Petições
+          </a>
+        </li>
+        <li class="nav-item">
+          <a href="/prazos" class="nav-link d-flex align-items-center active">
+            <i class="bi bi-folder"></i> Controle de Prazos
+          </a>
+        </li>
+        <li class="nav-item">
+          <a href="/base" class="nav-link d-flex align-items-center">
+            <i class="bi bi-database"></i> Administração
+          </a>
+        </li>
+        <li class="nav-item mt-4">
+          <a href="/login" class="nav-link d-flex align-items-center">
+            <i class="bi bi-box-arrow-right"></i> Sair
+          </a>
+        </li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- Main Content -->
+  <div class="main-content">
+    <div class="container-fluid">
+      <div class="card">
+        <div class="card-header">
+          <h4 class="mb-0"><i class="bi bi-folder me-2"></i>Controle de Prazos - Girardi & Moraes Advocacia</h4>
+        </div>
+        <div class="card-body">
+          <!-- Conteúdo do Controle de Prazos -->
+          <div class="panel animate-pop">
+            <div class="grid cols-4">
+              <div>
+                <label for="cliente">Nome do cliente</label>
+                <input id="cliente" type="text" placeholder="Ex.: Maria da Silva" />
+              </div>
+              <div>
+                <label for="processo">Nº do processo</label>
+                <input id="processo" type="text" placeholder="Ex.: 1001234-56.2025.8.26.0001" />
+              </div>
+              <div>
+                <label for="tipo">Tipo de prazo</label>
+                <select id="tipo">
+                  <option value="ap">Apelação (15 dias)</option>
+                  <option value="ed">Embargos de Declaração (5 dias)</option>
+                  <option value="rc">Réplica à Contestação (15 dias úteis)</option>
+                </select>
+              </div>
+              <div>
+                <label for="data">Data da publicação</label>
+                <input id="data" type="date" />
+                <div class="meta" style="margin-top:6px">
+                  <label style="display:flex;align-items:center;gap:8px">
+                    <input id="corridos" type="checkbox" style="width:auto" />
+                    Contar em dias corridos (padrão: dias úteis)
+                  </label>
+                </div>
+              </div>
+            </div>
+            <div class="grid cols-5" style="margin-top:12px">
+              <div class="col" style="grid-column:1/3">
+                <label for="obs">Observações</label>
+                <textarea id="obs" placeholder="Notas internas, peculiaridades do caso, feriados locais etc."></textarea>
+              </div>
+              <div>
+                <label class="meta" for="responsavel">Responsável</label>
+                <select id="responsavel">
+                  <option>Marcelo</option>
+                  <option>Beatriz</option>
+                  <option>Clara</option>
+                  <option>Pedro</option>
+                  <option>Stephanie</option>
+                </select>
+              </div>
+              <div>
+                <label class="meta" style="display:flex;align-items:center;gap:8px" for="prazoLivre">
+                  <input id="prazoLivre" type="checkbox" style="width:auto" />
+                  Prazo editável
+                </label>
+                <input id="nomePrazo" type="text" placeholder="Nome do prazo (ex.: Contrarrazões)" style="margin-top:8px;display:none" />
+                <input id="diasCustom" type="number" min="1" placeholder="Dias do prazo" style="margin-top:8px;display:none" />
+              </div>
+              <div>
+                <label>&nbsp;</label>
+                <button id="btnAdicionar" type="button" class="primary">Adicionar à lista</button>
+              </div>
+            </div>
+
+            <!-- Status do caso -->
+            <div class="grid" style="grid-template-columns:1fr 1fr; margin-top:10px">
+              <div>
+                <label class="meta" for="statusCaso">Status do caso</label>
+                <select id="statusCaso">
+                  <option value="">(sem status)</option>
+                  <option>Pendente</option>
+                  <option>OK</option>
+                  <option>Cliente sumiu</option>
+                  <option>Repetido</option>
+                  <option>Não vamos fazer nada</option>
+                  <option>Concluído</option>
+                  <option>Aguardando documentos</option>
+                </select>
+              </div>
+              <div>
+                <label class="meta" for="dilacao">Dilação solicitada?</label>
+                <select id="dilacao"><option>Não</option><option>Sim</option></select>
+              </div>
+            </div>
+
+            <div id="resultado" class="results" aria-live="polite" style="display:none"></div>
+            <div class="footer-note">Regra: <strong>publicação + prazo legal − 2 dias</strong>, mantendo úteis/corridos. Se cair em sábado/domingo, prorroga para o próximo útil. <strong>Feriados não são considerados automaticamente.</strong></div>
+          </div>
+
+          <div class="panel animate-pop" style="margin-top:16px">
+            <!-- Contadores -->
+            <div class="counters" id="counters">
+              <div class="counter-item">
+                <span>Total:</span>
+                <span class="count" id="count-total">0</span>
+              </div>
+              <div class="counter-item">
+                <span>Pendentes:</span>
+                <span class="count" id="count-pendentes">0</span>
+              </div>
+              <div class="counter-item">
+                <span>Urgentes:</span>
+                <span class="count" id="count-urgentes">0</span>
+              </div>
+              <div class="counter-item">
+                <span>Vencidos:</span>
+                <span class="count" id="count-vencidos">0</span>
+              </div>
+              <div class="counter-item">
+                <span>Aguardando docs:</span>
+                <span class="count" id="count-aguardando-docs">0</span>
+              </div>
+            </div>
+
+            <!-- Subpainéis -->
+            <div class="tools">
+              <div class="subpanel">
+                <div class="subhead">
+                  <span>Filtros</span>
+                  <span class="mini-actions">
+                    <button id="btnSortAsc" class="pill" title="Ordenar por prazo (mais próximo primeiro)">Prazo ↑</button>
+                    <button id="btnSortDesc" class="pill" title="Ordenar por prazo (mais distante primeiro)">Prazo ↓</button>
+                  </span>
+                </div>
+                <div class="filters">
+                  <div class="group"><label class="meta">Tipo</label>
+                    <select id="uiTipo" class="pill">
+                      <option value="all">Todos</option>
+                      <option value="ap">Apelação</option>
+                      <option value="ed">Embargos</option>
+                      <option value="rc">Réplica</option>
+                      <option value="custom">Personalizado</option>
+                    </select>
+                  </div>
+                  <div class="group"><label class="meta">Prazo</label>
+                    <select id="uiPrazo" class="pill">
+                      <option value="all">Todos</option><option value="normal">Normal</option>
+                      <option value="urgente">Urgente</option><option value="fatal">Prazo fatal</option><option value="vencido">Prazo vencido</option>
+                    </select>
+                  </div>
+                  <div class="group"><label class="meta">Status</label>
+                    <select id="uiStatus" class="pill">
+                      <option value="all">Todos</option><option>Pendente</option><option>OK</option><option>Cliente sumiu</option><option>Repetido</option><option>Não vamos fazer nada</option><option>Concluído</option><option>Aguardando documentos</option>
+                    </select>
+                  </div>
+                  <div class="group"><label class="meta">Responsável</label>
+                    <select id="uiResp" class="pill"><option value="all">Todos</option><option>Marcelo</option><option>Beatriz</option><option>Clara</option><option>Pedro</option><option>Stephanie</option></select>
+                  </div>
+                  <div class="group"><label class="meta">Dilação?</label>
+                    <select id="uiDilacao" class="pill"><option value="all">Todos</option><option value="Sim">Sim</option><option value="Não">Não</option></select>
+                  </div>
+                  <div class="group"><label class="meta">Pesquisar</label>
+                    <input id="uiSearch" class="pill" placeholder="Cliente ou nº do processo" />
+                  </div>
+                  <div class="bar">
+                    <button id="btnAplicarFiltros" class="pill apply">Aplicar</button>
+                    <button id="btnLimparFiltros" class="pill clear" title="Limpa os filtros e a pesquisa">Limpar</button>
+                  </div>
+                </div>
+              </div>
+
+              <div class="subpanel">
+                <div class="subhead">Exportações & Backup</div>
+                <div class="exports">
+                  <div class="item">
+                    <button id="btnExportar" class="pill">CSV</button>
+                    <button id="btnExportarWord" class="pill">Word</button>
+                    <button id="btnExportarExcel" class="pill">Excel</button>
+                  </div>
+                  <div class="item">
+                    <button id="btnBackup" class="pill">Backup</button>
+                    <button id="btnVersoes" class="pill">Versões</button>
+                    <label class="pill" style="display:flex;align-items:center;gap:8px;cursor:pointer">
+                      <input id="restoreInput" type="file" accept="application/json" style="display:none" />
+                      <span>Restaurar</span>
+                    </label>
+                    <button id="btnLimpar" class="pill" title="Remove todos os itens salvos">Limpar lista</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <table id="tabela">
+              <thead>
+                <tr>
+                  <th style="width:26%"><span class="th-sort" data-sort="cliente">Caso <span class="dir" id="dir-cliente"></span></span></th>
+                  <th style="width:32%"><span class="th-sort" data-sort="publicacao">Parâmetros <span class="dir" id="dir-publicacao"></span></span></th>
+                  <th style="width:18%"><span class="th-sort" data-sort="prazoOperacional">Prazo Operacional <span class="dir" id="dir-prazo"></span></span></th>
+                  <th style="width:14%"><span class="th-sort" data-sort="statusCaso">Status <span class="dir" id="dir-status"></span></span></th>
+                  <th style="width:8%"><span class="th-sort" data-sort="responsavel">Resp. <span class="dir" id="dir-resp"></span></span></th>
+                  <th style="width:6%">Ações</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+            <div class="footer-note" id="summary"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal -->
+  <dialog id="dlg">
+    <div class="modal-head">
+      <strong>Detalhes do prazo</strong>
+      <button id="dlgClose" class="pill btn-outline" style="width:auto">Fechar</button>
+    </div>
+    <div class="modal-body">
+      <div class="grid" style="grid-template-columns:1fr 1fr; gap:10px">
+        <div>
+          <label class="meta" for="mdCliente">Cliente</label>
+          <input id="mdCliente" />
+        </div>
+        <div>
+          <label class="meta" for="mdProcesso">Processo</label>
+          <input id="mdProcesso" />
+        </div>
+        <div>
+          <label class="meta" for="mdTipo">Tipo</label>
+          <select id="mdTipo">
+            <option value="ap">Apelação (15 dias)</option>
+            <option value="ed">Embargos de Declaração (5 dias)</option>
+            <option value="rc">Réplica à Contestação (15 dias úteis)</option>
+            <option value="custom">Personalizado</option>
+          </select>
+        </div>
+        <div>
+          <label class="meta" for="mdPubData">Data da publicação</label>
+          <input id="mdPubData" type="date" />
+          <label class="meta" style="display:flex;align-items:center;gap:8px;margin-top:6px">
+            <input id="mdCorridos" type="checkbox" style="width:auto"/>
+            Contar em dias corridos (padrão úteis)
+          </label>
+        </div>
+        <div id="wrapMdCustom" style="display:none; grid-column:1/3">
+          <div class="grid" style="grid-template-columns:1fr 180px; gap:10px">
+            <div>
+              <label class="meta" for="mdNomePrazo">Nome do prazo (personalizado)</label>
+              <input id="mdNomePrazo" placeholder="Ex.: Contrarrazões" />
+            </div>
+            <div>
+              <label class="meta" for="mdDiasCustom">Dias de prazo</label>
+              <input id="mdDiasCustom" type="number" min="1" placeholder="Ex.: 7"/>
+            </div>
+          </div>
+        </div>
+        <div>
+          <div class="meta">Prazo legal</div>
+          <div id="mdLegal" class="cell"></div>
+        </div>
+        <div>
+          <div class="meta">Prazo operacional (-2)</div>
+          <div id="mdOper" class="cell"></div>
+        </div>
+        <div>
+          <label class="meta" for="mdResp">Responsável</label>
+          <select id="mdResp">
+            <option>Marcelo</option>
+            <option>Beatriz</option>
+            <option>Clara</option>
+            <option>Pedro</option>
+            <option>Stephanie</option>
+          </select>
+        </div>
+        <div style="grid-column:1/3">
+          <label class="meta" for="mdObs">Observações</label>
+          <textarea id="mdObs"></textarea>
+        </div>
+        <div>
+          <label class="meta" for="mdDilacao">Dilação solicitada?</label>
+          <select id="mdDilacao"><option>Não</option><option>Sim</option></select>
+        </div>
+        <div style="grid-column:1/3">
+          <label class="meta" for="mdStatus">Status do caso</label>
+          <select id="mdStatus">
+            <option value="">(sem status)</option>
+            <option>Pendente</option>
+            <option>OK</option>
+            <option>Cliente sumiu</option>
+            <option>Repetido</option>
+            <option>Não vamos fazer nada</option>
+            <option>Concluído</option>
+            <option>Aguardando documentos</option>
+          </select>
+          <div id="mdBadge" style="margin-top:6px"></div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <div class="left" style="display:flex;gap:8px;flex-wrap:wrap">
+        <button id="btnRecalcular" class="pill btn-outline" type="button">Recalcular prazos</button>
+      </div>
+      <div class="right" style="display:flex;gap:8px">
+        <button id="btnConcluir" class="primary" type="button">Concluir</button>
+        <button id="btnExcluir" class="pill btn-outline" type="button">Excluir</button>
+      </div>
+    </div>
+  </dialog>
+
+  <!-- Toasts -->
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  <div id="centerOk" class="center-ok" aria-live="polite">
+    <div class="icon">✓</div>
+    <div><strong>Prazo adicionado com sucesso</strong></div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    // O JavaScript completo do controle de prazos permanece aqui
+    // (mantive o mesmo código JavaScript da versão original)
+    (function(){
+      // ===== Helpers e estado =====
+      const KEY = 'gm_prazos_v18_html'; // atualiza versão
+      const $ = (sel)=>document.querySelector(sel);
+      // Ordenação atual
+      let sort = { key:'prazoOperacional', dir: 'asc' };
+      // Estado dos filtros que realmente estão aplicados
+      let currentFilters = { tipo:'all', prazo:'all', status:'all', resp:'all', dil:'all', q:'' };
+
+      function uuid(){
+        if (window.crypto && typeof window.crypto.randomUUID === 'function'){
+          return window.crypto.randomUUID();
+        }
+        const rnd = (len)=>Array.from({length:len},()=>Math.floor(Math.random()*16).toString(16)).join('');
+        return `${Date.now().toString(16)}-${rnd(4)}-${rnd(4)}-${rnd(4)}-${rnd(12)}`;
+      }
+
+      const storage = {
+        load(){
+          try{
+            return JSON.parse(localStorage.getItem(KEY)||'[]');
+          }catch{
+            return []
+          }
+        },
+        save(list){
+          localStorage.setItem(KEY, JSON.stringify(list));
+        }
+      };
+
+      const toast = (msg)=>{
+        const t=$('#toast');
+        t.textContent=msg;
+        t.classList.add('show');
+        setTimeout(()=>t.classList.remove('show'),1900)
+      };
+
+      const centerOk = (show=true)=>{
+        const c=$('#centerOk');
+        if(show){
+          c.classList.add('show');
+          setTimeout(()=>c.classList.remove('show'),1200)
+        }
+      };
+
+      const escapeHtml = (s)=> String(s||'').replace(/[&<>"']/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[c]));
+
+      // ===== Datas =====
+      const isBusinessDay = (d)=>{
+        const day = d.getDay();
+        return day!==0 && day!==6;
+      };
+
+      const startNextBusinessDay = (d)=>{
+        const x = new Date(d);
+        x.setDate(x.getDate()+1);
+        while(!isBusinessDay(x)) x.setDate(x.getDate()+1);
+        return x
+      };
+
+      const startNextDay = (d)=>{
+        const x = new Date(d);
+        x.setDate(x.getDate()+1);
+        return x
+      };
+
+      const compareToToday = (date)=>{
+        const a=new Date(date);
+        a.setHours(0,0,0,0);
+        const b=new Date();
+        b.setHours(0,0,0,0);
+        return a<b?-1:(a>b?1:0)
+      };
+
+      function addBusinessDaysExclusiveStart(startDate, n){
+        let cur=startNextBusinessDay(startDate);
+        let counted=0;
+        while(counted<n){
+          if(isBusinessDay(cur)) counted++;
+          if(counted===n) break;
+          cur.setDate(cur.getDate()+1);}
+        while(!isBusinessDay(cur)) cur.setDate(cur.getDate()+1);
+        return cur;
+      }
+
+      function addCalendarDaysExclusiveStart(startDate, n){
+        const cur=startNextDay(startDate);
+        cur.setDate(cur.getDate()+(n-1));
+        return cur;
+      }
+
+      function subtractBusinessDays(date, n){
+        const d=new Date(date);
+        let left=n;
+        while(left>0){
+          d.setDate(d.getDate()-1);
+          if(isBusinessDay(d)) left--;
+        }
+        return d;
+      }
+
+      const subtractCalendarDays=(date,n)=>{
+        const d=new Date(date);
+        d.setDate(d.getDate()-n);
+        return d
+      };
+
+      const formatBR = (d)=>{
+        const pad=(x)=>String(x).padStart(2,'0');
+        return `${pad(d.getDate())}/${pad(d.getMonth()+1)}/${d.getFullYear()}`
+      };
+
+      function diffDaysInclusive(toModeBusiness, fromDate, toDate){
+        const today=new Date();
+        today.setHours(0,0,0,0);
+        const start=new Date(today);
+        start.setDate(start.getDate()+1);
+        const end=new Date(toDate);
+        end.setHours(0,0,0,0);
+        if(end<today) return -1;
+        if(!toModeBusiness){
+          const ms=end-start;
+          return Math.floor(ms/86400000)+1
+        }
+        let count=0;
+        let cur=new Date(start);
+        while(cur<=end){
+          if(isBusinessDay(cur)) count++;
+          cur.setDate(cur.getDate()+1)}
+        return count;
+      }
+
+      // Prazos por tipo
+      const PRAZO_DIAS = { ap:15, ed:5, rc:15 };
+      const tipoDescricao = (code, diasCustom, nomeCustom)=> {
+        if(code==='ap') return 'Apelação (15 dias)';
+        if(code==='ed') return 'Embargos de Declaração (5 dias)';
+        if(code==='rc') return 'Réplica à Contestação (15 dias úteis)';
+        return `Personalizado${nomeCustom? ` – ${nomeCustom}`:''} (${diasCustom||'?'} dias)`;
+      };
+
+      function calcularItem({tipo, publicacao, corridos, diasCustom}){
+        if(!publicacao) return null;
+        const base=new Date(publicacao+'T00:00:00');
+        const dias = tipo==='custom' ? Number(diasCustom||0) : PRAZO_DIAS[tipo];
+        if(!dias || dias<1) return null;
+        let prazoLegal = corridos? addCalendarDaysExclusiveStart(base,dias) : addBusinessDaysExclusiveStart(base,dias);
+        let prazoOper = corridos? subtractCalendarDays(prazoLegal,2) : subtractBusinessDays(prazoLegal,2);
+        if(!corridos){
+          while(!isBusinessDay(prazoOper)) prazoOper.setDate(prazoOper.getDate()+1)
+        }
+        return {
+          prazoLegal: prazoLegal.toISOString().slice(0,10),
+          prazoOperacional: prazoOper.toISOString().slice(0,10)
+        };
+      }
+
+      // ===== UI principal =====
+      function calcular(){
+        const cliente = $('#cliente').value.trim();
+        const processo = $('#processo').value.trim();
+        const tipo = $('#tipo').value;
+        const publicacao = $('#data').value;
+        const corridos = $('#corridos').checked;
+        const observacoes = $('#obs').value.trim();
+        const responsavel = $('#responsavel').value;
+        const statusCaso = $('#statusCaso').value || '';
+        const dilacao = $('#dilacao').value || 'Não';
+        const tipoFinal = $('#prazoLivre').checked? 'custom' : tipo;
+        const nomePrazo = $('#prazoLivre').checked? String($('#nomePrazo').value||'').trim() : '';
+        const diasCustom = $('#prazoLivre').checked? Number($('#diasCustom').value) : null;
+
+        if(!publicacao){
+          toast('Informe a data da publicação.');
+          return null;
+        }
+
+        if(tipoFinal==='custom'){
+          if(!diasCustom || diasCustom<1){
+            toast('Informe os dias do prazo personalizado.');
+            return null;
+          }
+          if(!nomePrazo){
+            toast('Informe o nome do prazo personalizado.');
+            return null;
+          }
+        }
+
+        const prazos = calcularItem({tipo:tipoFinal, publicacao, corridos, diasCustom});
+        if(!prazos){
+          toast('Não foi possível calcular o prazo.');
+          return null;
+        }
+
+        return {
+          id: uuid(),
+          cliente: cliente||'(sem nome)',
+          processo: processo||'—',
+          tipo: tipoFinal,
+          nomePrazo: nomePrazo || '',
+          diasCustom,
+          tipoDesc: tipoDescricao(tipoFinal,diasCustom,nomePrazo),
+          publicacao,
+          prazoLegal: prazos.prazoLegal,
+          prazoOperacional: prazos.prazoOperacional,
+          corridos,
+          statusCaso,
+          responsavel,
+          observacoes,
+          dilacao
+        };
+      }
+
+      function renderResultado(res){
+        const el = $('#resultado');
+        el.style.display='flex';
+        const op = new Date(res.prazoOperacional+'T00:00:00');
+        const cmp = compareToToday(op);
+        const rest = cmp<0? -1 : diffDaysInclusive(!res.corridos, new Date(), op);
+        let cls='normal', label='normal';
+        if(cmp<0){cls='vencido';label='prazo vencido'}
+        else if(cmp===0){cls='fatal';label='prazo fatal'}
+        else if(rest<=3){cls='urgente';label='urgente'}
+        el.innerHTML = `
+          <div class="badge animate-fadeUp"><strong>Cliente:</strong> ${escapeHtml(res.cliente)}</div>
+          <div class="badge animate-fadeUp"><strong>Processo:</strong> ${escapeHtml(res.processo)}</div>
+          <div class="badge animate-fadeUp"><strong>Tipo:</strong> ${escapeHtml(res.tipoDesc)}${res.corridos ? ' (corridos)' : ' (úteis)'}</div>
+          <div class="badge animate-fadeUp"><strong>Prazo operacional (-2):</strong> ${formatBR(op)}</div>
+          <div class="badge animate-fadeUp"><strong>Dias restantes:</strong> ${rest < 0 ? '—' : rest}</div>
+          <div class="badge animate-fadeUp"><strong>Responsável:</strong> ${escapeHtml(res.responsavel||'—')}</div>
+          <div class="badge status ${cls} animate-fadeUp">${label}</div>
+        `;
+      }
+
+      function prazoStatus(item){
+        const op=new Date(item.prazoOperacional+'T00:00:00');
+        const cmp=compareToToday(op);
+        if(cmp<0) return 'vencido';
+        if(cmp===0) return 'fatal';
+        const rest=diffDaysInclusive(!item.corridos,new Date(),op);
+        return rest<=3?'urgente':'normal';
+      }
+
+      function updateCounters(list){
+        const total = list.length;
+        const pendentes = list.filter(x => (x.statusCaso || '') === 'Pendente').length;
+        const urgentes = list.filter(x => prazoStatus(x) === 'urgente').length;
+        const vencidos = list.filter(x => prazoStatus(x) === 'vencido').length;
+        const aguardandoDocs = list.filter(x => (x.statusCaso || '') === 'Aguardando documentos').length;
+
+        $('#count-total').textContent = total;
+        $('#count-pendentes').textContent = pendentes;
+        $('#count-urgentes').textContent = urgentes;
+        $('#count-vencidos').textContent = vencidos;
+        $('#count-aguardando-docs').textContent = aguardandoDocs;
+      }
+
+      function updateSummary(list){
+        const total = list.length;
+        const porStatus = list.reduce((acc,x)=>{
+          const k=(x.statusCaso||'(sem status)');
+          acc[k]=(acc[k]||0)+1;
+          return acc;
+        },{});
+        const porResp = list.reduce((acc,x)=>{
+          const k=(x.responsavel||'(sem)');
+          acc[k]=(acc[k]||0)+1;
+          return acc;
+        },{});
+
+        const s = Object.entries(porStatus).map(([k,v])=>`${escapeHtml(k)}: <strong>${v}</strong>`).join(' · ');
+        const r = Object.entries(porResp).map(([k,v])=>`${escapeHtml(k)}: <strong>${v}</strong>`).join(' · ');
+        $('#summary').innerHTML = `Itens: <strong>${total}</strong> — Status: ${s} — Resp.: ${r}`;
+      }
+
+      function renderTable(){
+        const tbody = $('#tabela tbody');
+        let list = storage.load();
+        // usar filtros aplicados (estado), não os inputs
+        const {tipo:fTipo,prazo:fPrazo,status:fStatus,resp:fResp,dil:fDil,q} = currentFilters;
+
+        list = list.map(item=>{
+          const _op=new Date(item.prazoOperacional+'T00:00:00');
+          const _rest = (()=>{
+            const cmp=compareToToday(_op);
+            return cmp<0? -1 : diffDaysInclusive(!item.corridos, new Date(), _op)
+          })();
+          const _ps=prazoStatus(item);
+          const _cls=_ps==='vencido'?'vencido':_ps==='fatal'?'fatal':_ps==='urgente'?'urgente':'normal';
+          return {...item,_op,_rest,_ps,_cls};
+        });
+
+        list = list.filter(x=>
+          (fTipo==='all'||x.tipo===fTipo) &&
+          (fPrazo==='all'||x._ps===fPrazo) &&
+          (fStatus==='all'||(x.statusCaso||'')===fStatus) &&
+          (fResp==='all'||(x.responsavel||'')===fResp) &&
+          (fDil==='all'||(x.dilacao||'Não')===fDil) &&
+          (!q || x.cliente.toLowerCase().includes(q) || (x.processo||'').toLowerCase().includes(q))
+        );
+
+        // Ordenação
+        list.sort((a,b)=>{
+          const dir = sort.dir==='asc'? 1 : -1;
+          const ka = sort.key==='prazoOperacional'? a.prazoOperacional : (sort.key==='cliente'? a.cliente.toLowerCase() : (sort.key==='responsavel'? (a.responsavel||'').toLowerCase() : (sort.key==='statusCaso'? (a.statusCaso||'').toLowerCase() : a.publicacao)));
+          const kb = sort.key==='prazoOperacional'? b.prazoOperacional : (sort.key==='cliente'? b.cliente.toLowerCase() : (sort.key==='responsavel'? (b.responsavel||'').toLowerCase() : (sort.key==='statusCaso'? (b.statusCaso||'').toLowerCase() : b.publicacao)));
+          return ka<kb? -1*dir : ka>kb? 1*dir : 0;
+        });
+
+        tbody.innerHTML = list.map(item=>{
+          const prazoText = item._ps==='fatal'?'prazo fatal':(item._ps==='vencido'?'prazo vencido':(item._ps==='urgente'?'urgente':'normal'));
+          const tipoLinha = item.tipoDesc + (item.tipo==='custom' && item.diasCustom? ` (${item.diasCustom}d)`:'');
+          const badge = (item.statusCaso? `<div class="caseStatus ${escapeHtml(item.statusCaso)}" title="${escapeHtml(item.statusCaso)}">${escapeHtml(item.statusCaso)}</div>` : '<span class="meta">(sem status)</span>');
+          const f3 = `<span class="flag ${item.dilacao==='Sim'?'on':'off'}">Dilação: ${item.dilacao||'Não'}</span>`;
+
+          return `<tr data-id="${item.id}" class="row-item animate-fadeUp" style="cursor:pointer">
+            <td class="cell">
+              <div><strong>${escapeHtml(item.cliente)}</strong></div>
+              <div class="meta">Proc.: ${escapeHtml(item.processo)}</div>
+              ${item.observacoes? `<div class="meta" style="margin-top:6px;max-width:360px">${escapeHtml(item.observacoes)}</div>`: ''}
+            </td>
+            <td class="cell">
+              <div class="meta">${escapeHtml(tipoLinha)}${item.corridos?' (corridos)':' (úteis)'} | Pub.: ${formatBR(new Date(item.publicacao+'T00:00:00'))}</div>
+              <div style="margin-top:6px">${f3}</div>
+            </td>
+            <td class="cell">
+              <div class="meta"><strong>${formatBR(item._op)}</strong> | <span class="status ${item._cls}">${prazoText}</span> | Restantes: ${item._rest<0? '—' : item._rest}</div>
+            </td>
+            <td class="cell">${badge}</td>
+            <td class="cell">${escapeHtml(item.responsavel||'—')}</td>
+            <td class="actions">
+              <button class="pill btn-edit" data-id="${item.id}">Editar</button>
+              <button class="pill btn-del" data-id="${item.id}">Excluir</button>
+            </td>
+          </tr>`
+        }).join('');
+
+        updateCounters(list);
+        updateSummary(list);
+
+        // Bind de eventos por linha
+        tbody.querySelectorAll('.row-item').forEach(tr=>
+          tr.addEventListener('click', ()=> openModal(tr.getAttribute('data-id')))
+        );
+        tbody.querySelectorAll('.btn-edit').forEach(btn=>
+          btn.addEventListener('click', (e)=>{
+            e.stopPropagation();
+            openModal(btn.getAttribute('data-id'));
+          }));
+        tbody.querySelectorAll('.btn-del').forEach(btn=>
+          btn.addEventListener('click', (e)=>{
+            e.stopPropagation();
+            removeFromList(btn.getAttribute('data-id'));
+          }));
+      }
+
+      function addItem(){
+        const it=calcular();
+        if(!it) return;
+        const list=storage.load();
+        list.push(it);
+        storage.save(list);
+        renderResultado(it);
+        renderTable();
+        // limpar campos
+        $('#cliente').value='';
+        $('#processo').value='';
+        $('#obs').value='';
+        $('#diasCustom').value='';
+        $('#nomePrazo').value='';
+        $('#prazoLivre').checked=false;
+        $('#diasCustom').style.display='none';
+        $('#nomePrazo').style.display='none';
+        $('#statusCaso').value='';
+        $('#dilacao').value='Não';
+        toast('Prazo adicionado');
+        centerOk(true);
+      }
+
+      function removeFromList(id){
+        const list=storage.load().filter(x=>x.id!==id);
+        storage.save(list);
+        renderTable();
+        toast('Removido');
+      }
+
+      // ===== Modal =====
+      let currentId=null;
+      function statusBadgeHTML(status){
+        if(!status) return '';
+        return `<span class="caseStatus ${escapeHtml(status)}" title="${escapeHtml(status)}">${escapeHtml(status)}</span>`
+      }
+
+      function syncMdCustomVisibility(){
+        const sel=$('#mdTipo').value;
+        $('#wrapMdCustom').style.display = (sel==='custom')? 'block':'none';
+      }
+
+      function openModal(id){
+        const it=storage.load().find(x=>x.id===id);
+        if(!it) return;
+        currentId=id;
+        $('#mdCliente').value=it.cliente;
+        $('#mdProcesso').value=it.processo;
+        $('#mdTipo').value=it.tipo;
+        $('#mdPubData').value=it.publicacao;
+        $('#mdCorridos').checked=!!it.corridos;
+        $('#mdObs').value=it.observacoes||'';
+        $('#mdStatus').value=it.statusCaso||'';
+        $('#mdBadge').innerHTML=statusBadgeHTML(it.statusCaso||'');
+        $('#mdDiasCustom').value=it.diasCustom||'';
+        $('#mdNomePrazo').value=it.nomePrazo||'';
+        $('#mdResp').value=it.responsavel||'Marcelo';
+        $('#mdDilacao').value=it.dilacao||'Não';
+        syncMdCustomVisibility();
+        $('#mdLegal').textContent=formatBR(new Date(it.prazoLegal+'T00:00:00'));
+        $('#mdOper').textContent=formatBR(new Date(it.prazoOperacional+'T00:00:00'));
+        $('#dlg').showModal();
+      }
+
+      function closeModal(){
+        $('#dlg').close();
+        currentId=null;
+      }
+
+      function recalcFromModal(){
+        const tipo=$('#mdTipo').value;
+        const publicacao=$('#mdPubData').value;
+        const corridos=$('#mdCorridos').checked;
+        const diasCustom=(tipo==='custom')? Number($('#mdDiasCustom').value):null;
+        if(!publicacao){
+          toast('Informe a data da publicação.');
+          return;
+        }
+        if(tipo==='custom' && (!diasCustom || diasCustom<1)){
+          toast('Informe os dias do prazo personalizado.');
+          return;
+        }
+        const prazos=calcularItem({tipo,publicacao,corridos,diasCustom});
+        $('#mdLegal').textContent=formatBR(new Date(prazos.prazoLegal+'T00:00:00'));
+        $('#mdOper').textContent=formatBR(new Date(prazos.prazoOperacional+'T00:00:00'));
+        return prazos;
+      }
+
+      // ===== Exportações =====
+      function exportCSV(){
+        const list=storage.load();
+        if(!list.length){ toast('Nada para exportar.'); return }
+        const header=['Cliente','Processo','Tipo','Nome do Prazo','Publicação','Prazo Legal','Prazo Operacional (-2)','Modo','Dilação solicitada?','Status do caso','Responsável','Observações'];
+        const rows=list.map(x=>[
+          x.cliente,x.processo,x.tipo==='custom'?`Personalizado (${x.diasCustom||'?'} dias)`:x.tipoDesc,x.nomePrazo||'',
+          formatBR(new Date(x.publicacao+'T00:00:00')),formatBR(new Date(x.prazoLegal+'T00:00:00')),formatBR(new Date(x.prazoOperacional+'T00:00:00')),
+          x.corridos?'Corridos':'Úteis',x.dilacao||'Não',x.statusCaso||'',x.responsavel||'',(x.observacoes||'').replace(/\n/g,' ')
+        ]);
+        const csv=[header,...rows].map(r=>r.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(';')).join('\n');
+        const blob=new Blob(["\ufeff"+csv],{type:'text/csv;charset=utf-8;'});
+        const url=URL.createObjectURL(blob);
+        const a=document.createElement('a');
+        a.href=url;
+        a.download='prazos_girardi_moraes.csv';
+        a.click();
+        URL.revokeObjectURL(url);
+        toast('CSV exportado');
+      }
+
+      function exportWord(){
+        const list=storage.load();
+        if(!list.length){ toast('Nada para exportar.'); return }
+        const rows=list.map(x=> `
+          <tr>
+            <td>${escapeHtml(x.cliente)}</td>
+            <td>${escapeHtml(x.processo)}</td>
+            <td>${escapeHtml(x.tipo==='custom'?`Personalizado (${x.diasCustom||'?'} dias)`:x.tipoDesc)}</td>
+            <td>${escapeHtml(x.nomePrazo||'')}</td>
+            <td>${formatBR(new Date(x.publicacao+'T00:00:00'))}</td>
+            <td>${formatBR(new Date(x.prazoLegal+'T00:00:00'))}</td>
+            <td>${formatBR(new Date(x.prazoOperacional+'T00:00:00'))}</td>
+            <td>${x.corridos?'Corridos':'Úteis'}</td>
+            <td>${escapeHtml(x.dilacao||'Não')}</td>
+            <td>${escapeHtml(x.statusCaso||'')}</td>
+            <td>${escapeHtml(x.responsavel||'')}</td>
+            <td>${escapeHtml(x.observacoes||'')}</td>
+          </tr>`).join('');
+        const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><style>
+          table{border-collapse:collapse;width:100%;font-family:Arial,sans-serif;font-size:12px}
+          th,td{border:1px solid #999;padding:6px;text-align:left}
+          th{background:#f3f4f6}
+          </style></head><body>
+          <h2>Relatório de Prazos – Girardi & Moraes</h2>
+          <table><thead><tr>
+          <th>Cliente</th><th>Processo</th><th>Tipo</th><th>Nome do Prazo</th><th>Publicação</th>
+          <th>Prazo Legal</th><th>Prazo Operacional (-2)</th><th>Modo</th>
+          <th>Dilação?</th><th>Status</th><th>Responsável</th><th>Observações</th>
+          </tr></thead><tbody>${rows}</tbody></table>
+          </body></html>`;
+        const blob = new Blob([html], {type:'application/msword'});
+        const url = URL.createObjectURL(blob);
+        const a=document.createElement('a');
+        a.href=url;
+        a.download='prazos_girardi_moraes.doc';
+        a.click();
+        URL.revokeObjectURL(url);
+        toast('Word exportado');
+      }
+
+      function exportExcel(){
+        const list=storage.load();
+        if(!list.length){ toast('Nada para exportar.'); return }
+        function esc(x){ return String(x||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;') }
+        const rows = list.map(x=>[
+          x.cliente, x.processo, x.tipo==='custom'?`Personalizado (${x.diasCustom||'?'} dias)`:x.tipoDesc,
+          x.nomePrazo||'', formatBR(new Date(x.publicacao+'T00:00:00')),
+          formatBR(new Date(x.prazoLegal+'T00:00:00')), formatBR(new Date(x.prazoOperacional+'T00:00:00')),
+          x.corridos?'Corridos':'Úteis', x.dilacao||'Não', x.statusCaso||'', x.responsavel||'',
+          (x.observacoes||'').replace(/\n/g,' ')
+        ]).map(r=>`<Row>${r.map(v=>`<Cell><Data ss:Type="String">${esc(v)}</Data></Cell>`).join('')}</Row>`).join('');
+        const xml = `<?xml version="1.0"?>
+          <Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet" xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet">
+          <Worksheet ss:Name="Prazos">
+          <Table>
+          <Row>
+          <Cell><Data ss:Type="String">Cliente</Data></Cell>
+          <Cell><Data ss:Type="String">Processo</Data></Cell>
+          <Cell><Data ss:Type="String">Tipo</Data></Cell>
+          <Cell><Data ss:Type="String">Nome do Prazo</Data></Cell>
+          <Cell><Data ss:Type="String">Publicação</Data></Cell>
+          <Cell><Data ss:Type="String">Prazo Legal</Data></Cell>
+          <Cell><Data ss:Type="String">Prazo Operacional (-2)</Data></Cell>
+          <Cell><Data ss:Type="String">Modo</Data></Cell>
+          <Cell><Data ss:Type="String">Dilação?</Data></Cell>
+          <Cell><Data ss:Type="String">Status</Data></Cell>
+          <Cell><Data ss:Type="String">Responsável</Data></Cell>
+          <Cell><Data ss:Type="String">Observações</Data></Cell>
+          </Row>
+          ${rows}
+          </Table>
+          </Worksheet>
+          </Workbook>`;
+        const blob = new Blob([xml], {type:'application/vnd.ms-excel'});
+        const url = URL.createObjectURL(blob);
+        const a=document.createElement('a');
+        a.href=url;
+        a.download='prazos_girardi_moraes.xls';
+        a.click();
+        URL.revokeObjectURL(url);
+        toast('Excel exportado');
+      }
+
+      // ===== Backup e Versões =====
+      function nowStamp(){
+        const d=new Date();
+        const p=(n)=>String(n).padStart(2,'0');
+        return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}_${p(d.getHours())}-${p(d.getMinutes())}-${p(d.getSeconds())}`;
+      }
+
+      function backupDownloadManual(){
+        const data={version:18,exportedAt:new Date().toISOString(),items:storage.load()};
+        const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+        const url=URL.createObjectURL(blob);
+        const a=document.createElement('a');
+        a.href=url;
+        a.download=`backup_prazos_gm_v18_${nowStamp()}.json`;
+        a.click();
+        URL.revokeObjectURL(url);
+        toast('Backup gerado');
+      }
+
+      function backupBeforeClear(items){
+        if(!items || !items.length){ return; } // nada a salvar
+        const data={version:18,exportedAt:new Date().toISOString(),items};
+        const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+        const url=URL.createObjectURL(blob);
+        const a=document.createElement('a');
+        a.href=url;
+        a.download=`backup_prazos_gm_v18_auto_${nowStamp()}.json`;
+        a.click();
+        URL.revokeObjectURL(url);
+      }
+
+      function backupRestore(file){
+        const reader=new FileReader();
+        reader.onload=(e)=>{
+          try{
+            const json=JSON.parse(e.target.result);
+            const items = Array.isArray(json.items)? json.items : (Array.isArray(json)? json : null);
+            if(!items) throw new Error('Arquivo inválido');
+            storage.save(items);
+            renderTable();
+            toast('Backup restaurado');
+          }catch(err){
+            alert('Falha ao restaurar backup: '+err.message);
+          }
+        };
+        reader.readAsText(file);
+      }
+
+      // Backup automático diário (Word e Excel)
+      function autoDailyBackup(){
+        const today = new Date().toDateString();
+        const lastBackup = localStorage.getItem('lastAutoBackupDate');
+        if (lastBackup === today) return; // Já fez backup hoje
+
+        const list = storage.load();
+        if (list.length === 0) return; // Nada para fazer backup
+
+        // Backup em Word
+        const rows = list.map(x=> `
+          <tr>
+            <td>${escapeHtml(x.cliente)}</td>
+            <td>${escapeHtml(x.processo)}</td>
+            <td>${escapeHtml(x.tipo==='custom'?`Personalizado (${x.diasCustom||'?'} dias)`:x.tipoDesc)}</td>
+            <td>${escapeHtml(x.nomePrazo||'')}</td>
+            <td>${formatBR(new Date(x.publicacao+'T00:00:00'))}</td>
+            <td>${formatBR(new Date(x.prazoLegal+'T00:00:00'))}</td>
+            <td>${formatBR(new Date(x.prazoOperacional+'T00:00:00'))}</td>
+            <td>${x.corridos?'Corridos':'Úteis'}</td>
+            <td>${escapeHtml(x.dilacao||'Não')}</td>
+            <td>${escapeHtml(x.statusCaso||'')}</td>
+            <td>${escapeHtml(x.responsavel||'')}</td>
+            <td>${escapeHtml(x.observacoes||'')}</td>
+          </tr>`).join('');
+        const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><style>
+          table{border-collapse:collapse;width:100%;font-family:Arial,sans-serif;font-size:12px}
+          th,td{border:1px solid #999;padding:6px;text-align:left}
+          th{background:#f3f4f6}
+          </style></head><body>
+          <h2>Relatório de Prazos – Girardi & Moraes (Backup Automático ${new Date().toLocaleDateString('pt-BR')})</h2>
+          <table><thead><tr>
+          <th>Cliente</th><th>Processo</th><th>Tipo</th><th>Nome do Prazo</th><th>Publicação</th>
+          <th>Prazo Legal</th><th>Prazo Operacional (-2)</th><th>Modo</th>
+          <th>Dilação?</th><th>Status</th><th>Responsável</th><th>Observações</th>
+          </tr></thead><tbody>${rows}</tbody></table>
+          </body></html>`;
+        const blobWord = new Blob([html], {type:'application/msword'});
+        const urlWord = URL.createObjectURL(blobWord);
+        const aWord=document.createElement('a');
+        aWord.href=urlWord;
+        aWord.download=`backup_auto_word_${nowStamp()}.doc`;
+        aWord.click();
+        URL.revokeObjectURL(urlWord);
+
+        // Backup em Excel
+        function esc(x){ return String(x||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;') }
+        const rowsExcel = list.map(x=>[
+          x.cliente, x.processo, x.tipo==='custom'?`Personalizado (${x.diasCustom||'?'} dias)`:x.tipoDesc,
+          x.nomePrazo||'', formatBR(new Date(x.publicacao+'T00:00:00')),
+          formatBR(new Date(x.prazoLegal+'T00:00:00')), formatBR(new Date(x.prazoOperacional+'T00:00:00')),
+          x.corridos?'Corridos':'Úteis', x.dilacao||'Não', x.statusCaso||'', x.responsavel||'',
+          (x.observacoes||'').replace(/\n/g,' ')
+        ]).map(r=>`<Row>${r.map(v=>`<Cell><Data ss:Type="String">${esc(v)}</Data></Cell>`).join('')}</Row>`).join('');
+        const xml = `<?xml version="1.0"?>
+          <Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet" xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet">
+          <Worksheet ss:Name="Prazos">
+          <Table>
+          <Row>
+          <Cell><Data ss:Type="String">Cliente</Data></Cell>
+          <Cell><Data ss:Type="String">Processo</Data></Cell>
+          <Cell><Data ss:Type="String">Tipo</Data></Cell>
+          <Cell><Data ss:Type="String">Nome do Prazo</Data></Cell>
+          <Cell><Data ss:Type="String">Publicação</Data></Cell>
+          <Cell><Data ss:Type="String">Prazo Legal</Data></Cell>
+          <Cell><Data ss:Type="String">Prazo Operacional (-2)</Data></Cell>
+          <Cell><Data ss:Type="String">Modo</Data></Cell>
+          <Cell><Data ss:Type="String">Dilação?</Data></Cell>
+          <Cell><Data ss:Type="String">Status</Data></Cell>
+          <Cell><Data ss:Type="String">Responsável</Data></Cell>
+          <Cell><Data ss:Type="String">Observações</Data></Cell>
+          </Row>
+          ${rowsExcel}
+          </Table>
+          </Worksheet>
+          </Workbook>`;
+        const blobExcel = new Blob([xml], {type:'application/vnd.ms-excel'});
+        const urlExcel = URL.createObjectURL(blobExcel);
+        const aExcel=document.createElement('a');
+        aExcel.href=urlExcel;
+        aExcel.download=`backup_auto_excel_${nowStamp()}.xls`;
+        aExcel.click();
+        URL.revokeObjectURL(urlExcel);
+
+        localStorage.setItem('lastAutoBackupDate', today);
+        console.log('Backup automático diário realizado');
+      }
+
+      // Exportar versões (Word e Excel)
+      function exportVersions(){
+        const list = storage.load();
+        if(!list.length){ toast('Nada para exportar.'); return }
+
+        // Word
+        const rows = list.map(x=> `
+          <tr>
+            <td>${escapeHtml(x.cliente)}</td>
+            <td>${escapeHtml(x.processo)}</td>
+            <td>${escapeHtml(x.tipo==='custom'?`Personalizado (${x.diasCustom||'?'} dias)`:x.tipoDesc)}</td>
+            <td>${escapeHtml(x.nomePrazo||'')}</td>
+            <td>${formatBR(new Date(x.publicacao+'T00:00:00'))}</td>
+            <td>${formatBR(new Date(x.prazoLegal+'T00:00:00'))}</td>
+            <td>${formatBR(new Date(x.prazoOperacional+'T00:00:00'))}</td>
+            <td>${x.corridos?'Corridos':'Úteis'}</td>
+            <td>${escapeHtml(x.dilacao||'Não')}</td>
+            <td>${escapeHtml(x.statusCaso||'')}</td>
+            <td>${escapeHtml(x.responsavel||'')}</td>
+            <td>${escapeHtml(x.observacoes||'')}</td>
+          </tr>`).join('');
+        const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><style>
+          table{border-collapse:collapse;width:100%;font-family:Arial,sans-serif;font-size:12px}
+          th,td{border:1px solid #999;padding:6px;text-align:left}
+          th{background:#f3f4f6}
+          </style></head><body>
+          <h2>Relatório de Prazos – Girardi & Moraes (Versão ${new Date().toLocaleDateString('pt-BR')})</h2>
+          <table><thead><tr>
+          <th>Cliente</th><th>Processo</th><th>Tipo</th><th>Nome do Prazo</th><th>Publicação</th>
+          <th>Prazo Legal</th><th>Prazo Operacional (-2)</th><th>Modo</th>
+          <th>Dilação?</th><th>Status</th><th>Responsável</th><th>Observações</th>
+          </tr></thead><tbody>${rows}</tbody></table>
+          </body></html>`;
+        const blobWord = new Blob([html], {type:'application/msword'});
+        const urlWord = URL.createObjectURL(blobWord);
+        const aWord=document.createElement('a');
+        aWord.href=urlWord;
+        aWord.download=`versao_word_${nowStamp()}.doc`;
+        aWord.click();
+        URL.revokeObjectURL(urlWord);
+
+        // Excel
+        function esc(x){ return String(x||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;') }
+        const rowsExcel = list.map(x=>[
+          x.cliente, x.processo, x.tipo==='custom'?`Personalizado (${x.diasCustom||'?'} dias)`:x.tipoDesc,
+          x.nomePrazo||'', formatBR(new Date(x.publicacao+'T00:00:00')),
+          formatBR(new Date(x.prazoLegal+'T00:00:00')), formatBR(new Date(x.prazoOperacional+'T00:00:00')),
+          x.corridos?'Corridos':'Úteis', x.dilacao||'Não', x.statusCaso||'', x.responsavel||'',
+          (x.observacoes||'').replace(/\n/g,' ')
+        ]).map(r=>`<Row>${r.map(v=>`<Cell><Data ss:Type="String">${esc(v)}</Data></Cell>`).join('')}</Row>`).join('');
+        const xml = `<?xml version="1.0"?>
+          <Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet" xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet">
+          <Worksheet ss:Name="Prazos">
+          <Table>
+          <Row>
+          <Cell><Data ss:Type="String">Cliente</Data></Cell>
+          <Cell><Data ss:Type="String">Processo</Data></Cell>
+          <Cell><Data ss:Type="String">Tipo</Data></Cell>
+          <Cell><Data ss:Type="String">Nome do Prazo</Data></Cell>
+          <Cell><Data ss:Type="String">Publicação</Data></Cell>
+          <Cell><Data ss:Type="String">Prazo Legal</Data></Cell>
+          <Cell><Data ss:Type="String">Prazo Operacional (-2)</Data></Cell>
+          <Cell><Data ss:Type="String">Modo</Data></Cell>
+          <Cell><Data ss:Type="String">Dilação?</Data></Cell>
+          <Cell><Data ss:Type="String">Status</Data></Cell>
+          <Cell><Data ss:Type="String">Responsável</Data></Cell>
+          <Cell><Data ss:Type="String">Observações</Data></Cell>
+          </Row>
+          ${rowsExcel}
+          </Table>
+          </Worksheet>
+          </Workbook>`;
+        const blobExcel = new Blob([xml], {type:'application/vnd.ms-excel'});
+        const urlExcel = URL.createObjectURL(blobExcel);
+        const aExcel=document.createElement('a');
+        aExcel.href=urlExcel;
+        aExcel.download=`versao_excel_${nowStamp()}.xls`;
+        aExcel.click();
+        URL.revokeObjectURL(urlExcel);
+
+        toast('Versões exportadas (Word e Excel)');
+      }
+
+      // ===== Eventos =====
+      document.addEventListener('DOMContentLoaded', ()=>{
+        // principal
+        $('#btnAdicionar').addEventListener('click', addItem);
+        $('#prazoLivre').addEventListener('change', ()=>{
+          const on = $('#prazoLivre').checked;
+          $('#diasCustom').style.display = on? 'block':'none';
+          $('#nomePrazo').style.display = on? 'block':'none';
+        });
+
+        // filtros – só aplicam ao clicar
+        $('#btnAplicarFiltros').addEventListener('click', ()=>{
+          currentFilters = {
+            tipo: $('#uiTipo').value,
+            prazo: $('#uiPrazo').value,
+            status: $('#uiStatus').value,
+            resp: $('#uiResp').value,
+            dil: $('#uiDilacao').value,
+            q: ($('#uiSearch').value||'').trim().toLowerCase()
+          };
+          renderTable();
+          toast('Filtros aplicados');
+        });
+
+        $('#btnLimparFiltros').addEventListener('click', ()=>{
+          // reset UI
+          $('#uiTipo').value='all';
+          $('#uiPrazo').value='all';
+          $('#uiStatus').value='all';
+          $('#uiResp').value='all';
+          $('#uiDilacao').value='all';
+          $('#uiSearch').value='';
+          // reset estado
+          currentFilters = { tipo:'all', prazo:'all', status:'all', resp:'all', dil:'all', q:'' };
+          renderTable();
+          toast('Filtros limpos');
+        });
+
+        // Ordenação rápida
+        $('#btnSortAsc').addEventListener('click', ()=>{
+          sort={key:'prazoOperacional',dir:'asc'};
+          renderTable();
+          toast('Ordenado por prazo (mais próximo)');
+        });
+
+        $('#btnSortDesc').addEventListener('click', ()=>{
+          sort={key:'prazoOperacional',dir:'desc'};
+          renderTable();
+          toast('Ordenado por prazo (mais distante)');
+        });
+
+        // Sort por cabeçalho
+        document.querySelectorAll('.th-sort').forEach(th=>{
+          th.addEventListener('click', ()=>{
+            const key = th.getAttribute('data-sort');
+            sort.dir = (sort.key===key && sort.dir==='asc')? 'desc' : 'asc';
+            sort.key = key;
+            renderTable();
+            document.querySelectorAll('.th-sort .dir').forEach(el=> el.textContent='');
+            const dirSpan = th.querySelector('.dir');
+            dirSpan.textContent = sort.dir==='asc'?'▲':'▼';
+          });
+        });
+
+        // export/backup
+        $('#btnExportar').addEventListener('click', exportCSV);
+        $('#btnExportarWord').addEventListener('click', exportWord);
+        $('#btnExportarExcel').addEventListener('click', exportExcel);
+        $('#btnBackup').addEventListener('click', backupDownloadManual);
+        $('#btnVersoes').addEventListener('click', exportVersions);
+
+        $('#restoreInput').addEventListener('change', (ev)=>{
+          const f=ev.target.files?.[0];
+          if(f) backupRestore(f);
+          ev.target.value='';
+        });
+
+        // Limpar lista com backup automático (Word e Excel)
+        $('#btnLimpar').addEventListener('click', ()=>{
+          const items = storage.load();
+          if(!items.length){
+            if(confirm('A lista já está vazia. Deseja confirmar a limpeza mesmo assim?')){
+              storage.save([]);
+              renderTable();
+              toast('Lista limpa');
+            }
+            return;
+          }
+          if(confirm('Isto vai limpar toda a lista. Backups em Word e Excel serão baixados automaticamente. Deseja continuar?')){
+            // Exportar Word e Excel antes de limpar
+            exportVersions();
+            storage.save([]); // limpa
+            renderTable();
+            toast('Lista limpa (backups salvos)');
+          }
+        });
+
+        // modal
+        $('#dlgClose').addEventListener('click', closeModal);
+        $('#mdTipo').addEventListener('change', syncMdCustomVisibility);
+        $('#mdStatus').addEventListener('change', (e)=>{
+          $('#mdBadge').innerHTML = statusBadgeHTML(e.target.value)
+        });
+        $('#btnRecalcular').addEventListener('click', ()=>{
+          const p=recalcFromModal();
+          if(p){
+            toast('Prazos recalculados');
+            $('#mdOper').classList.add('animate-flash');
+            setTimeout(()=>$('#mdOper').classList.remove('animate-flash'),1000)
+          }
+        });
+        $('#btnConcluir').addEventListener('click', ()=>{
+          if(!currentId) return;
+          const list=storage.load();
+          const idx=list.findIndex(x=>x.id===currentId);
+          if(idx<0) return;
+          const tipo=$('#mdTipo').value;
+          const publicacao=$('#mdPubData').value;
+          const corridos=$('#mdCorridos').checked;
+          const diasCustom=(tipo==='custom')? Number($('#mdDiasCustom').value):null;
+          const nomePrazo=(tipo==='custom')? String($('#mdNomePrazo').value||'').trim() : '';
+          if(!publicacao){
+            toast('Informe a data da publicação.');
+            return;
+          }
+          if(tipo==='custom'){
+            if(!diasCustom || diasCustom<1){
+              toast('Informe os dias do prazo personalizado.');
+              return;
+            }
+            if(!nomePrazo){
+              toast('Informe o nome do prazo personalizado.');
+              return;
+            }
+          }
+          const prazos=calcularItem({tipo,publicacao,corridos,diasCustom});
+          list[idx] = {
+            ...list[idx],
+            cliente:$('#mdCliente').value.trim()||'(sem nome)',
+            processo:$('#mdProcesso').value.trim()||'—',
+            tipo,
+            diasCustom,
+            nomePrazo,
+            tipoDesc:tipoDescricao(tipo,diasCustom,nomePrazo),
+            publicacao,
+            prazoLegal:prazos.prazoLegal,
+            prazoOperacional:prazos.prazoOperacional,
+            corridos,
+            observacoes:$('#mdObs').value.trim(),
+            statusCaso:$('#mdStatus').value,
+            responsavel:$('#mdResp').value,
+            dilacao: $('#mdDilacao').value
+          };
+          storage.save(list);
+          renderTable();
+          toast('Alterações salvas');
+          closeModal();
+        });
+
+        // Backup automático diário
+        setTimeout(autoDailyBackup, 2000); // Executa 2 segundos após carregar
+
+        // primeira render
+        renderTable();
+      });
+    })();
+  </script>
 </body>
 </html>

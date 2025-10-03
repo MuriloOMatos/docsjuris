@@ -31,87 +31,500 @@
         display: none;
       }
     }
+    .form-section {
+      display: none;
+    }
+    .form-section.active {
+      display: block;
+    }
+    .progress-bar {
+      height: 10px;
+      border-radius: 5px;
+    }
+    .nav-link.active {
+      background-color: rgba(255, 255, 255, 0.15) !important;
+      border-radius: 0.375rem;
+    }
+    .conditional-field {
+      display: none;
+    }
+    .checkbox-group {
+      max-height: 300px;
+      overflow-y: auto;
+      border: 1px solid #dee2e6;
+      border-radius: 0.375rem;
+      padding: 15px;
+      margin-top: 10px;
+    }
+    .checkbox-group.is-invalid {
+      border-color: #dc3545 !important;
+    }
+    .checkbox-item {
+      margin-bottom: 10px;
+      padding: 8px;
+      border-radius: 5px;
+      transition: background-color 0.2s;
+    }
+    .checkbox-item:hover {
+      background-color: #f8f9fa;
+    }
+    .checkbox-item:last-child {
+      margin-bottom: 0;
+    }
+    .optional-field {
+      border-left: 3px solid #0d6efd;
+      padding-left: 10px;
+    }
+    .loading-spinner {
+      display: none;
+      width: 20px;
+      height: 20px;
+      border: 2px solid #f3f3f3;
+      border-top: 2px solid #0d6efd;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin-left: 10px;
+    }
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    .comarca-field {
+      display: none;
+    }
+    .is-invalid {
+      border-color: #dc3545 !important;
+    }
+    .invalid-feedback {
+      display: none;
+      width: 100%;
+      margin-top: 0.25rem;
+      font-size: 0.875em;
+      color: #dc3545;
+    }
+    .was-validated .invalid-feedback {
+      display: block;
+    }
   </style>
 </head>
 <body>
   <div class="d-flex">
     <!-- Sidebar -->
-<nav class="bg-primary text-white p-3 vh-100 d-flex flex-column shadow" style="width: 220px;">
-  <!-- Título -->
-  <h4 class="mb-4 border-bottom pb-2">
-    <i class="bi bi-folder me-2"></i> Menu
-  </h4>
+    <nav class="bg-primary text-white p-3 vh-100 d-flex flex-column shadow" style="width: 220px; position: fixed;">
+      <!-- Título -->
+      <h4 class="mb-4 border-bottom pb-2">
+        <i class="bi bi-folder me-2"></i> Menu
+      </h4>
 
-  <!-- Lista de navegação -->
-  <ul class="nav flex-column">
-    <li class="nav-item mb-2">
-      <a href="#" class="nav-link text-white d-flex align-items-center">
-        <i class="bi bi-pencil-square me-2"></i> Nova Petição
-      </a>
-    </li>
-    <li class="nav-item mb-2">
-      <a href="/" class="nav-link text-white d-flex align-items-center">
-        <i class="bi bi-house-door me-2"></i> Menu Inicial
-      </a>
-    </li>
-    <li class="nav-item mb-2">
-      <a href="/documentos" class="nav-link text-white d-flex align-items-center">
-        <i class="bi bi-file-earmark-text me-2"></i> Documentos
-      </a>
-    </li>
-  </ul>
-</nav>
+      <!-- Lista de navegação -->
+      <ul class="nav flex-column">
+        <li class="nav-item mb-2">
+          <a href="#" class="nav-link text-white d-flex align-items-center active">
+            <i class="bi bi-pencil-square me-2"></i> Nova Petição
+          </a>
+        </li>
+        <li class="nav-item mb-2">
+          <a href="/" class="nav-link text-white d-flex align-items-center">
+            <i class="bi bi-house-door me-2"></i> Menu Inicial
+          </a>
+        </li>
+        <li class="nav-item mb-2">
+          <a href="/documentos" class="nav-link text-white d-flex align-items-center">
+            <i class="bi bi-file-earmark-text me-2"></i> Documentos
+          </a>
+        </li>
+      </ul>
+    </nav>
 
     <!-- Conteúdo principal -->
-    <div class="flex-grow-1 p-4">
+    <div class="flex-grow-1 p-4" style="margin-left: 220px;">
       <div class="container min-vh-100 d-flex justify-content-center align-items-center">
-        <div class="row g-4 w-100" style="max-width: 600px;">
+        <div class="row g-4 w-100" style="max-width: 800px;">
           <div class="col-12">
-            <div class="card">
-              <div class="card-header bg-primary text-white">
-                <h2 class="h4 mb-0"><i class="bi bi-pencil-square me-2"></i>Dados da Petição</h2>
+            <!-- Barra de progresso -->
+            <div class="mb-4">
+              <div class="d-flex justify-content-between mb-2">
+                <span class="text-primary fw-bold">Dados da Petição</span>
+                <span class="text-muted">Dados do Empréstimo</span>
               </div>
-              <div class="card-body">
-                <form action="/gerar-peticao" method="post" role="form" novalidate>
-                  <!-- Seleção de Modelo -->
-                  <div class="mb-3">
-                    <label for="modelo_peticao" class="form-label">Número de Empréstimos:</label>
-                    <select class="form-select" id="modelo_peticao" name="modelo_peticao" required>
-                      <option value="" selected disabled>Selecione um modelo...</option>
-                      <option value="1">1 Empréstimo</option>
-                      <option value="2">2 Empréstimos</option>
-                      <option value="3">3 Empréstimos</option>
-                    </select>
-                    <div class="invalid-feedback">Selecione um modelo de petição.</div>
-                  </div>
-
-                  <!-- Dados Gerais -->
-                  <div class="mb-3">
-                    <label for="renda_mensal" class="form-label">Renda Mensal Líquida</label>
-                    <div class="input-group">
-                      <span class="input-group-text">R$</span>
-                      <input type="number" step="0.01" min="0" class="form-control" id="renda_mensal" name="renda_mensal" placeholder="Ex: 3500,00" required>
+              <div class="progress">
+                <div class="progress-bar" role="progressbar" style="width: 50%" aria-valuenow="50" aria-valuemin="0" aria-valuemax="100"></div>
+              </div>
+            </div>
+            
+            <!-- Seção de Dados da Petição -->
+            <div id="peticao-section" class="form-section active">
+              <div class="card">
+                <div class="card-header bg-primary text-white">
+                  <h2 class="h4 mb-0"><i class="bi bi-file-text me-2"></i>Dados da Petição</h2>
+                </div>
+                <div class="card-body">
+                  <form id="peticao-form" class="needs-validation" novalidate>
+                    <!-- Tipo de Petição -->
+                    <div class="mb-3">
+                      <label for="tipo_peticao" class="form-label">Tipo de Petição:</label>
+                      <select class="form-select" id="tipo_peticao" name="tipo_peticao" required>
+                        <option value="" selected disabled>Selecione o tipo...</option>
+                        <option value="judicial">Judicial</option>
+                        <option value="extrajudicial">Extrajudicial</option>
+                        <option value="administrativa">Administrativa</option>
+                      </select>
+                      <div class="invalid-feedback">Selecione o tipo de petição.</div>
                     </div>
-                    <div class="invalid-feedback">Informe um valor válido.</div>
-                  </div>
 
-                  <!-- Container para os campos de cada empréstimo -->
-                  <div id="loan_fields"></div>
-
-                  <!-- Parcela Pessoal -->
-                  <div class="mb-3">
-                    <label for="parcela_pessoal" class="form-label">Parcela Consignada</label>
-                    <div class="input-group">
-                      <span class="input-group-text">R$</span>
-                      <input type="number" step="0.01" min="0" class="form-control" id="parcela_pessoal" name="parcela_pessoal" placeholder="Ex: 500,00" required>
+                    <!-- Foro (Autor/Réu) -->
+                    <div class="mb-3">
+                      <label for="foro" class="form-label">Qual o foro?</label>
+                      <select class="form-select" id="foro" name="foro" required>
+                        <option value="" selected disabled>Selecione o foro...</option>
+                        <option value="autor">Autor</option>
+                        <option value="reu">Réu</option>
+                      </select>
+                      <div class="invalid-feedback">Selecione o foro.</div>
                     </div>
-                    <div class="invalid-feedback">Informe um valor válido.</div>
-                  </div>
 
-                  <button type="submit" class="btn btn-primary w-100 py-3">
-                    <i class="bi bi-magic me-2"></i>Gerar Petição Automática
-                  </button>
-                </form>
+<!-- Campo para selecionar banco (agora sempre visível) -->
+<div class="mb-3">
+  <label for="banco" class="form-label">Selecione o banco:</label>
+  <select class="form-select" id="banco" name="banco" required>
+    <option value="" selected disabled>Selecione o banco...</option>
+    <option value="banco_brasil">Banco do Brasil</option>
+    <option value="caixa">Caixa Econômica Federal</option>
+    <option value="bradesco">Bradesco</option>
+    <option value="itau">Itaú</option>
+    <option value="santander">Santander</option>
+    <option value="sicoob">Sicoob</option>
+    <option value="sicredi">Sicredi</option>
+    <option value="mercantil">Banco Mercantil</option>
+    <option value="bmg">Banco BMG</option>
+    <option value="crefisa">Banco Crefisa</option>
+    <option value="agbank">Banco Agibank</option>
+    <option value="crefaz">Crediaz</option>
+    <option value="daycoval">Banco Daycoval</option>
+    <option value="inbursa">Banco Inbursa</option>
+    <option value="inter">Banco Inter</option>
+    <option value="jbcred">Banco JB Cred</option>
+    <option value="master">Banco Master</option>
+    <option value="pan">Banco Pan</option>
+    <option value="pkl">Banco PKL One</option>
+    <option value="safra">Banco Safra</option>
+    <option value="c6">Banco C6</option>
+    <option value="brb">BRB - Banco de Brasília</option>
+    <option value="nubank">Nubank</option>
+    <option value="bullha">Bullha Pagamentos</option>
+    <option value="facta">Facta Financeira</option>
+    <option value="mercadopago">Mercado Pago</option>
+    <option value="outro">Outro</option>
+  </select>
+  <div class="invalid-feedback">Selecione o banco.</div>
+</div>
+
+                    <!-- Campo para empréstimos consignados (independente) -->
+                    <div class="mb-3">
+                      <label for="possui_emprestimos" class="form-label">Autor possui empréstimos consignados?</label>
+                      <select class="form-select" id="possui_emprestimos" name="possui_emprestimos" required>
+                        <option value="" selected disabled>Selecione uma opção...</option>
+                        <option value="sim">Sim</option>
+                        <option value="nao">Não</option>
+                      </select>
+                      <div class="invalid-feedback">Selecione uma opção.</div>
+                    </div>
+
+                    <!-- Campo para fontes de renda (independente) -->
+                    <div class="mb-3">
+                      <label class="form-label">Qual ou quais as fontes de renda do autor?</label>
+                      <div class="checkbox-group" id="fontes-renda-group">
+                        <div class="checkbox-item">
+                          <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="fonte_1" name="fontes_renda[]" value="salario">
+                            <label class="form-check-label" for="fonte_1">Salário</label>
+                          </div>
+                        </div>
+                        <div class="checkbox-item">
+                          <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="fonte_2" name="fontes_renda[]" value="beneficio_deficiencia">
+                            <label class="form-check-label" for="fonte_2">Benefício de Prestação Continuada à Pessoa com Deficiência</label>
+                          </div>
+                        </div>
+                        <div class="checkbox-item">
+                          <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="fonte_3" name="fontes_renda[]" value="beneficio_idosa">
+                            <label class="form-check-label" for="fonte_3">Benefício de Prestação Continuada à Pessoa Idosa</label>
+                          </div>
+                        </div>
+                        <div class="checkbox-item">
+                          <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="fonte_4" name="fontes_renda[]" value="pensao_morte">
+                            <label class="form-check-label" for="fonte_4">Benefício de Pensão Por Morte Previdenciária</label>
+                          </div>
+                        </div>
+                        <div class="checkbox-item">
+                          <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="fonte_5" name="fontes_renda[]" value="aposentadoria_idade">
+                            <label class="form-check-label" for="fonte_5">Aposentadoria Por Idade Previdenciária</label>
+                          </div>
+                        </div>
+                        <div class="checkbox-item">
+                          <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="fonte_6" name="fontes_renda[]" value="aposentadoria_tempo">
+                            <label class="form-check-label" for="fonte_6">Aposentadoria Por Tempo de Contribuição Previdenciária</label>
+                          </div>
+                        </div>
+                        <div class="checkbox-item">
+                          <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="fonte_7" name="fontes_renda[]" value="aposentadoria_incapacidade">
+                            <label class="form-check-label" for="fonte_7">Aposentadoria Por Incapacidade Permanente Previdenciária</label>
+                          </div>
+                        </div>
+                        <div class="checkbox-item">
+                          <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="fonte_8" name="fontes_renda[]" value="maes_pernambuco">
+                            <label class="form-check-label" for="fonte_8">Mães de Pernambuco</label>
+                          </div>
+                        </div>
+                        <div class="checkbox-item">
+                          <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="fonte_9" name="fontes_renda[]" value="auxilio_gas">
+                            <label class="form-check-label" for="fonte_9">Auxílio Gás dos Brasileiros</label>
+                          </div>
+                        </div>
+                        <div class="checkbox-item">
+                          <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="fonte_10" name="fontes_renda[]" value="bolsa_familia">
+                            <label class="form-check-label" for="fonte_10">Bolsa Família</label>
+                          </div>
+                        </div>
+                        <div class="checkbox-item">
+                          <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="fonte_11" name="fontes_renda[]" value="auxilio_incapacidade">
+                            <label class="form-check-label" for="fonte_11">Benefício de Auxílio Por Incapacidade Temporária Previdenciário</label>
+                          </div>
+                        </div>
+                        <div class="checkbox-item">
+                          <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="fonte_12" name="fontes_renda[]" value="auxilio_acidente">
+                            <label class="form-check-label" for="fonte_12">Benefício de Auxílio-Acidente</label>
+                          </div>
+                        </div>
+                      </div>
+                      <div class="invalid-feedback" id="fontes-renda-feedback">Selecione pelo menos uma fonte de renda.</div>
+                    </div>
+
+                    <!-- Campo para conjunto probatório (independente) -->
+                    <div class="mb-3">
+                      <label class="form-label">Qual o conjunto probatório para comprovar hipossuficiência?</label>
+                      <div class="checkbox-group" id="conjunto-probatorio-group">
+                        <div class="checkbox-item">
+                          <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="proba_1" name="conjunto_probatorio[]" value="declaracao_hipossuficiencia">
+                            <label class="form-check-label" for="proba_1">Declaração de Hipossuficiência firmada pela parte autora</label>
+                          </div>
+                        </div>
+                        <div class="checkbox-item">
+                          <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="proba_2" name="conjunto_probatorio[]" value="isencao_imposto_renda">
+                            <label class="form-check-label" for="proba_2">Declaração de isenção de Imposto de Renda</label>
+                          </div>
+                        </div>
+                        <div class="checkbox-item">
+                          <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="proba_3" name="conjunto_probatorio[]" value="print_receita_federal">
+                            <label class="form-check-label" for="proba_3">Print da Receita Federal demonstrando inexistência de dados quanto à Declaração Anual de Imposto de Renda</label>
+                          </div>
+                        </div>
+                        <div class="checkbox-item">
+                          <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="proba_4" name="conjunto_probatorio[]" value="extratos_inss">
+                            <label class="form-check-label" for="proba_4">Extratos de benefício previdenciário (INSS)</label>
+                          </div>
+                        </div>
+                        <div class="checkbox-item">
+                          <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="proba_5" name="conjunto_probatorio[]" value="extratos_bancarios">
+                            <label class="form-check-label" for="proba_5">Extratos bancários atualizados</label>
+                          </div>
+                        </div>
+                        <div class="checkbox-item">
+                          <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="proba_6" name="conjunto_probatorio[]" value="ctps_digital">
+                            <label class="form-check-label" for="proba_6">Carteira de Trabalho e Previdência Social (CTPS) Digital</label>
+                          </div>
+                        </div>
+                        <div class="checkbox-item">
+                          <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="proba_7" name="conjunto_probatorio[]" value="cadastro_unico">
+                            <label class="form-check-label" for="proba_7">Folha resumo do Cadastro Único para Programas Sociais do Governo Federal</label>
+                          </div>
+                        </div>
+                      </div>
+                      <div class="invalid-feedback" id="conjunto-probatorio-feedback">Selecione pelo menos um item do conjunto probatório.</div>
+                    </div>
+
+                    <!-- Campo para comarca (aparece apenas quando foro = Autor) -->
+                    <div id="comarca-field" class="mb-3 comarca-field">
+                      <label class="form-label">Comarca onde vai ingressar com a ação:</label>
+                      <div class="row">
+                        <div class="col-md-6 mb-2">
+                          <label for="estado_comarca" class="form-label">Estado:</label>
+                          <select class="form-select" id="estado_comarca" name="estado_comarca">
+                            <option value="" selected disabled>Selecione o estado...</option>
+                            <option value="AC">Acre</option>
+                            <option value="AL">Alagoas</option>
+                            <option value="AP">Amapá</option>
+                            <option value="AM">Amazonas</option>
+                            <option value="BA">Bahia</option>
+                            <option value="CE">Ceará</option>
+                            <option value="DF">Distrito Federal</option>
+                            <option value="ES">Espírito Santo</option>
+                            <option value="GO">Goiás</option>
+                            <option value="MA">Maranhão</option>
+                            <option value="MT">Mato Grosso</option>
+                            <option value="MS">Mato Grosso do Sul</option>
+                            <option value="MG">Minas Gerais</option>
+                            <option value="PA">Pará</option>
+                            <option value="PB">Paraíba</option>
+                            <option value="PR">Paraná</option>
+                            <option value="PE">Pernambuco</option>
+                            <option value="PI">Piauí</option>
+                            <option value="RJ">Rio de Janeiro</option>
+                            <option value="RN">Rio Grande do Norte</option>
+                            <option value="RS">Rio Grande do Sul</option>
+                            <option value="RO">Rondônia</option>
+                            <option value="RR">Roraima</option>
+                            <option value="SC">Santa Catarina</option>
+                            <option value="SP">São Paulo</option>
+                            <option value="SE">Sergipe</option>
+                            <option value="TO">Tocantins</option>
+                          </select>
+                          <div class="invalid-feedback">Selecione o estado.</div>
+                        </div>
+                        <div class="col-md-6 mb-2">
+                          <label for="cidade_comarca" class="form-label">Cidade:</label>
+                          <div class="input-group">
+                            <select class="form-select" id="cidade_comarca" name="cidade_comarca" disabled>
+                              <option value="" selected disabled>Primeiro selecione o estado</option>
+                            </select>
+                            <span class="input-group-text p-0">
+                              <button type="button" id="btn-buscar-cidades" class="btn btn-primary" disabled>
+                                <i class="bi bi-search"></i>
+                              </button>
+                            </span>
+                            <div class="loading-spinner" id="loading-cidades"></div>
+                          </div>
+                          <div class="invalid-feedback">Selecione a cidade.</div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- Advogado Responsável (agora como select) -->
+                    <div class="mb-3">
+                      <label for="advogado" class="form-label">Advogado Responsável:</label>
+                      <select class="form-select" id="advogado" name="advogado" required>
+                        <option value="" selected disabled>Selecione o advogado...</option>
+                        <option value="Guilherme Esteves dos Santos Moraes">Guilherme Esteves dos Santos Moraes</option>
+                        <option value="Cícero Vogelaar Girardi">Cícero Vogelaar Girardi</option>
+                      </select>
+                      <div class="invalid-feedback">Selecione o advogado responsável.</div>
+                    </div>
+
+                    <!-- Estado e OAB -->
+                    <div class="row mb-3">
+                      <div class="col-md-6">
+                        <label for="estado_oab" class="form-label">Estado da OAB:</label>
+                        <select class="form-select" id="estado_oab" name="estado_oab" required>
+                          <option value="" selected disabled>Selecione o estado...</option>
+                          <option value="BA">Bahia (BA)</option>
+                          <option value="MG">Minas Gerais (MG)</option>
+                          <option value="PE">Pernambuco (PE)</option>
+                          <option value="RJ">Rio de Janeiro (RJ)</option>
+                          <option value="RN">Rio Grande do Norte (RN)</option>
+                          <option value="SP">São Paulo (SP)</option>
+                        </select>
+                        <div class="invalid-feedback">Selecione o estado da OAB.</div>
+                      </div>
+                      <div class="col-md-6">
+                        <label for="numero_oab" class="form-label">Número da OAB:</label>
+                        <input type="text" class="form-control" id="numero_oab" name="numero_oab" 
+                              placeholder="Ex: 123456" required>
+                        <div class="invalid-feedback">Informe o número da OAB.</div>
+                      </div>
+                    </div>
+
+                    <button type="button" id="btn-salvar-peticao" class="btn btn-primary w-100 py-2">
+                      <i class="bi bi-arrow-right me-2"></i>Salvar e Continuar para Empréstimo
+                    </button>
+                  </form>
+                </div>
+              </div>
+            </div>
+
+            <!-- Seção de Dados do Empréstimo (original) -->
+            <div id="emprestimo-section" class="form-section">
+              <div class="card">
+                <div class="card-header bg-primary text-white">
+                  <h2 class="h4 mb-0"><i class="bi bi-pencil-square me-2"></i>Dados do Empréstimo</h2>
+                </div>
+                <div class="card-body">
+                  <form action="/gerar-peticao" method="post" role="form" novalidate>
+                    <!-- CAMPOS HIDDEN PARA OS DADOS DA PETIÇÃO -->
+                    <input type="hidden" id="foro_hidden" name="foro">
+                    <input type="hidden" id="tipo_peticao_hidden" name="tipo_peticao">
+                    <input type="hidden" id="banco_hidden" name="banco">
+                    <input type="hidden" id="possui_emprestimos_hidden" name="possui_emprestimos">
+                    <input type="hidden" id="fontes_renda_hidden" name="fontes_renda[]">
+                    <input type="hidden" id="conjunto_probatorio_hidden" name="conjunto_probatorio[]">
+                    <input type="hidden" id="estado_comarca_hidden" name="estado_comarca">
+                    <input type="hidden" id="cidade_comarca_hidden" name="cidade_comarca">
+                    <input type="hidden" id="advogado_hidden" name="advogado">
+                    <input type="hidden" id="estado_oab_hidden" name="estado_oab">
+                    <input type="hidden" id="numero_oab_hidden" name="numero_oab">
+                    <input type="hidden" id="beneficios_hidden" name="beneficios">
+                    
+                    <!-- Seleção de Modelo -->
+                    <div class="mb-3">
+                      <label for="modelo_peticao" class="form-label">Número de Empréstimos:</label>
+                      <select class="form-select" id="modelo_peticao" name="modelo_peticao" required>
+                        <option value="" selected disabled>Selecione um modelo...</option>
+                        <option value="1">1 Empréstimo</option>
+                        <option value="2">2 Empréstimos</option>
+                        <option value="3">3 Empréstimos</option>
+                      </select>
+                      <div class="invalid-feedback">Selecione um modelo de petição.</div>
+                    </div>
+
+                    <!-- Dados Gerais -->
+                    <div class="mb-3">
+                      <label for="renda_mensal" class="form-label">Renda Mensal Líquida</label>
+                      <div class="input-group">
+                        <span class="input-group-text">R$</span>
+                        <input type="number" step="0.01" min="0" class="form-control" id="renda_mensal" name="renda_mensal" placeholder="Ex: 3500,00" required>
+                      </div>
+                      <div class="invalid-feedback">Informe um valor válido.</div>
+                    </div>
+
+                    <!-- Container para os campos de cada empréstimo -->
+                    <div id="loan_fields"></div>
+
+                    <!-- Parcela Pessoal -->
+                    <div class="mb-3">
+                      <label for="parcela_pessoal" class="form-label">Parcela Consignada</label>
+                      <div class="input-group">
+                        <span class="input-group-text">R$</span>
+                        <input type="number" step="0.01" min="0" class="form-control" id="parcela_pessoal" name="parcela_pessoal" placeholder="Ex: 500,00" required>
+                      </div>
+                      <div class="invalid-feedback">Informe um valor válido.</div>
+                    </div>
+
+                    <div class="d-flex gap-2">
+                      <button type="button" id="btn-voltar-peticao" class="btn btn-outline-secondary w-50 py-2">
+                        <i class="bi bi-arrow-left me-2"></i>Voltar
+                      </button>
+                      <button type="submit" class="btn btn-primary w-50 py-2">
+                        <i class="bi bi-magic me-2"></i>Gerar Petição
+                      </button>
+                    </div>
+                  </form>
+                </div>
               </div>
             </div>
           </div>
@@ -123,6 +536,482 @@
   <!-- JavaScript Bootstrap 5 -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
   <script>
+// Dados de comarcas por banco (simulando busca no sistema)
+const comarcasPorBanco = {
+  'banco_brasil': 'Comarca de Brasília - DF',
+  'caixa': 'Comarca de São Paulo - SP',
+  'bradesco': 'Comarca de Osasco - SP',
+  'itau': 'Comarca de São Paulo - SP',
+  'santander': 'Comarca de São Paulo - SP',
+  'sicoob': 'Comarca de Brasília - DF',
+  'sicredi': 'Comarca de Porto Alegre - RS',
+  'mercantil': 'Comarca de Belo Horizonte - MG',
+  'bmg': 'Comarca de São Paulo - SP',
+  'crefisa': 'Comarca de São Paulo - SP',
+  'agbank': 'Comarca de Campinas - SP',
+  'crefaz': 'Comarca a definir',
+  'daycoval': 'Comarca de São Paulo - SP',
+  'inbursa': 'Comarca de São Paulo - SP',
+  'inter': 'Comarca de São Paulo - SP',
+  'jbcred': 'Comarca de São Paulo - SP',
+  'master': 'Comarca de São Paulo - SP',
+  'pan': 'Comarca de São Paulo - SP',
+  'pkl': 'Comarca de São Paulo - SP',
+  'safra': 'Comarca de São Paulo - SP',
+  'c6': 'Comarca de São Paulo - SP',
+  'brb': 'Comarca de Brasília - DF',
+  'nubank': 'Comarca de São Paulo - SP',
+  'bullha': 'Comarca de São Paulo - SP',
+  'facta': 'Comarca de Porto Alegre - RS',
+  'mercadopago': 'Comarca de Osasco - SP',
+  'outro': 'Comarca a definir'
+};
+
+    // Gerenciador de dados da petição
+    class PeticaoManager {
+      constructor() {
+        this.peticaoData = null;
+        this.init();
+      }
+
+      init() {
+        // Event listener para o botão de salvar
+        document.getElementById('btn-salvar-peticao').addEventListener('click', () => {
+          this.salvarPeticao();
+        });
+        
+        // Event listener para o botão de voltar
+        document.getElementById('btn-voltar-peticao').addEventListener('click', () => {
+          this.showSection('peticao-section');
+          document.querySelector('.progress-bar').style.width = '50%';
+          document.querySelector('.d-flex.justify-content-between span.text-primary').textContent = 'Dados da Petição';
+          document.querySelector('.d-flex.justify-content-between span.text-muted').textContent = 'Dados do Empréstimo';
+        });
+        
+        // Event listener para mudança no campo foro
+        document.getElementById('foro').addEventListener('change', (e) => {
+          this.handleForoChange(e.target.value);
+        });
+        
+        // Event listener para mudança no campo banco
+        document.getElementById('banco').addEventListener('change', (e) => {
+          this.handleBancoChange(e.target.value);
+        });
+        
+        // Event listener para mudança no campo estado da comarca
+        document.getElementById('estado_comarca').addEventListener('change', (e) => {
+          this.handleEstadoComarcaChange(e.target.value);
+        });
+        
+        // Event listener para o botão de buscar cidades
+        document.getElementById('btn-buscar-cidades').addEventListener('click', () => {
+          this.buscarCidades();
+        });
+        
+        // Formatação do número da OAB
+        document.getElementById('numero_oab').addEventListener('input', function(e) {
+          // Remove qualquer caractere não numérico
+          let value = e.target.value.replace(/\D/g, '');
+          
+          // Limita a 6 dígitos
+          if (value.length > 6) {
+            value = value.substring(0, 6);
+          }
+          
+          e.target.value = value;
+        });
+
+        // Preenchimento automático do número da OAB baseado no estado
+        document.getElementById("estado_oab").addEventListener("change", function () {
+          const estado = this.value;
+          const numeroOab = document.getElementById("numero_oab");
+
+          const numerosOab = {
+            SP: "487943",
+            MG: "238241",
+            BA: "100000",
+            PE: "200000",
+            RJ: "300000",
+            RN: "400000"
+          };
+
+          numeroOab.value = numerosOab[estado] || "";
+        });
+        
+        // Carregar dados salvos se existirem
+        this.carregarDadosSalvos();
+      }
+
+      handleForoChange(foro) {
+        const comarcaField = document.getElementById('comarca-field');
+        
+        // Mostrar/ocultar o campo de comarca baseado na seleção
+        if (foro === 'autor') {
+          comarcaField.style.display = 'block';
+          document.getElementById('estado_comarca').setAttribute('required', 'required');
+          document.getElementById('cidade_comarca').setAttribute('required', 'required');
+        } else {
+          comarcaField.style.display = 'none';
+          document.getElementById('estado_comarca').removeAttribute('required');
+          document.getElementById('cidade_comarca').removeAttribute('required');
+        }
+      }
+
+      handleBancoChange(banco) {
+        // Se um banco for selecionado, preencher automaticamente a comarca
+        if (banco && comarcasPorBanco[banco]) {
+          // Extrair estado da comarca padrão
+          const partes = comarcasPorBanco[banco].split(' - ');
+          if (partes.length === 2) {
+            const estado = partes[1];
+            const estadoSelect = document.getElementById('estado_comarca');
+            
+            // Encontrar a opção correspondente ao estado
+            for (let i = 0; i < estadoSelect.options.length; i++) {
+              if (estadoSelect.options[i].value === estado) {
+                estadoSelect.value = estado;
+                this.handleEstadoComarcaChange(estado);
+                break;
+              }
+            }
+          }
+        }
+      }
+
+      handleEstadoComarcaChange(estado) {
+        const btnBuscar = document.getElementById('btn-buscar-cidades');
+        const cidadeSelect = document.getElementById('cidade_comarca');
+        
+        // Habilitar/desabilitar botão de busca baseado na seleção do estado
+        if (estado) {
+          btnBuscar.disabled = false;
+          cidadeSelect.disabled = false;
+          
+          // Limpar seleção anterior de cidades
+          cidadeSelect.innerHTML = '<option value="" selected disabled>Selecione a cidade</option>';
+        } else {
+          btnBuscar.disabled = true;
+          cidadeSelect.disabled = true;
+          cidadeSelect.innerHTML = '<option value="" selected disabled>Primeiro selecione o estado</option>';
+        }
+      }
+
+      async buscarCidades() {
+        const estado = document.getElementById('estado_comarca').value;
+        const cidadeSelect = document.getElementById('cidade_comarca');
+        const loadingSpinner = document.getElementById('loading-cidades');
+        const btnBuscar = document.getElementById('btn-buscar-cidades');
+        
+        if (!estado) {
+          alert('Selecione um estado primeiro.');
+          return;
+        }
+        
+        // Mostrar spinner de carregamento
+        loadingSpinner.style.display = 'inline-block';
+        btnBuscar.disabled = true;
+        cidadeSelect.disabled = true;
+        cidadeSelect.innerHTML = '<option value="" selected>Carregando cidades...</option>';
+        
+        try {
+          // Fazer requisição para la API del IBGE
+          const response = await fetch(`https://servicodados.ibge.gov.br/api/v1/localidades/estados/${estado}/municipios`);
+          const cidades = await response.json();
+          
+          // Ordenar cidades por nome
+          cidades.sort((a, b) => a.nome.localeCompare(b.nome));
+          
+          // Preencher el select de cidades
+          cidadeSelect.innerHTML = '<option value="" selected disabled>Selecione a cidade</option>';
+          cidades.forEach(cidade => {
+            const option = document.createElement('option');
+            option.value = cidade.nome;
+            option.textContent = cidade.nome;
+            cidadeSelect.appendChild(option);
+          });
+          
+          cidadeSelect.disabled = false;
+        } catch (error) {
+          console.error('Erro ao buscar cidades:', error);
+          cidadeSelect.innerHTML = '<option value="" selected disabled>Erro ao carregar cidades</option>';
+          alert('Não foi possível carregar a lista de cidades. Verifique sua conexão e tente novamente.');
+        } finally {
+          // Ocultar spinner de carregamento
+          loadingSpinner.style.display = 'none';
+          btnBuscar.disabled = false;
+        }
+      }
+
+      showSection(sectionId) {
+        // Esconder todas as seções
+        document.querySelectorAll('.form-section').forEach(section => {
+          section.classList.remove('active');
+        });
+        
+        // Mostrar a seção específica
+        document.getElementById(sectionId).classList.add('active');
+      }
+
+      formatarBeneficios(fontesRenda) {
+        if (!fontesRenda || fontesRenda.length === 0) {
+          return 'Nenhuma fonte de renda selecionada';
+        }
+        
+        // Mapeamento dos valores para nomes amigáveis
+        const mapeamentoBeneficios = {
+          'salario': 'Salário',
+          'beneficio_deficiencia': 'Benefício de Prestação Continuada à Pessoa com Deficiência',
+          'beneficio_idosa': 'Benefício de Prestação Continuada à Pessoa Idosa',
+          'pensao_morte': 'Benefício de Pensão Por Morte Previdenciária',
+          'aposentadoria_idade': 'Aposentadoria Por Idade Previdenciária',
+          'aposentadoria_tempo': 'Aposentadoria Por Tempo de Contribuição Previdenciária',
+          'aposentadoria_incapacidade': 'Aposentadoria Por Incapacidade Permanente Previdenciária',
+          'maes_pernambuco': 'Mães de Pernambuco',
+          'auxilio_gas': 'Auxílio Gás dos Brasileiros',
+          'bolsa_familia': 'Bolsa Família',
+          'auxilio_incapacidade': 'Benefício de Auxílio Por Incapacidade Temporária Previdenciário',
+          'auxilio_acidente': 'Benefício de Auxílio-Acidente'
+        };
+        
+        // Converter valores para nomes amigáveis
+        const beneficiosNomes = fontesRenda.map(valor => mapeamentoBeneficios[valor] || valor);
+        
+        // Juntar com vírgulas, exceto o último que usa "e"
+        if (beneficiosNomes.length === 1) {
+          return beneficiosNomes[0];
+        } else if (beneficiosNomes.length === 2) {
+          return beneficiosNomes.join(' e ');
+        } else {
+          const todosExcetoUltimo = beneficiosNomes.slice(0, -1).join(', ');
+          const ultimo = beneficiosNomes[beneficiosNomes.length - 1];
+          return `${todosExcetoUltimo} e ${ultimo}`;
+        }
+      }
+
+      salvarPeticao() {
+        // Limpar validações anteriores
+        this.limparValidacoes();
+        
+        // Coletar dados do formulário - INCLUIR DADOS DA COMARCA
+        const formData = {
+            tipo_peticao: document.getElementById('tipo_peticao').value,
+            foro: document.getElementById('foro').value,
+            banco: document.getElementById('banco').value,
+            possui_emprestimos: document.getElementById('possui_emprestimos').value,
+            fontes_renda: this.getFontesRendaSelecionadas(),
+            conjunto_probatorio: this.getConjuntoProbatorioSelecionado(),
+            estado_comarca: document.getElementById('estado_comarca').value,
+            cidade_comarca: document.getElementById('cidade_comarca').value,
+            advogado: document.getElementById('advogado').value,
+            estado_oab: document.getElementById('estado_oab').value,
+            numero_oab: document.getElementById('numero_oab').value,
+            data_cadastro: new Date().toISOString()
+        };
+
+        // Validação
+        if (!this.validarDados(formData)) {
+          // Adicionar a classe was-validated para mostrar as mensagens de erro
+          document.getElementById('peticao-form').classList.add('was-validated');
+          return;
+        }
+
+        // FORMATAR OS BENEFÍCIOS PARA O PLACEHOLDER
+        const beneficiosFormatados = this.formatarBeneficios(formData.fontes_renda);
+        
+        // Salvar dados
+        this.peticaoData = formData;
+        localStorage.setItem('peticaoData', JSON.stringify(formData));
+        
+        // PREENCHER OS CAMPOS HIDDEN
+        document.getElementById('foro_hidden').value = formData.foro;
+        document.getElementById('tipo_peticao_hidden').value = formData.tipo_peticao;
+        document.getElementById('banco_hidden').value = formData.banco;
+        document.getElementById('possui_emprestimos_hidden').value = formData.possui_emprestimos;
+        document.getElementById('fontes_renda_hidden').value = JSON.stringify(formData.fontes_renda);
+        document.getElementById('conjunto_probatorio_hidden').value = JSON.stringify(formData.conjunto_probatorio);
+        document.getElementById('estado_comarca_hidden').value = formData.estado_comarca;
+        document.getElementById('cidade_comarca_hidden').value = formData.cidade_comarca;
+        document.getElementById('advogado_hidden').value = formData.advogado;
+        document.getElementById('estado_oab_hidden').value = formData.estado_oab;
+        document.getElementById('numero_oab_hidden').value = formData.numero_oab;
+        
+        // ADICIONAR ESTE NOVO CAMPO PARA BENEFÍCIOS FORMATADOS
+        document.getElementById('beneficios_hidden').value = beneficiosFormatados;
+        
+        // Ir para a seção de empréstimo
+        this.showSection('emprestimo-section');
+        document.querySelector('.progress-bar').style.width = '100%';
+        document.querySelector('.d-flex.justify-content-between span.text-primary').textContent = 'Dados do Empréstimo';
+        document.querySelector('.d-flex.justify-content-between span.text-muted').textContent = 'Dados da Petição';
+        
+        // Preencher campos relacionados se necessário
+        this.preencherCamposRelacionados(formData);
+      }
+
+      limparValidacoes() {
+        // Remover a classe was-validated
+        document.getElementById('peticao-form').classList.remove('was-validated');
+        
+        // Limpar validações dos campos individuais
+        document.querySelectorAll('.is-invalid').forEach(el => {
+          el.classList.remove('is-invalid');
+        });
+        
+        // Limpar validações dos grupos de checkbox
+        document.getElementById('fontes-renda-group').classList.remove('is-invalid');
+        document.getElementById('conjunto-probatorio-group').classList.remove('is-invalid');
+        
+        // Esconder mensagens de erro
+        document.getElementById('fontes-renda-feedback').style.display = 'none';
+        document.getElementById('conjunto-probatorio-feedback').style.display = 'none';
+      }
+
+      getFontesRendaSelecionadas() {
+        const checkboxes = document.querySelectorAll('input[name="fontes_renda[]"]:checked');
+        const valores = [];
+        checkboxes.forEach(checkbox => {
+          valores.push(checkbox.value);
+        });
+        return valores;
+      }
+
+      getConjuntoProbatorioSelecionado() {
+        const checkboxes = document.querySelectorAll('input[name="conjunto_probatorio[]"]:checked');
+        const valores = [];
+        checkboxes.forEach(checkbox => {
+          valores.push(checkbox.value);
+        });
+        return valores;
+      }
+
+      validarDados(data) {
+        let isValid = true;
+        
+        // Campos obrigatórios
+        const requiredFields = ['tipo_peticao', 'foro', 'banco', 'possui_emprestimos', 'advogado', 'estado_oab', 'numero_oab'];
+        
+        // Validar campos obrigatórios
+        for (const field of requiredFields) {
+          if (!data[field] || data[field].toString().trim() === '') {
+            // Destacar campo com erro
+            const element = document.getElementById(field);
+            element.classList.add('is-invalid');
+            isValid = false;
+          }
+        }
+        
+        // Validar fontes de renda (sempre obrigatório)
+        if (!data.fontes_renda || data.fontes_renda.length === 0) {
+          document.getElementById('fontes-renda-feedback').style.display = 'block';
+          document.getElementById('fontes-renda-group').classList.add('is-invalid');
+          isValid = false;
+        }
+        
+        // Validar conjunto probatório (sempre obrigatório)
+        if (!data.conjunto_probatorio || data.conjunto_probatorio.length === 0) {
+          document.getElementById('conjunto-probatorio-feedback').style.display = 'block';
+          document.getElementById('conjunto-probatorio-group').classList.add('is-invalid');
+          isValid = false;
+        }
+        
+        // Adicionar validação específica para campos condicionais baseado no foro
+        if (data.foro === 'autor') {
+          if (!data.estado_comarca || data.estado_comarca.trim() === '') {
+            document.getElementById('estado_comarca').classList.add('is-invalid');
+            isValid = false;
+          }
+          if (!data.cidade_comarca || data.cidade_comarca.trim() === '') {
+            document.getElementById('cidade_comarca').classList.add('is-invalid');
+            isValid = false;
+          }
+        }
+        
+        return isValid;
+      }
+
+      preencherCamposRelacionados(peticaoData) {
+        // Exemplo: Preencher automaticamente campos no formulário de empréstimo
+        // baseado nos dados da petição, se necessário
+      }
+
+      carregarDadosSalvos() {
+        const savedData = localStorage.getItem('peticaoData');
+        if (savedData) {
+          this.peticaoData = JSON.parse(savedData);
+          this.preencherFormulario(this.peticaoData);
+          
+          // PREENCHER O CAMPO HIDDEN SE EXISTIR
+          if (this.peticaoData.foro && document.getElementById('foro_hidden')) {
+            document.getElementById('foro_hidden').value = this.peticaoData.foro;
+          }
+          
+          // Atualizar la exibição dos campos baseado no foro selecionado
+          if (this.peticaoData.foro) {
+            this.handleForoChange(this.peticaoData.foro);
+          }
+        }
+      }
+
+      preencherFormulario(data) {
+        // Preencher los campos del formulário con datos guardados
+        document.getElementById('tipo_peticao').value = data.tipo_peticao || '';
+        document.getElementById('foro').value = data.foro || '';
+        document.getElementById('banco').value = data.banco || '';
+        document.getElementById('possui_emprestimos').value = data.possui_emprestimos || '';
+        document.getElementById('estado_comarca').value = data.estado_comarca || '';
+        document.getElementById('advogado').value = data.advogado || '';
+        document.getElementById('estado_oab').value = data.estado_oab || '';
+        document.getElementById('numero_oab').value = data.numero_oab || '';
+        
+        // Se houver estado selecionado, habilitar o botão de busca de cidades
+        if (data.estado_comarca) {
+          this.handleEstadoComarcaChange(data.estado_comarca);
+          
+          // Se houver cidade salva, tentar preencher após carregar as cidades
+          if (data.cidade_comarca) {
+            // Disparar o evento de busca de cidades
+            setTimeout(() => {
+              this.buscarCidades().then(() => {
+                // Após carregar as cidades, selecionar a cidade salva
+                const cidadeSelect = document.getElementById('cidade_comarca');
+                for (let i = 0; i < cidadeSelect.options.length; i++) {
+                  if (cidadeSelect.options[i].value === data.cidade_comarca) {
+                    cidadeSelect.value = data.cidade_comarca;
+                    break;
+                  }
+                }
+              });
+            }, 500);
+          }
+        }
+        
+        // Preencher checkboxes das fontes de renda
+        if (data.fontes_renda && Array.isArray(data.fontes_renda)) {
+          data.fontes_renda.forEach(valor => {
+            const checkbox = document.querySelector(`input[name="fontes_renda[]"][value="${valor}"]`);
+            if (checkbox) {
+              checkbox.checked = true;
+            }
+          });
+        }
+        
+        // Preencher checkboxes do conjunto probatório
+        if (data.conjunto_probatorio && Array.isArray(data.conjunto_probatorio)) {
+          data.conjunto_probatorio.forEach(valor => {
+            const checkbox = document.querySelector(`input[name="conjunto_probatorio[]"][value="${valor}"]`);
+            if (checkbox) {
+              checkbox.checked = true;
+            }
+          });
+        }
+      }
+
+      getPeticaoData() {
+        return this.peticaoData;
+      }
+    }
+
+    // Funções existentes para gerenciar campos de empréstimo
     function manageLoanFields() {
       const select = document.getElementById('modelo_peticao');
       const container = document.getElementById('loan_fields');
@@ -178,6 +1067,12 @@
                 </div>
                 <div class="invalid-feedback">Informe uma taxa entre 0 e 100%.</div>
               </div>
+              <!-- Campo opcional para número do contrato -->
+              <div class="mb-3 optional-field">
+                <label for="contrato_${i}" class="form-label">Número do Contrato (Opcional)</label>
+                <input type="text" class="form-control" id="contrato_${i}"
+                       name="emprestimos[${i}][contrato]" placeholder="Ex: 123456789">
+              </div>
             </div>
           `;
           container.appendChild(group);
@@ -203,7 +1098,14 @@
       });
     }
 
-    manageLoanFields();
+    // Inicializar quando o documento estiver pronto
+    document.addEventListener('DOMContentLoaded', function() {
+      const peticaoManager = new PeticaoManager();
+      manageLoanFields();
+      
+      // Tornar acessível globalmente se necessário
+      window.peticaoManager = peticaoManager;
+    });
   </script>
 </body>
 </html>
