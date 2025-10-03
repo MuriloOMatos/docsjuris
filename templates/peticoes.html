@@ -2,52 +2,128 @@
 <html lang="pt-br">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Gerador de Petições</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Girardi & Moraes Advogados - Gerador de Petições</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
   <style>
+    :root {
+      --primary-color: #0d6efd;
+      --secondary-color: #6c757d;
+      --dark-color: #0d0d0e;
+      --light-color: #f8f9fa;
+    }
+    
     body {
-      background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+      background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
       min-height: 100vh;
     }
+    
+    .sidebar {
+      background: linear-gradient(135deg, var(--dark-color) 0%, var(--primary-color) 100%);
+      color: white;
+      min-height: 100vh;
+      position: fixed;
+      width: 220px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      z-index: 1000;
+    }
+    
+    .main-content {
+      margin-left: 220px;
+      padding: 20px;
+      min-height: 100vh;
+    }
+    
+    .logo-container {
+      padding: 1.5rem 1rem;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+      text-align: center;
+    }
+    
+    .logo {
+      font-size: 1.8rem;
+      font-weight: bold;
+      color: white;
+    }
+    
+    .nav-link {
+      color: rgba(255,255,255,0.8);
+      padding: 0.75rem 1rem;
+      border-radius: 0.375rem;
+      margin-bottom: 0.25rem;
+      transition: all 0.3s;
+    }
+    
+    .nav-link:hover, .nav-link.active {
+      color: white;
+      background-color: rgba(255,255,255,0.15);
+    }
+    
+    .nav-link i {
+      width: 20px;
+      text-align: center;
+      margin-right: 10px;
+    }
+    
     .card {
       border: none;
-      box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+      border-radius: 10px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      transition: transform 0.3s, box-shadow 0.3s;
     }
-    .card-body {
-      padding: 1.5rem;
+    
+    .card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
     }
+    
+    .card-header {
+      background: linear-gradient(135deg, var(--primary-color) 0%, #0a58ca 100%);
+      color: white;
+      border-radius: 10px 10px 0 0 !important;
+    }
+    
+    @media (max-width: 768px) {
+      .sidebar {
+        width: 100%;
+        position: relative;
+        min-height: auto;
+      }
+      
+      .main-content {
+        margin-left: 0;
+      }
+    }
+
+    /* Estilos específicos do gerador de petições */
     input[id^="taxa_"] {
       border-color: #ced4da !important;
       box-shadow: none !important;
     }
+    
     input[id^="taxa_"]:focus {
       border-color: #86b7fe !important;
       box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25) !important;
     }
-    @media (max-width: 768px) {
-      nav {
-        display: none;
-      }
-    }
+    
     .form-section {
       display: none;
     }
+    
     .form-section.active {
       display: block;
     }
+    
     .progress-bar {
       height: 10px;
       border-radius: 5px;
     }
-    .nav-link.active {
-      background-color: rgba(255, 255, 255, 0.15) !important;
-      border-radius: 0.375rem;
-    }
+    
     .conditional-field {
       display: none;
     }
+    
     .checkbox-group {
       max-height: 300px;
       overflow-y: auto;
@@ -56,25 +132,31 @@
       padding: 15px;
       margin-top: 10px;
     }
+    
     .checkbox-group.is-invalid {
       border-color: #dc3545 !important;
     }
+    
     .checkbox-item {
       margin-bottom: 10px;
       padding: 8px;
       border-radius: 5px;
       transition: background-color 0.2s;
     }
+    
     .checkbox-item:hover {
       background-color: #f8f9fa;
     }
+    
     .checkbox-item:last-child {
       margin-bottom: 0;
     }
+    
     .optional-field {
       border-left: 3px solid #0d6efd;
       padding-left: 10px;
     }
+    
     .loading-spinner {
       display: none;
       width: 20px;
@@ -85,16 +167,20 @@
       animation: spin 1s linear infinite;
       margin-left: 10px;
     }
+    
     @keyframes spin {
       0% { transform: rotate(0deg); }
       100% { transform: rotate(360deg); }
     }
+    
     .comarca-field {
       display: none;
     }
+    
     .is-invalid {
       border-color: #dc3545 !important;
     }
+    
     .invalid-feedback {
       display: none;
       width: 100%;
@@ -102,428 +188,451 @@
       font-size: 0.875em;
       color: #dc3545;
     }
+    
     .was-validated .invalid-feedback {
       display: block;
     }
   </style>
 </head>
 <body>
-  <div class="d-flex">
-    <!-- Sidebar -->
-    <nav class="bg-primary text-white p-3 vh-100 d-flex flex-column shadow" style="width: 220px; position: fixed;">
-      <!-- Título -->
-      <h4 class="mb-4 border-bottom pb-2">
-        <i class="bi bi-folder me-2"></i> Menu
-      </h4>
-
-      <!-- Lista de navegação -->
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <div class="logo-container">
+      <div class="logo">G&M</div>
+      <small class="text-white-50">Advocacia</small>
+    </div>
+    
+    <div class="d-flex flex-column p-3">
       <ul class="nav flex-column">
-        <li class="nav-item mb-2">
-          <a href="#" class="nav-link text-white d-flex align-items-center active">
-            <i class="bi bi-pencil-square me-2"></i> Nova Petição
+        <li class="nav-item">
+          <a href="/" class="nav-link d-flex align-items-center">
+            <i class="bi bi-house-door"></i> Página Inicial
           </a>
         </li>
-        <li class="nav-item mb-2">
-          <a href="/" class="nav-link text-white d-flex align-items-center">
-            <i class="bi bi-house-door me-2"></i> Menu Inicial
+        <li class="nav-item">
+          <a href="/documentos" class="nav-link d-flex align-items-center">
+            <i class="bi bi-file-earmark-text"></i> Gerar Documentos
           </a>
         </li>
-        <li class="nav-item mb-2">
-          <a href="/documentos" class="nav-link text-white d-flex align-items-center">
-            <i class="bi bi-file-earmark-text me-2"></i> Documentos
+        <li class="nav-item">
+          <a href="/peticoes" class="nav-link d-flex align-items-center active">
+            <i class="bi bi-journal-text"></i> Petições
+          </a>
+        </li>
+        <li class="nav-item">
+          <a href="/prazos" class="nav-link d-flex align-items-center">
+            <i class="bi bi-folder"></i> Controle de Prazos
+          </a>
+        </li>
+        <li class="nav-item">
+          <a href="/base" class="nav-link d-flex align-items-center">
+            <i class="bi bi-database"></i> Administração
+          </a>
+        </li>
+        <li class="nav-item mt-4">
+          <a href="/login" class="nav-link d-flex align-items-center">
+            <i class="bi bi-box-arrow-right"></i> Sair
           </a>
         </li>
       </ul>
-    </nav>
+    </div>
+  </div>
 
-    <!-- Conteúdo principal -->
-    <div class="flex-grow-1 p-4" style="margin-left: 220px;">
-      <div class="container min-vh-100 d-flex justify-content-center align-items-center">
-        <div class="row g-4 w-100" style="max-width: 800px;">
-          <div class="col-12">
-            <!-- Barra de progresso -->
-            <div class="mb-4">
-              <div class="d-flex justify-content-between mb-2">
-                <span class="text-primary fw-bold">Dados da Petição</span>
-                <span class="text-muted">Dados do Empréstimo</span>
-              </div>
-              <div class="progress">
-                <div class="progress-bar" role="progressbar" style="width: 50%" aria-valuenow="50" aria-valuemin="0" aria-valuemax="100"></div>
-              </div>
-            </div>
-            
-            <!-- Seção de Dados da Petição -->
-            <div id="peticao-section" class="form-section active">
-              <div class="card">
-                <div class="card-header bg-primary text-white">
-                  <h2 class="h4 mb-0"><i class="bi bi-file-text me-2"></i>Dados da Petição</h2>
+  <!-- Main Content -->
+  <div class="main-content">
+    <div class="container-fluid">
+      <div class="card">
+        <div class="card-header">
+          <h4 class="mb-0"><i class="bi bi-journal-text me-2"></i>Gerador de Petições</h4>
+        </div>
+        <div class="card-body">
+          <!-- Conteúdo do Gerador de Petições -->
+          <div class="row g-4 w-100" style="max-width: 800px; margin: 0 auto;">
+            <div class="col-12">
+              <!-- Barra de progresso -->
+              <div class="mb-4">
+                <div class="d-flex justify-content-between mb-2">
+                  <span class="text-primary fw-bold">Dados da Petição</span>
+                  <span class="text-muted">Dados do Empréstimo</span>
                 </div>
-                <div class="card-body">
-                  <form id="peticao-form" class="needs-validation" novalidate>
-                    <!-- Tipo de Petição -->
-                    <div class="mb-3">
-                      <label for="tipo_peticao" class="form-label">Tipo de Petição:</label>
-                      <select class="form-select" id="tipo_peticao" name="tipo_peticao" required>
-                        <option value="" selected disabled>Selecione o tipo...</option>
-                        <option value="judicial">Judicial</option>
-                        <option value="extrajudicial">Extrajudicial</option>
-                        <option value="administrativa">Administrativa</option>
-                      </select>
-                      <div class="invalid-feedback">Selecione o tipo de petição.</div>
-                    </div>
-
-                    <!-- Foro (Autor/Réu) -->
-                    <div class="mb-3">
-                      <label for="foro" class="form-label">Qual o foro?</label>
-                      <select class="form-select" id="foro" name="foro" required>
-                        <option value="" selected disabled>Selecione o foro...</option>
-                        <option value="autor">Autor</option>
-                        <option value="reu">Réu</option>
-                      </select>
-                      <div class="invalid-feedback">Selecione o foro.</div>
-                    </div>
-
-<!-- Campo para selecionar banco (agora sempre visível) -->
-<div class="mb-3">
-  <label for="banco" class="form-label">Selecione o banco:</label>
-  <select class="form-select" id="banco" name="banco" required>
-    <option value="" selected disabled>Selecione o banco...</option>
-    <option value="banco_brasil">Banco do Brasil</option>
-    <option value="caixa">Caixa Econômica Federal</option>
-    <option value="bradesco">Bradesco</option>
-    <option value="itau">Itaú</option>
-    <option value="santander">Santander</option>
-    <option value="sicoob">Sicoob</option>
-    <option value="sicredi">Sicredi</option>
-    <option value="mercantil">Banco Mercantil</option>
-    <option value="bmg">Banco BMG</option>
-    <option value="crefisa">Banco Crefisa</option>
-    <option value="agbank">Banco Agibank</option>
-    <option value="crefaz">Crediaz</option>
-    <option value="daycoval">Banco Daycoval</option>
-    <option value="inbursa">Banco Inbursa</option>
-    <option value="inter">Banco Inter</option>
-    <option value="jbcred">Banco JB Cred</option>
-    <option value="master">Banco Master</option>
-    <option value="pan">Banco Pan</option>
-    <option value="pkl">Banco PKL One</option>
-    <option value="safra">Banco Safra</option>
-    <option value="c6">Banco C6</option>
-    <option value="brb">BRB - Banco de Brasília</option>
-    <option value="nubank">Nubank</option>
-    <option value="bullha">Bullha Pagamentos</option>
-    <option value="facta">Facta Financeira</option>
-    <option value="mercadopago">Mercado Pago</option>
-    <option value="outro">Outro</option>
-  </select>
-  <div class="invalid-feedback">Selecione o banco.</div>
-</div>
-
-                    <!-- Campo para empréstimos consignados (independente) -->
-                    <div class="mb-3">
-                      <label for="possui_emprestimos" class="form-label">Autor possui empréstimos consignados?</label>
-                      <select class="form-select" id="possui_emprestimos" name="possui_emprestimos" required>
-                        <option value="" selected disabled>Selecione uma opção...</option>
-                        <option value="sim">Sim</option>
-                        <option value="nao">Não</option>
-                      </select>
-                      <div class="invalid-feedback">Selecione uma opção.</div>
-                    </div>
-
-                    <!-- Campo para fontes de renda (independente) -->
-                    <div class="mb-3">
-                      <label class="form-label">Qual ou quais as fontes de renda do autor?</label>
-                      <div class="checkbox-group" id="fontes-renda-group">
-                        <div class="checkbox-item">
-                          <div class="form-check">
-                            <input class="form-check-input" type="checkbox" id="fonte_1" name="fontes_renda[]" value="salario">
-                            <label class="form-check-label" for="fonte_1">Salário</label>
-                          </div>
-                        </div>
-                        <div class="checkbox-item">
-                          <div class="form-check">
-                            <input class="form-check-input" type="checkbox" id="fonte_2" name="fontes_renda[]" value="beneficio_deficiencia">
-                            <label class="form-check-label" for="fonte_2">Benefício de Prestação Continuada à Pessoa com Deficiência</label>
-                          </div>
-                        </div>
-                        <div class="checkbox-item">
-                          <div class="form-check">
-                            <input class="form-check-input" type="checkbox" id="fonte_3" name="fontes_renda[]" value="beneficio_idosa">
-                            <label class="form-check-label" for="fonte_3">Benefício de Prestação Continuada à Pessoa Idosa</label>
-                          </div>
-                        </div>
-                        <div class="checkbox-item">
-                          <div class="form-check">
-                            <input class="form-check-input" type="checkbox" id="fonte_4" name="fontes_renda[]" value="pensao_morte">
-                            <label class="form-check-label" for="fonte_4">Benefício de Pensão Por Morte Previdenciária</label>
-                          </div>
-                        </div>
-                        <div class="checkbox-item">
-                          <div class="form-check">
-                            <input class="form-check-input" type="checkbox" id="fonte_5" name="fontes_renda[]" value="aposentadoria_idade">
-                            <label class="form-check-label" for="fonte_5">Aposentadoria Por Idade Previdenciária</label>
-                          </div>
-                        </div>
-                        <div class="checkbox-item">
-                          <div class="form-check">
-                            <input class="form-check-input" type="checkbox" id="fonte_6" name="fontes_renda[]" value="aposentadoria_tempo">
-                            <label class="form-check-label" for="fonte_6">Aposentadoria Por Tempo de Contribuição Previdenciária</label>
-                          </div>
-                        </div>
-                        <div class="checkbox-item">
-                          <div class="form-check">
-                            <input class="form-check-input" type="checkbox" id="fonte_7" name="fontes_renda[]" value="aposentadoria_incapacidade">
-                            <label class="form-check-label" for="fonte_7">Aposentadoria Por Incapacidade Permanente Previdenciária</label>
-                          </div>
-                        </div>
-                        <div class="checkbox-item">
-                          <div class="form-check">
-                            <input class="form-check-input" type="checkbox" id="fonte_8" name="fontes_renda[]" value="maes_pernambuco">
-                            <label class="form-check-label" for="fonte_8">Mães de Pernambuco</label>
-                          </div>
-                        </div>
-                        <div class="checkbox-item">
-                          <div class="form-check">
-                            <input class="form-check-input" type="checkbox" id="fonte_9" name="fontes_renda[]" value="auxilio_gas">
-                            <label class="form-check-label" for="fonte_9">Auxílio Gás dos Brasileiros</label>
-                          </div>
-                        </div>
-                        <div class="checkbox-item">
-                          <div class="form-check">
-                            <input class="form-check-input" type="checkbox" id="fonte_10" name="fontes_renda[]" value="bolsa_familia">
-                            <label class="form-check-label" for="fonte_10">Bolsa Família</label>
-                          </div>
-                        </div>
-                        <div class="checkbox-item">
-                          <div class="form-check">
-                            <input class="form-check-input" type="checkbox" id="fonte_11" name="fontes_renda[]" value="auxilio_incapacidade">
-                            <label class="form-check-label" for="fonte_11">Benefício de Auxílio Por Incapacidade Temporária Previdenciário</label>
-                          </div>
-                        </div>
-                        <div class="checkbox-item">
-                          <div class="form-check">
-                            <input class="form-check-input" type="checkbox" id="fonte_12" name="fontes_renda[]" value="auxilio_acidente">
-                            <label class="form-check-label" for="fonte_12">Benefício de Auxílio-Acidente</label>
-                          </div>
-                        </div>
-                      </div>
-                      <div class="invalid-feedback" id="fontes-renda-feedback">Selecione pelo menos uma fonte de renda.</div>
-                    </div>
-
-                    <!-- Campo para conjunto probatório (independente) -->
-                    <div class="mb-3">
-                      <label class="form-label">Qual o conjunto probatório para comprovar hipossuficiência?</label>
-                      <div class="checkbox-group" id="conjunto-probatorio-group">
-                        <div class="checkbox-item">
-                          <div class="form-check">
-                            <input class="form-check-input" type="checkbox" id="proba_1" name="conjunto_probatorio[]" value="declaracao_hipossuficiencia">
-                            <label class="form-check-label" for="proba_1">Declaração de Hipossuficiência firmada pela parte autora</label>
-                          </div>
-                        </div>
-                        <div class="checkbox-item">
-                          <div class="form-check">
-                            <input class="form-check-input" type="checkbox" id="proba_2" name="conjunto_probatorio[]" value="isencao_imposto_renda">
-                            <label class="form-check-label" for="proba_2">Declaração de isenção de Imposto de Renda</label>
-                          </div>
-                        </div>
-                        <div class="checkbox-item">
-                          <div class="form-check">
-                            <input class="form-check-input" type="checkbox" id="proba_3" name="conjunto_probatorio[]" value="print_receita_federal">
-                            <label class="form-check-label" for="proba_3">Print da Receita Federal demonstrando inexistência de dados quanto à Declaração Anual de Imposto de Renda</label>
-                          </div>
-                        </div>
-                        <div class="checkbox-item">
-                          <div class="form-check">
-                            <input class="form-check-input" type="checkbox" id="proba_4" name="conjunto_probatorio[]" value="extratos_inss">
-                            <label class="form-check-label" for="proba_4">Extratos de benefício previdenciário (INSS)</label>
-                          </div>
-                        </div>
-                        <div class="checkbox-item">
-                          <div class="form-check">
-                            <input class="form-check-input" type="checkbox" id="proba_5" name="conjunto_probatorio[]" value="extratos_bancarios">
-                            <label class="form-check-label" for="proba_5">Extratos bancários atualizados</label>
-                          </div>
-                        </div>
-                        <div class="checkbox-item">
-                          <div class="form-check">
-                            <input class="form-check-input" type="checkbox" id="proba_6" name="conjunto_probatorio[]" value="ctps_digital">
-                            <label class="form-check-label" for="proba_6">Carteira de Trabalho e Previdência Social (CTPS) Digital</label>
-                          </div>
-                        </div>
-                        <div class="checkbox-item">
-                          <div class="form-check">
-                            <input class="form-check-input" type="checkbox" id="proba_7" name="conjunto_probatorio[]" value="cadastro_unico">
-                            <label class="form-check-label" for="proba_7">Folha resumo do Cadastro Único para Programas Sociais do Governo Federal</label>
-                          </div>
-                        </div>
-                      </div>
-                      <div class="invalid-feedback" id="conjunto-probatorio-feedback">Selecione pelo menos um item do conjunto probatório.</div>
-                    </div>
-
-                    <!-- Campo para comarca (aparece apenas quando foro = Autor) -->
-                    <div id="comarca-field" class="mb-3 comarca-field">
-                      <label class="form-label">Comarca onde vai ingressar com a ação:</label>
-                      <div class="row">
-                        <div class="col-md-6 mb-2">
-                          <label for="estado_comarca" class="form-label">Estado:</label>
-                          <select class="form-select" id="estado_comarca" name="estado_comarca">
-                            <option value="" selected disabled>Selecione o estado...</option>
-                            <option value="AC">Acre</option>
-                            <option value="AL">Alagoas</option>
-                            <option value="AP">Amapá</option>
-                            <option value="AM">Amazonas</option>
-                            <option value="BA">Bahia</option>
-                            <option value="CE">Ceará</option>
-                            <option value="DF">Distrito Federal</option>
-                            <option value="ES">Espírito Santo</option>
-                            <option value="GO">Goiás</option>
-                            <option value="MA">Maranhão</option>
-                            <option value="MT">Mato Grosso</option>
-                            <option value="MS">Mato Grosso do Sul</option>
-                            <option value="MG">Minas Gerais</option>
-                            <option value="PA">Pará</option>
-                            <option value="PB">Paraíba</option>
-                            <option value="PR">Paraná</option>
-                            <option value="PE">Pernambuco</option>
-                            <option value="PI">Piauí</option>
-                            <option value="RJ">Rio de Janeiro</option>
-                            <option value="RN">Rio Grande do Norte</option>
-                            <option value="RS">Rio Grande do Sul</option>
-                            <option value="RO">Rondônia</option>
-                            <option value="RR">Roraima</option>
-                            <option value="SC">Santa Catarina</option>
-                            <option value="SP">São Paulo</option>
-                            <option value="SE">Sergipe</option>
-                            <option value="TO">Tocantins</option>
-                          </select>
-                          <div class="invalid-feedback">Selecione o estado.</div>
-                        </div>
-                        <div class="col-md-6 mb-2">
-                          <label for="cidade_comarca" class="form-label">Cidade:</label>
-                          <div class="input-group">
-                            <select class="form-select" id="cidade_comarca" name="cidade_comarca" disabled>
-                              <option value="" selected disabled>Primeiro selecione o estado</option>
-                            </select>
-                            <span class="input-group-text p-0">
-                              <button type="button" id="btn-buscar-cidades" class="btn btn-primary" disabled>
-                                <i class="bi bi-search"></i>
-                              </button>
-                            </span>
-                            <div class="loading-spinner" id="loading-cidades"></div>
-                          </div>
-                          <div class="invalid-feedback">Selecione a cidade.</div>
-                        </div>
-                      </div>
-                    </div>
-
-                    <!-- Advogado Responsável (agora como select) -->
-                    <div class="mb-3">
-                      <label for="advogado" class="form-label">Advogado Responsável:</label>
-                      <select class="form-select" id="advogado" name="advogado" required>
-                        <option value="" selected disabled>Selecione o advogado...</option>
-                        <option value="Guilherme Esteves dos Santos Moraes">Guilherme Esteves dos Santos Moraes</option>
-                        <option value="Cícero Vogelaar Girardi">Cícero Vogelaar Girardi</option>
-                      </select>
-                      <div class="invalid-feedback">Selecione o advogado responsável.</div>
-                    </div>
-
-                    <!-- Estado e OAB -->
-                    <div class="row mb-3">
-                      <div class="col-md-6">
-                        <label for="estado_oab" class="form-label">Estado da OAB:</label>
-                        <select class="form-select" id="estado_oab" name="estado_oab" required>
-                          <option value="" selected disabled>Selecione o estado...</option>
-                          <option value="BA">Bahia (BA)</option>
-                          <option value="MG">Minas Gerais (MG)</option>
-                          <option value="PE">Pernambuco (PE)</option>
-                          <option value="RJ">Rio de Janeiro (RJ)</option>
-                          <option value="RN">Rio Grande do Norte (RN)</option>
-                          <option value="SP">São Paulo (SP)</option>
+                <div class="progress">
+                  <div class="progress-bar" role="progressbar" style="width: 50%" aria-valuenow="50" aria-valuemin="0" aria-valuemax="100"></div>
+                </div>
+              </div>
+              
+              <!-- Seção de Dados da Petição -->
+              <div id="peticao-section" class="form-section active">
+                <div class="card">
+                  <div class="card-header bg-primary text-white">
+                    <h2 class="h4 mb-0"><i class="bi bi-file-text me-2"></i>Dados da Petição</h2>
+                  </div>
+                  <div class="card-body">
+                    <form id="peticao-form" class="needs-validation" novalidate>
+                      <!-- Tipo de Petição -->
+                      <div class="mb-3">
+                        <label for="tipo_peticao" class="form-label">Tipo de Petição:</label>
+                        <select class="form-select" id="tipo_peticao" name="tipo_peticao" required>
+                          <option value="" selected disabled>Selecione o tipo...</option>
+                          <option value="judicial">Judicial</option>
+                          <option value="extrajudicial">Extrajudicial</option>
+                          <option value="administrativa">Administrativa</option>
                         </select>
-                        <div class="invalid-feedback">Selecione o estado da OAB.</div>
+                        <div class="invalid-feedback">Selecione o tipo de petição.</div>
                       </div>
-                      <div class="col-md-6">
-                        <label for="numero_oab" class="form-label">Número da OAB:</label>
-                        <input type="text" class="form-control" id="numero_oab" name="numero_oab" 
-                              placeholder="Ex: 123456" required>
-                        <div class="invalid-feedback">Informe o número da OAB.</div>
-                      </div>
-                    </div>
 
-                    <button type="button" id="btn-salvar-peticao" class="btn btn-primary w-100 py-2">
-                      <i class="bi bi-arrow-right me-2"></i>Salvar e Continuar para Empréstimo
-                    </button>
-                  </form>
+                      <!-- Foro (Autor/Réu) -->
+                      <div class="mb-3">
+                        <label for="foro" class="form-label">Qual o foro?</label>
+                        <select class="form-select" id="foro" name="foro" required>
+                          <option value="" selected disabled>Selecione o foro...</option>
+                          <option value="autor">Autor</option>
+                          <option value="reu">Réu</option>
+                        </select>
+                        <div class="invalid-feedback">Selecione o foro.</div>
+                      </div>
+
+                      <!-- Campo para selecionar banco -->
+                      <div class="mb-3">
+                        <label for="banco" class="form-label">Selecione o banco:</label>
+                        <select class="form-select" id="banco" name="banco" required>
+                          <option value="" selected disabled>Selecione o banco...</option>
+                          <option value="banco_brasil">Banco do Brasil</option>
+                          <option value="caixa">Caixa Econômica Federal</option>
+                          <option value="bradesco">Bradesco</option>
+                          <option value="itau">Itaú</option>
+                          <option value="santander">Santander</option>
+                          <option value="sicoob">Sicoob</option>
+                          <option value="sicredi">Sicredi</option>
+                          <option value="mercantil">Banco Mercantil</option>
+                          <option value="bmg">Banco BMG</option>
+                          <option value="crefisa">Banco Crefisa</option>
+                          <option value="agbank">Banco Agibank</option>
+                          <option value="crefaz">Crediaz</option>
+                          <option value="daycoval">Banco Daycoval</option>
+                          <option value="inbursa">Banco Inbursa</option>
+                          <option value="inter">Banco Inter</option>
+                          <option value="jbcred">Banco JB Cred</option>
+                          <option value="master">Banco Master</option>
+                          <option value="pan">Banco Pan</option>
+                          <option value="pkl">Banco PKL One</option>
+                          <option value="safra">Banco Safra</option>
+                          <option value="c6">Banco C6</option>
+                          <option value="brb">BRB - Banco de Brasília</option>
+                          <option value="nubank">Nubank</option>
+                          <option value="bullha">Bullha Pagamentos</option>
+                          <option value="facta">Facta Financeira</option>
+                          <option value="mercadopago">Mercado Pago</option>
+                          <option value="outro">Outro</option>
+                        </select>
+                        <div class="invalid-feedback">Selecione o banco.</div>
+                      </div>
+
+                      <!-- Campo para empréstimos consignados -->
+                      <div class="mb-3">
+                        <label for="possui_emprestimos" class="form-label">Autor possui empréstimos consignados?</label>
+                        <select class="form-select" id="possui_emprestimos" name="possui_emprestimos" required>
+                          <option value="" selected disabled>Selecione uma opção...</option>
+                          <option value="sim">Sim</option>
+                          <option value="nao">Não</option>
+                        </select>
+                        <div class="invalid-feedback">Selecione uma opção.</div>
+                      </div>
+
+                      <!-- Campo para fontes de renda -->
+                      <div class="mb-3">
+                        <label class="form-label">Qual ou quais as fontes de renda do autor?</label>
+                        <div class="checkbox-group" id="fontes-renda-group">
+                          <div class="checkbox-item">
+                            <div class="form-check">
+                              <input class="form-check-input" type="checkbox" id="fonte_1" name="fontes_renda[]" value="salario">
+                              <label class="form-check-label" for="fonte_1">Salário</label>
+                            </div>
+                          </div>
+                          <div class="checkbox-item">
+                            <div class="form-check">
+                              <input class="form-check-input" type="checkbox" id="fonte_2" name="fontes_renda[]" value="beneficio_deficiencia">
+                              <label class="form-check-label" for="fonte_2">Benefício de Prestação Continuada à Pessoa com Deficiência</label>
+                            </div>
+                          </div>
+                          <div class="checkbox-item">
+                            <div class="form-check">
+                              <input class="form-check-input" type="checkbox" id="fonte_3" name="fontes_renda[]" value="beneficio_idosa">
+                              <label class="form-check-label" for="fonte_3">Benefício de Prestação Continuada à Pessoa Idosa</label>
+                            </div>
+                          </div>
+                          <div class="checkbox-item">
+                            <div class="form-check">
+                              <input class="form-check-input" type="checkbox" id="fonte_4" name="fontes_renda[]" value="pensao_morte">
+                              <label class="form-check-label" for="fonte_4">Benefício de Pensão Por Morte Previdenciária</label>
+                            </div>
+                          </div>
+                          <div class="checkbox-item">
+                            <div class="form-check">
+                              <input class="form-check-input" type="checkbox" id="fonte_5" name="fontes_renda[]" value="aposentadoria_idade">
+                              <label class="form-check-label" for="fonte_5">Aposentadoria Por Idade Previdenciária</label>
+                            </div>
+                          </div>
+                          <div class="checkbox-item">
+                            <div class="form-check">
+                              <input class="form-check-input" type="checkbox" id="fonte_6" name="fontes_renda[]" value="aposentadoria_tempo">
+                              <label class="form-check-label" for="fonte_6">Aposentadoria Por Tempo de Contribuição Previdenciária</label>
+                            </div>
+                          </div>
+                          <div class="checkbox-item">
+                            <div class="form-check">
+                              <input class="form-check-input" type="checkbox" id="fonte_7" name="fontes_renda[]" value="aposentadoria_incapacidade">
+                              <label class="form-check-label" for="fonte_7">Aposentadoria Por Incapacidade Permanente Previdenciária</label>
+                            </div>
+                          </div>
+                          <div class="checkbox-item">
+                            <div class="form-check">
+                              <input class="form-check-input" type="checkbox" id="fonte_8" name="fontes_renda[]" value="maes_pernambuco">
+                              <label class="form-check-label" for="fonte_8">Mães de Pernambuco</label>
+                            </div>
+                          </div>
+                          <div class="checkbox-item">
+                            <div class="form-check">
+                              <input class="form-check-input" type="checkbox" id="fonte_9" name="fontes_renda[]" value="auxilio_gas">
+                              <label class="form-check-label" for="fonte_9">Auxílio Gás dos Brasileiros</label>
+                            </div>
+                          </div>
+                          <div class="checkbox-item">
+                            <div class="form-check">
+                              <input class="form-check-input" type="checkbox" id="fonte_10" name="fontes_renda[]" value="bolsa_familia">
+                              <label class="form-check-label" for="fonte_10">Bolsa Família</label>
+                            </div>
+                          </div>
+                          <div class="checkbox-item">
+                            <div class="form-check">
+                              <input class="form-check-input" type="checkbox" id="fonte_11" name="fontes_renda[]" value="auxilio_incapacidade">
+                              <label class="form-check-label" for="fonte_11">Benefício de Auxílio Por Incapacidade Temporária Previdenciário</label>
+                            </div>
+                          </div>
+                          <div class="checkbox-item">
+                            <div class="form-check">
+                              <input class="form-check-input" type="checkbox" id="fonte_12" name="fontes_renda[]" value="auxilio_acidente">
+                              <label class="form-check-label" for="fonte_12">Benefício de Auxílio-Acidente</label>
+                            </div>
+                          </div>
+                        </div>
+                        <div class="invalid-feedback" id="fontes-renda-feedback">Selecione pelo menos uma fonte de renda.</div>
+                      </div>
+
+                      <!-- Campo para conjunto probatório -->
+                      <div class="mb-3">
+                        <label class="form-label">Qual o conjunto probatório para comprovar hipossuficiência?</label>
+                        <div class="checkbox-group" id="conjunto-probatorio-group">
+                          <div class="checkbox-item">
+                            <div class="form-check">
+                              <input class="form-check-input" type="checkbox" id="proba_1" name="conjunto_probatorio[]" value="declaracao_hipossuficiencia">
+                              <label class="form-check-label" for="proba_1">Declaração de Hipossuficiência firmada pela parte autora</label>
+                            </div>
+                          </div>
+                          <div class="checkbox-item">
+                            <div class="form-check">
+                              <input class="form-check-input" type="checkbox" id="proba_2" name="conjunto_probatorio[]" value="isencao_imposto_renda">
+                              <label class="form-check-label" for="proba_2">Declaração de isenção de Imposto de Renda</label>
+                            </div>
+                          </div>
+                          <div class="checkbox-item">
+                            <div class="form-check">
+                              <input class="form-check-input" type="checkbox" id="proba_3" name="conjunto_probatorio[]" value="print_receita_federal">
+                              <label class="form-check-label" for="proba_3">Print da Receita Federal demonstrando inexistência de dados quanto à Declaração Anual de Imposto de Renda</label>
+                            </div>
+                          </div>
+                          <div class="checkbox-item">
+                            <div class="form-check">
+                              <input class="form-check-input" type="checkbox" id="proba_4" name="conjunto_probatorio[]" value="extratos_inss">
+                              <label class="form-check-label" for="proba_4">Extratos de benefício previdenciário (INSS)</label>
+                            </div>
+                          </div>
+                          <div class="checkbox-item">
+                            <div class="form-check">
+                              <input class="form-check-input" type="checkbox" id="proba_5" name="conjunto_probatorio[]" value="extratos_bancarios">
+                              <label class="form-check-label" for="proba_5">Extratos bancários atualizados</label>
+                            </div>
+                          </div>
+                          <div class="checkbox-item">
+                            <div class="form-check">
+                              <input class="form-check-input" type="checkbox" id="proba_6" name="conjunto_probatorio[]" value="ctps_digital">
+                              <label class="form-check-label" for="proba_6">Carteira de Trabalho e Previdência Social (CTPS) Digital</label>
+                            </div>
+                          </div>
+                          <div class="checkbox-item">
+                            <div class="form-check">
+                              <input class="form-check-input" type="checkbox" id="proba_7" name="conjunto_probatorio[]" value="cadastro_unico">
+                              <label class="form-check-label" for="proba_7">Folha resumo do Cadastro Único para Programas Sociais do Governo Federal</label>
+                            </div>
+                          </div>
+                        </div>
+                        <div class="invalid-feedback" id="conjunto-probatorio-feedback">Selecione pelo menos um item do conjunto probatório.</div>
+                      </div>
+
+                      <!-- Campo para comarca -->
+                      <div id="comarca-field" class="mb-3 comarca-field">
+                        <label class="form-label">Comarca onde vai ingressar com a ação:</label>
+                        <div class="row">
+                          <div class="col-md-6 mb-2">
+                            <label for="estado_comarca" class="form-label">Estado:</label>
+                            <select class="form-select" id="estado_comarca" name="estado_comarca">
+                              <option value="" selected disabled>Selecione o estado...</option>
+                              <option value="AC">Acre</option>
+                              <option value="AL">Alagoas</option>
+                              <option value="AP">Amapá</option>
+                              <option value="AM">Amazonas</option>
+                              <option value="BA">Bahia</option>
+                              <option value="CE">Ceará</option>
+                              <option value="DF">Distrito Federal</option>
+                              <option value="ES">Espírito Santo</option>
+                              <option value="GO">Goiás</option>
+                              <option value="MA">Maranhão</option>
+                              <option value="MT">Mato Grosso</option>
+                              <option value="MS">Mato Grosso do Sul</option>
+                              <option value="MG">Minas Gerais</option>
+                              <option value="PA">Pará</option>
+                              <option value="PB">Paraíba</option>
+                              <option value="PR">Paraná</option>
+                              <option value="PE">Pernambuco</option>
+                              <option value="PI">Piauí</option>
+                              <option value="RJ">Rio de Janeiro</option>
+                              <option value="RN">Rio Grande do Norte</option>
+                              <option value="RS">Rio Grande do Sul</option>
+                              <option value="RO">Rondônia</option>
+                              <option value="RR">Roraima</option>
+                              <option value="SC">Santa Catarina</option>
+                              <option value="SP">São Paulo</option>
+                              <option value="SE">Sergipe</option>
+                              <option value="TO">Tocantins</option>
+                            </select>
+                            <div class="invalid-feedback">Selecione o estado.</div>
+                          </div>
+                          <div class="col-md-6 mb-2">
+                            <label for="cidade_comarca" class="form-label">Cidade:</label>
+                            <div class="input-group">
+                              <select class="form-select" id="cidade_comarca" name="cidade_comarca" disabled>
+                                <option value="" selected disabled>Primeiro selecione o estado</option>
+                              </select>
+                              <span class="input-group-text p-0">
+                                <button type="button" id="btn-buscar-cidades" class="btn btn-primary" disabled>
+                                  <i class="bi bi-search"></i>
+                                </button>
+                              </span>
+                              <div class="loading-spinner" id="loading-cidades"></div>
+                            </div>
+                            <div class="invalid-feedback">Selecione a cidade.</div>
+                          </div>
+                        </div>
+                      </div>
+
+                      <!-- Advogado Responsável -->
+                      <div class="mb-3">
+                        <label for="advogado" class="form-label">Advogado Responsável:</label>
+                        <select class="form-select" id="advogado" name="advogado" required>
+                          <option value="" selected disabled>Selecione o advogado...</option>
+                          <option value="Guilherme Esteves dos Santos Moraes">Guilherme Esteves dos Santos Moraes</option>
+                          <option value="Cícero Vogelaar Girardi">Cícero Vogelaar Girardi</option>
+                        </select>
+                        <div class="invalid-feedback">Selecione o advogado responsável.</div>
+                      </div>
+
+                      <!-- Estado e OAB -->
+                      <div class="row mb-3">
+                        <div class="col-md-6">
+                          <label for="estado_oab" class="form-label">Estado da OAB:</label>
+                          <select class="form-select" id="estado_oab" name="estado_oab" required>
+                            <option value="" selected disabled>Selecione o estado...</option>
+                            <option value="BA">Bahia (BA)</option>
+                            <option value="MG">Minas Gerais (MG)</option>
+                            <option value="PE">Pernambuco (PE)</option>
+                            <option value="RJ">Rio de Janeiro (RJ)</option>
+                            <option value="RN">Rio Grande do Norte (RN)</option>
+                            <option value="SP">São Paulo (SP)</option>
+                          </select>
+                          <div class="invalid-feedback">Selecione o estado da OAB.</div>
+                        </div>
+                        <div class="col-md-6">
+                          <label for="numero_oab" class="form-label">Número da OAB:</label>
+                          <input type="text" class="form-control" id="numero_oab" name="numero_oab" 
+                                placeholder="Ex: 123456" required>
+                          <div class="invalid-feedback">Informe o número da OAB.</div>
+                        </div>
+                      </div>
+
+                      <button type="button" id="btn-salvar-peticao" class="btn btn-primary w-100 py-2">
+                        <i class="bi bi-arrow-right me-2"></i>Salvar e Continuar para Empréstimo
+                      </button>
+                    </form>
+                  </div>
                 </div>
               </div>
-            </div>
 
-            <!-- Seção de Dados do Empréstimo (original) -->
-            <div id="emprestimo-section" class="form-section">
-              <div class="card">
-                <div class="card-header bg-primary text-white">
-                  <h2 class="h4 mb-0"><i class="bi bi-pencil-square me-2"></i>Dados do Empréstimo</h2>
-                </div>
-                <div class="card-body">
-                  <form action="/gerar-peticao" method="post" role="form" novalidate>
-                    <!-- CAMPOS HIDDEN PARA OS DADOS DA PETIÇÃO -->
-                    <input type="hidden" id="foro_hidden" name="foro">
-                    <input type="hidden" id="tipo_peticao_hidden" name="tipo_peticao">
-                    <input type="hidden" id="banco_hidden" name="banco">
-                    <input type="hidden" id="possui_emprestimos_hidden" name="possui_emprestimos">
-                    <input type="hidden" id="fontes_renda_hidden" name="fontes_renda[]">
-                    <input type="hidden" id="conjunto_probatorio_hidden" name="conjunto_probatorio[]">
-                    <input type="hidden" id="estado_comarca_hidden" name="estado_comarca">
-                    <input type="hidden" id="cidade_comarca_hidden" name="cidade_comarca">
-                    <input type="hidden" id="advogado_hidden" name="advogado">
-                    <input type="hidden" id="estado_oab_hidden" name="estado_oab">
-                    <input type="hidden" id="numero_oab_hidden" name="numero_oab">
-                    <input type="hidden" id="beneficios_hidden" name="beneficios">
-                    
-                    <!-- Seleção de Modelo -->
-                    <div class="mb-3">
-                      <label for="modelo_peticao" class="form-label">Número de Empréstimos:</label>
-                      <select class="form-select" id="modelo_peticao" name="modelo_peticao" required>
-                        <option value="" selected disabled>Selecione um modelo...</option>
-                        <option value="1">1 Empréstimo</option>
-                        <option value="2">2 Empréstimos</option>
-                        <option value="3">3 Empréstimos</option>
-                      </select>
-                      <div class="invalid-feedback">Selecione um modelo de petição.</div>
-                    </div>
-
-                    <!-- Dados Gerais -->
-                    <div class="mb-3">
-                      <label for="renda_mensal" class="form-label">Renda Mensal Líquida</label>
-                      <div class="input-group">
-                        <span class="input-group-text">R$</span>
-                        <input type="number" step="0.01" min="0" class="form-control" id="renda_mensal" name="renda_mensal" placeholder="Ex: 3500,00" required>
+              <!-- Seção de Dados do Empréstimo -->
+              <div id="emprestimo-section" class="form-section">
+                <div class="card">
+                  <div class="card-header bg-primary text-white">
+                    <h2 class="h4 mb-0"><i class="bi bi-pencil-square me-2"></i>Dados do Empréstimo</h2>
+                  </div>
+                  <div class="card-body">
+                    <form action="/gerar-peticao" method="post" role="form" novalidate>
+                      <!-- CAMPOS HIDDEN PARA OS DADOS DA PETIÇÃO -->
+                      <input type="hidden" id="foro_hidden" name="foro">
+                      <input type="hidden" id="tipo_peticao_hidden" name="tipo_peticao">
+                      <input type="hidden" id="banco_hidden" name="banco">
+                      <input type="hidden" id="possui_emprestimos_hidden" name="possui_emprestimos">
+                      <input type="hidden" id="fontes_renda_hidden" name="fontes_renda[]">
+                      <input type="hidden" id="conjunto_probatorio_hidden" name="conjunto_probatorio[]">
+                      <input type="hidden" id="estado_comarca_hidden" name="estado_comarca">
+                      <input type="hidden" id="cidade_comarca_hidden" name="cidade_comarca">
+                      <input type="hidden" id="advogado_hidden" name="advogado">
+                      <input type="hidden" id="estado_oab_hidden" name="estado_oab">
+                      <input type="hidden" id="numero_oab_hidden" name="numero_oab">
+                      <input type="hidden" id="beneficios_hidden" name="beneficios">
+                      
+                      <!-- Seleção de Modelo -->
+                      <div class="mb-3">
+                        <label for="modelo_peticao" class="form-label">Número de Empréstimos:</label>
+                        <select class="form-select" id="modelo_peticao" name="modelo_peticao" required>
+                          <option value="" selected disabled>Selecione um modelo...</option>
+                          <option value="1">1 Empréstimo</option>
+                          <option value="2">2 Empréstimos</option>
+                          <option value="3">3 Empréstimos</option>
+                        </select>
+                        <div class="invalid-feedback">Selecione um modelo de petição.</div>
                       </div>
-                      <div class="invalid-feedback">Informe um valor válido.</div>
-                    </div>
 
-                    <!-- Container para os campos de cada empréstimo -->
-                    <div id="loan_fields"></div>
-
-                    <!-- Parcela Pessoal -->
-                    <div class="mb-3">
-                      <label for="parcela_pessoal" class="form-label">Parcela Consignada</label>
-                      <div class="input-group">
-                        <span class="input-group-text">R$</span>
-                        <input type="number" step="0.01" min="0" class="form-control" id="parcela_pessoal" name="parcela_pessoal" placeholder="Ex: 500,00" required>
+                      <!-- Dados Gerais -->
+                      <div class="mb-3">
+                        <label for="renda_mensal" class="form-label">Renda Mensal Líquida</label>
+                        <div class="input-group">
+                          <span class="input-group-text">R$</span>
+                          <input type="number" step="0.01" min="0" class="form-control" id="renda_mensal" name="renda_mensal" placeholder="Ex: 3500,00" required>
+                        </div>
+                        <div class="invalid-feedback">Informe um valor válido.</div>
                       </div>
-                      <div class="invalid-feedback">Informe um valor válido.</div>
-                    </div>
 
-                    <div class="d-flex gap-2">
-                      <button type="button" id="btn-voltar-peticao" class="btn btn-outline-secondary w-50 py-2">
-                        <i class="bi bi-arrow-left me-2"></i>Voltar
-                      </button>
-                      <button type="submit" class="btn btn-primary w-50 py-2">
-                        <i class="bi bi-magic me-2"></i>Gerar Petição
-                      </button>
-                    </div>
-                  </form>
+                      <!-- Container para os campos de cada empréstimo -->
+                      <div id="loan_fields"></div>
+
+                      <!-- Parcela Pessoal -->
+                      <div class="mb-3">
+                        <label for="parcela_pessoal" class="form-label">Parcela Consignada</label>
+                        <div class="input-group">
+                          <span class="input-group-text">R$</span>
+                          <input type="number" step="0.01" min="0" class="form-control" id="parcela_pessoal" name="parcela_pessoal" placeholder="Ex: 500,00" required>
+                        </div>
+                        <div class="invalid-feedback">Informe um valor válido.</div>
+                      </div>
+
+                      <div class="d-flex gap-2">
+                        <button type="button" id="btn-voltar-peticao" class="btn btn-outline-secondary w-50 py-2">
+                          <i class="bi bi-arrow-left me-2"></i>Voltar
+                        </button>
+                        <button type="submit" class="btn btn-primary w-50 py-2">
+                          <i class="bi bi-magic me-2"></i>Gerar Petição
+                        </button>
+                      </div>
+                    </form>
+                  </div>
                 </div>
               </div>
             </div>
@@ -533,39 +642,38 @@
     </div>
   </div>
 
-  <!-- JavaScript Bootstrap 5 -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
   <script>
-// Dados de comarcas por banco (simulando busca no sistema)
-const comarcasPorBanco = {
-  'banco_brasil': 'Comarca de Brasília - DF',
-  'caixa': 'Comarca de São Paulo - SP',
-  'bradesco': 'Comarca de Osasco - SP',
-  'itau': 'Comarca de São Paulo - SP',
-  'santander': 'Comarca de São Paulo - SP',
-  'sicoob': 'Comarca de Brasília - DF',
-  'sicredi': 'Comarca de Porto Alegre - RS',
-  'mercantil': 'Comarca de Belo Horizonte - MG',
-  'bmg': 'Comarca de São Paulo - SP',
-  'crefisa': 'Comarca de São Paulo - SP',
-  'agbank': 'Comarca de Campinas - SP',
-  'crefaz': 'Comarca a definir',
-  'daycoval': 'Comarca de São Paulo - SP',
-  'inbursa': 'Comarca de São Paulo - SP',
-  'inter': 'Comarca de São Paulo - SP',
-  'jbcred': 'Comarca de São Paulo - SP',
-  'master': 'Comarca de São Paulo - SP',
-  'pan': 'Comarca de São Paulo - SP',
-  'pkl': 'Comarca de São Paulo - SP',
-  'safra': 'Comarca de São Paulo - SP',
-  'c6': 'Comarca de São Paulo - SP',
-  'brb': 'Comarca de Brasília - DF',
-  'nubank': 'Comarca de São Paulo - SP',
-  'bullha': 'Comarca de São Paulo - SP',
-  'facta': 'Comarca de Porto Alegre - RS',
-  'mercadopago': 'Comarca de Osasco - SP',
-  'outro': 'Comarca a definir'
-};
+    // Dados de comarcas por banco (simulando busca no sistema)
+    const comarcasPorBanco = {
+      'banco_brasil': 'Comarca de Brasília - DF',
+      'caixa': 'Comarca de São Paulo - SP',
+      'bradesco': 'Comarca de Osasco - SP',
+      'itau': 'Comarca de São Paulo - SP',
+      'santander': 'Comarca de São Paulo - SP',
+      'sicoob': 'Comarca de Brasília - DF',
+      'sicredi': 'Comarca de Porto Alegre - RS',
+      'mercantil': 'Comarca de Belo Horizonte - MG',
+      'bmg': 'Comarca de São Paulo - SP',
+      'crefisa': 'Comarca de São Paulo - SP',
+      'agbank': 'Comarca de Campinas - SP',
+      'crefaz': 'Comarca a definir',
+      'daycoval': 'Comarca de São Paulo - SP',
+      'inbursa': 'Comarca de São Paulo - SP',
+      'inter': 'Comarca de São Paulo - SP',
+      'jbcred': 'Comarca de São Paulo - SP',
+      'master': 'Comarca de São Paulo - SP',
+      'pan': 'Comarca de São Paulo - SP',
+      'pkl': 'Comarca de São Paulo - SP',
+      'safra': 'Comarca de São Paulo - SP',
+      'c6': 'Comarca de São Paulo - SP',
+      'brb': 'Comarca de Brasília - DF',
+      'nubank': 'Comarca de São Paulo - SP',
+      'bullha': 'Comarca de São Paulo - SP',
+      'facta': 'Comarca de Porto Alegre - RS',
+      'mercadopago': 'Comarca de Osasco - SP',
+      'outro': 'Comarca a definir'
+    };
 
     // Gerenciador de dados da petição
     class PeticaoManager {
