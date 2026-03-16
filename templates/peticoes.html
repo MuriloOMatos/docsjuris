@@ -799,13 +799,12 @@
         cidadeSelect.innerHTML = '<option value="" selected disabled>Carregando cidades...</option>';
 
         try {
-          const response = await fetch(
-            `https://servicodados.ibge.gov.br/api/v1/localidades/estados/${estado}/municipios`
-          );
+          const response = await fetch(`/api/municipios/${estado}`);
 
           if (!response.ok) throw new Error(`HTTP ${response.status}`);
 
           const cidades = await response.json();
+          // Os dados já chegam ordenados do servidor, mas garante o sort client-side também
           cidades.sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR'));
 
           cidadeSelect.innerHTML = '<option value="" selected disabled>Selecione a cidade</option>';
