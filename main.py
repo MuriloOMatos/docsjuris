@@ -100,6 +100,27 @@ MAPEAMENTO_VALORES = {
     "numero_oab": "Número da OAB",
 }
 
+# ---------------------------------------------------------------------------
+# Dados locais de estados e municípios (substitui API do IBGE)
+# ---------------------------------------------------------------------------
+def _carregar_json(caminho):
+    with open(caminho, encoding='utf-8-sig') as f:
+        return json.load(f)
+
+_ESTADOS_DATA   = _carregar_json(os.path.join(os.path.dirname(__file__), 'data', 'estados.json'))
+_MUNICIPIOS_DATA = _carregar_json(os.path.join(os.path.dirname(__file__), 'data', 'municipios.json'))
+
+# Índice: sigla_uf (ex: "SP") → codigo_uf
+_UF_PARA_CODIGO = {e['uf']: e['codigo_uf'] for e in _ESTADOS_DATA}
+
+# Índice: codigo_uf → lista de nomes de municípios ordenada
+_MUNICIPIOS_POR_UF = {}
+for _m in _MUNICIPIOS_DATA:
+    _cod = _m['codigo_uf']
+    _MUNICIPIOS_POR_UF.setdefault(_cod, []).append(_m['nome'])
+for _cod in _MUNICIPIOS_POR_UF:
+    _MUNICIPIOS_POR_UF[_cod].sort(key=lambda n: n.casefold())
+
 # Configuração de logging
 logging.basicConfig(level=logging.DEBUG)
 
@@ -1322,6 +1343,18 @@ def numero_contrato():
 def prazos():
     app.logger.debug("Acessando rota /prazos")
     return render_template('prazos.html')
+
+@app.route('/api/municipios/<uf>')
+@login_required
+def api_municipios(uf):
+    """Retorna lista de municípios para uma UF sem depender da API do IBGE."""
+    uf_upper = uf.upper()
+    codigo = _UF_PARA_CODIGO.get(uf_upper)
+    if codigo is None:
+        return {'error': f'UF "{uf_upper}" não encontrada'}, 404
+    nomes = _MUNICIPIOS_POR_UF.get(codigo, [])
+    # Retorna no mesmo formato que a API do IBGE usava: [{nome: "..."}]
+    return json.dumps([{'nome': n} for n in nomes], ensure_ascii=False), 200, {'Content-Type': 'application/json'}
 
 if __name__ == '__main__':
     app.run(debug=True, port=5000)
